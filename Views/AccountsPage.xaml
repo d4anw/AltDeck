@@ -122,8 +122,8 @@
               <ColumnDefinition Width="32"/>
               <ColumnDefinition Width="*" MinWidth="170"/>
               <ColumnDefinition Width="140"/>
-              <ColumnDefinition Width="120"/>
-              <ColumnDefinition Width="110"/>
+              <ColumnDefinition Width="170"/>
+              <ColumnDefinition Width="130"/>
               <ColumnDefinition Width="40"/>
               <ColumnDefinition Width="40"/>
             </Grid.ColumnDefinitions>
@@ -143,8 +143,8 @@
                     <ColumnDefinition Width="32"/>
                     <ColumnDefinition Width="*" MinWidth="170"/>
                     <ColumnDefinition Width="140"/>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="130"/>
                     <ColumnDefinition Width="40"/>
                     <ColumnDefinition Width="40"/>
                   </Grid.ColumnDefinitions>
@@ -170,7 +170,7 @@
                                ToolTip="{Binding StatusText, Mode=OneWay}"/>
                   </StackPanel>
                   <TextBlock Grid.Column="3" Text="{Binding RobuxText, Mode=OneWay}" VerticalAlignment="Center"
-                             TextTrimming="CharacterEllipsis" ToolTip="{Binding RobuxText, Mode=OneWay}" Margin="0,0,8,0"/>
+                             TextTrimming="CharacterEllipsis" ToolTip="{Binding RobuxText, Mode=OneWay}" Margin="0,0,20,0"/>
                   <ItemsControl Grid.Column="4" ItemsSource="{Binding GroupList}" VerticalAlignment="Center" ClipToBounds="True">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
