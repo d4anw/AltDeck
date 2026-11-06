@@ -101,8 +101,10 @@ public static class Updater
         return string.IsNullOrWhiteSpace(body) ? null : body;
     }
 
-    /// <summary>Downloads the update next to the running exe (or to <paramref name="targetExe"/>.new) and checks it.</summary>
-    public static async Task DownloadAsync(UpdateInfo u, string? targetExe = null, CancellationToken ct = default)
+    /// <summary>Downloads the update next to the running exe (or to <paramref name="targetExe"/>.new) and checks it.
+    /// <paramref name="progress"/> gets (bytes so far, total bytes; 0 when unknown) about ten times a second.</summary>
+    public static async Task DownloadAsync(UpdateInfo u, string? targetExe = null, CancellationToken ct = default,
+                                           IProgress<(long Done, long Total)>? progress = null)
     {
         var exe = targetExe ?? ExePath ?? throw new InvalidOperationException("AltDeck can't tell where its exe is.");
         var part = exe + ".download";
@@ -113,6 +115,9 @@ public static class Updater
             using (var r = await Http.GetAsync(u.Url, HttpCompletionOption.ResponseHeadersRead, ct))
             {
                 r.EnsureSuccessStatusCode();
+                long size = u.Size > 0 ? u.Size : r.Content.Headers.ContentLength ?? 0;
+                var lastReport = DateTime.MinValue;
+                progress?.Report((0, size));
                 using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 await using var src = await r.Content.ReadAsStreamAsync(ct);
                 await using var dst = new FileStream(part, FileMode.Create, FileAccess.Write, FileShare.None);
@@ -124,7 +129,13 @@ public static class Updater
                     await dst.WriteAsync(buffer.AsMemory(0, n), ct);
                     hash.AppendData(buffer, 0, n);
                     total += n;
+                    if (progress != null && DateTime.UtcNow - lastReport > TimeSpan.FromMilliseconds(100))
+                    {
+                        lastReport = DateTime.UtcNow;
+                        progress.Report((total, size));
+                    }
                 }
+                progress?.Report((total, size));
 
                 if (u.Size > 0 && total != u.Size)
                     throw new IOException("The download was incomplete.");

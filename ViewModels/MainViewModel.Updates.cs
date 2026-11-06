@@ -8,22 +8,26 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace AltDeck.ViewModels;
 
-/// <summary>Auto-update: checks GitHub shortly after start and every 6 hours, downloads in the background, installs on close.</summary>
+/// <summary>
+/// Updates: when AltDeck opens it checks GitHub, and if a newer version is out the window asks whether to update
+/// (with a download progress bar, then a restart into the new version). "Not now" asks again next start;
+/// "Don't notify me about updates again" switches the start-up check off. Settings → About can always check by hand.
+/// </summary>
 public partial class MainViewModel
 {
-    private readonly DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromHours(6) };
     private bool _updateBusy;
 
     private const string UpdateBaseText =
-        "Downloads new versions of AltDeck from GitHub by itself and installs them when AltDeck restarts.";
+        "When a new version of AltDeck is out, asks when AltDeck opens whether to update. Off: check by hand under About.";
     [ObservableProperty] private string updateStatus = "";
     public string UpdateDescription => string.IsNullOrEmpty(UpdateStatus) ? UpdateBaseText : UpdateBaseText + "\n" + UpdateStatus;
     partial void OnUpdateStatusChanged(string value) => OnPropertyChanged(nameof(UpdateDescription));
 
     public string AboutTitle => "AltDeck " + AppVersion;
 
-    /// <summary>A checked download is ready. The window asks whether to restart now.</summary>
-    public event Action<UpdateInfo>? UpdateReady;
+    /// <summary>A newer version is out: the window asks whether to update. Args: the update, its release notes
+    /// (null if GitHub didn't give them) and whether the person pressed "Check for updates".</summary>
+    public event Action<UpdateInfo, string?, bool>? UpdateAvailable;
 
     /// <summary>This copy was just updated: the window shows these release notes once.</summary>
     public event Action<Version, string>? WhatsNew;
@@ -44,12 +48,23 @@ public partial class MainViewModel
         }
 
         if (!Updater.CanUpdate) UpdateStatus = "This copy isn't the AltDeck.exe from GitHub Releases, so it doesn't update itself.";
+    }
 
-        var first = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };   // let start-up and the sign-in checks go first
-        first.Tick += async (_, _) => { first.Stop(); await CheckForUpdateAsync(manual: false); };
-        first.Start();
-        _updateTimer.Tick += async (_, _) => await CheckForUpdateAsync(manual: false);
-        _updateTimer.Start();
+    /// <summary>Called by the window once it's shown.</summary>
+    public Task CheckForUpdatesAtStartAsync() => CheckForUpdateAsync(manual: false);
+
+    /// <summary>The person chose Update and the download is done: don't show "What's new" for a version they just read about.</summary>
+    public void UpdateAccepted(UpdateInfo u)
+    {
+        Settings.LastSeenVersion = $"{u.Version.Major}.{u.Version.Minor}.{Math.Max(u.Version.Build, 0)}";
+        Log(ActivityLog.Info, $"Updating to AltDeck {Settings.LastSeenVersion}.");
+    }
+
+    /// <summary>The "Don't notify me about updates again" box.</summary>
+    public void StopUpdatePrompts()
+    {
+        Settings.AutoUpdate = false;
+        Log(ActivityLog.Info, "Update prompts switched off. Check by hand under Settings → About.");
     }
 
     private async Task ShowWhatsNewAsync()
@@ -102,12 +117,6 @@ public partial class MainViewModel
             if (manual) StatusMessage = "Only the AltDeck.exe from GitHub Releases updates itself.";
             return;
         }
-        if (Updater.Staged is { } ready)
-        {
-            UpdateReady?.Invoke(ready);
-            return;
-        }
-
         _updateBusy = true;
         try
         {
@@ -120,11 +129,10 @@ public partial class MainViewModel
                 return;
             }
 
-            UpdateStatus = $"Downloading AltDeck {u.Version}…";
-            await Updater.DownloadAsync(u);
-            Log(ActivityLog.Info, $"AltDeck {u.Version} downloaded. It installs when AltDeck restarts.");
-            UpdateStatus = $"AltDeck {u.Version} is ready. It installs when AltDeck restarts.";
-            UpdateReady?.Invoke(u);
+            string? notes = null;
+            try { notes = await Updater.GetReleaseNotesAsync(u.Version); } catch { }
+            UpdateStatus = $"AltDeck {u.Version} is available.";
+            UpdateAvailable?.Invoke(u, notes, manual);
         }
         catch (Exception ex)
         {
@@ -135,7 +143,7 @@ public partial class MainViewModel
         finally { _updateBusy = false; }
     }
 
-    /// <summary>On close: swaps in a downloaded update so the next start runs the new version.</summary>
+    /// <summary>On close: swaps in the update the person chose to download, so the restart runs the new version.</summary>
     private void InstallUpdateOnExit()
     {
         if (Updater.Staged is not { } u) return;

@@ -17,8 +17,8 @@ public partial class MainWindow : Window
     private readonly HotkeyService _hotkey = new();
     private bool _reallyExit;       // true when the person chose Quit (or Windows is signing out): Close must not hide to the tray
     private bool _trayTipShown;
-    private bool _updatePrompted;      // ask about an update once per run
-    private bool _restartAfterUpdate;  // the person chose "Restart now"
+    private bool _updateOpen;          // the update window is showing
+    private bool _restartAfterUpdate;  // the person chose "Update": restart into the new version on close
 
     public MainWindow()
     {
@@ -47,7 +47,7 @@ public partial class MainWindow : Window
             _tray.Balloon("AltDeck", _vm.StatusMessage);
         };
         _tray.QuitRequested += () => { _reallyExit = true; Close(); };
-        _vm.UpdateReady += u => Dispatcher.InvokeAsync(() => AskToRestartForUpdate(u));
+        _vm.UpdateAvailable += (u, notes, manual) => Dispatcher.InvokeAsync(() => AskToUpdate(u, notes, manual));
         _vm.WhatsNew += (v, notes) => Dispatcher.InvokeAsync(() =>
         {
             var w = new WhatsNewWindow(v, notes);
@@ -108,7 +108,11 @@ public partial class MainWindow : Window
         HoldBtn.PreviewMouseLeftButtonUp += (_, _) => StopHold();
         HoldBtn.MouseLeave += (_, _) => StopHold();
 
-        Loaded += async (_, _) => await _vm.InitializeAsync();
+        Loaded += async (_, _) =>
+        {
+            _ = _vm.CheckForUpdatesAtStartAsync();   // asks right away if a new version is out
+            await _vm.InitializeAsync();
+        };
         Closed += (_, _) =>
         {
             try { _hotkey.Dispose(); } catch { }
@@ -118,23 +122,24 @@ public partial class MainWindow : Window
         };
     }
 
-    private void AskToRestartForUpdate(UpdateInfo u)
+    private void AskToUpdate(UpdateInfo u, string? notes, bool manual)
     {
-        if (_updatePrompted) return;
-        _updatePrompted = true;
-        if (!IsVisible)
+        if (_updateOpen) return;
+        _updateOpen = true;
+        try
         {
-            _tray.Balloon("AltDeck update ready", $"AltDeck {u.Version} installs the next time AltDeck starts.");
-            return;
+            var w = new UpdateWindow(u, notes, askedByUser: manual);
+            if (IsVisible) w.Owner = this; else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            bool update = w.ShowDialog() == true;
+            if (w.DontAskAgain) _vm.StopUpdatePrompts();
+            if (!update) return;
+
+            _vm.UpdateAccepted(u);
+            _restartAfterUpdate = true;
+            _reallyExit = true;
+            Close();   // Closed installs the download and starts the new version
         }
-        var answer = MessageBox.Show(this,
-            $"AltDeck {u.Version} is downloaded and ready.\n\nRestart AltDeck now to install it? Your Roblox clients keep running.\n\n" +
-            "Choose No to install it the next time you close AltDeck.",
-            "Update ready", MessageBoxButton.YesNo, MessageBoxImage.Information);
-        if (answer != MessageBoxResult.Yes) return;
-        _restartAfterUpdate = true;
-        _reallyExit = true;
-        Close();
+        finally { _updateOpen = false; }
     }
 
     /// <summary>Shows the window (from the tray, minimized or behind other apps). Used when AltDeck is started a second time.</summary>
