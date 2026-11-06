@@ -17,7 +17,11 @@ public partial class WhatsNewWindow : Window
         Heading.Text = "What's new in " + v;
         Notes.Text = ToPlainText(releaseNotes);
         _url = $"https://github.com/{Updater.Repo}/releases/tag/v{v}";
+        PreviewKeyDown += (_, e) => { if (e.Key is System.Windows.Input.Key.Escape or System.Windows.Input.Key.Enter) Close(); };
     }
+
+    // IsCancel / IsDefault only close a window opened with ShowDialog; this one is opened with Show, so close it here.
+    private void GotIt_Click(object sender, RoutedEventArgs e) => Close();
 
     private void GitHub_Click(object sender, RoutedEventArgs e)
     {
