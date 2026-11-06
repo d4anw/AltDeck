@@ -11,6 +11,10 @@ namespace AltDeck.Services;
 /// </summary>
 public sealed class DiscordPresence
 {
+    /// <summary>AltDeck's own Discord application (public ID, not a secret). Its name "AltDeck" and the "altdeck_logo"
+    /// art asset are what Discord shows, so nobody has to make their own app.</summary>
+    public const string AppId = "1566917960700797029";
+
     private static readonly TimeSpan MinGap = TimeSpan.FromSeconds(15);   // Discord limits how often presence may change
     private static readonly TimeSpan Timeout3s = TimeSpan.FromSeconds(3);
 
@@ -25,17 +29,17 @@ public sealed class DiscordPresence
     /// <summary>One short line for the Settings page: what is going on with Discord.</summary>
     public string Status => _status;
 
-    /// <summary>Try again right away (used when the switch or the Application ID changed).</summary>
+    /// <summary>Try again right away (used when the switch changed).</summary>
     public void Reset() { _nextTry = DateTime.MinValue; _sentKey = _pipe == null ? "" : "\0"; }
 
     /// <summary>Call every few seconds from the UI thread.</summary>
-    public void Update(bool enabled, string? appId, int running)
+    public void Update(bool enabled, int running)
     {
-        appId = (appId ?? "").Trim();
+        const string appId = AppId;
 
-        if (!enabled || appId.Length == 0)
+        if (!enabled)
         {
-            _status = enabled ? "Add your Discord Application ID to switch this on." : "";
+            _status = "";
             if (_pipe != null || _sentKey != "") Run(() => { Clear(); return Task.CompletedTask; });
             return;
         }
@@ -125,7 +129,7 @@ public sealed class DiscordPresence
 
                 var (op, json) = await ReadFrameAsync(pipe);
                 if (op == 2 || json.Contains("\"ERROR\"", StringComparison.Ordinal))
-                    throw new InvalidOperationException("Discord didn't accept that Application ID. Copy it again from discord.com/developers.");
+                    throw new InvalidOperationException("Discord didn't accept AltDeck's application. Try again later.");
 
                 _pipe = pipe;
                 _connectedId = appId;

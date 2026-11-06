@@ -120,7 +120,7 @@ start muted, start tiny and a CPU limit for background clients.
 
 ### 🎨 Your look
 Black theme with orange accents by default. Change the accent colour, density and background
-image, or turn on Discord "Playing AltDeck" status.
+image. Your Discord profile shows "Playing AltDeck" automatically.
 
 </td>
 </tr>
@@ -141,7 +141,7 @@ image, or turn on Discord "Playing AltDeck" status.
 | 🎚️ **Performance** | FPS cap, MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
 | ⏲️ **Automation** | Panic hotkey to stop every client, a stop timer (30m / 1h / 2h / 4h), hold-to-stop-all button, close to tray. |
 | 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy for bug reports. Also written to `%AppData%\AltDeck\logs`, kept for 14 days. |
-| 💬 **Discord** | Optional "Playing AltDeck" status showing how many alts are running (needs your own Discord application ID). |
+| 💬 **Discord** | "Playing AltDeck" on your Discord profile with how many alts are running. Works out of the box with the Discord desktop app open; switch it off in Settings. |
 
 </details>
 
@@ -165,16 +165,9 @@ image, or turn on Discord "Playing AltDeck" status.
 3. Go to **Play**, tick the accounts you want and paste a game link or place ID.
 4. Press **Launch**. If the second client closes the first one, press **Close Roblox & enable multi-instance** on the Play page.
 
-<details>
-<summary><b>Set up Discord status (optional)</b></summary>
-<br>
-
-1. Create a free app at [discord.com/developers/applications](https://discord.com/developers/applications) and name it **AltDeck** (Discord shows that name).
-2. Copy its **Application ID** from General Information into AltDeck's Settings.
-3. For the picture, upload the logo under **Rich Presence → Art Assets** with the name `altdeck_logo`.
-4. Keep the Discord desktop app open, with **Share your detected activity** on (Settings → Activity Privacy).
-
-</details>
+> [!TIP]
+> Keep the Discord desktop app open and your profile shows **Playing AltDeck** with how many alts are running.
+> If it doesn't show, turn on **Share your detected activity** in Discord (Settings → Activity Privacy).
 
 <br>
 
@@ -182,7 +175,7 @@ image, or turn on Discord "Playing AltDeck" status.
 
 - **Your data stays on your PC.** Accounts, settings and logs live in `%AppData%\AltDeck`, never in the exe or in this repo.
 - **Sign-ins are encrypted** with Windows DPAPI, or your master password if you set one.
-- **Nothing is sent anywhere except Roblox** (and Discord, only if you turn on the Discord status).
+- **Nothing is sent anywhere except Roblox**, plus your running-alt count to the Discord app on your PC (switch it off in Settings).
 - **No telemetry**, no accounts, no AltDeck server.
 - **Nothing is injected into Roblox.** Window sizing uses a hook that watches from outside, and graphics settings use Roblox's own FastFlags file, which is put back after launch.
 
@@ -236,6 +229,7 @@ AltDeck/
 <summary><b>Not released yet</b></summary>
 <br>
 
+- Discord status works out of the box: AltDeck has its own built-in Discord app, so there's no Application ID to fill in.
 - Auto-rejoin also catches Roblox's "Disconnected" box (Error 277 and the like) by reading each client's log in `%LocalAppData%\Roblox\logs`. Teleports (285) are ignored; Error 273 is logged but not rejoined. A client that hasn't joined after 3 minutes counts as a failed join.
 - The first rejoin goes back to the same server; later tries go to any server. Private servers keep their own link. After a shutdown (275), a 279 or a client that never got in, the first rejoin picks a different server.
 - If your internet or Roblox is down, rejoins wait and start once it's back, without using up a try.

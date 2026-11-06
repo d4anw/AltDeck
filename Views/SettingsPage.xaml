@@ -76,11 +76,7 @@
                 </StackPanel>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Show on Discord" Description="{Binding DiscordDescription, Mode=OneWay}">
-                <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.DiscordAppId}" Width="190" FontFamily="Consolas" Margin="0,0,14,0"
-                           ToolTip="Application ID from discord.com/developers/applications (General Information)"/>
-                  <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.ShowOnDiscord}"/>
-                </StackPanel>
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.ShowOnDiscord}"/>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Close to tray" Description="The window hides; running clients and auto-rejoin keep working.">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.CloseToTray}"/>

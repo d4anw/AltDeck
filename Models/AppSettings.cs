@@ -17,7 +17,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private string backgroundImage = "";
     [ObservableProperty] private string density = "Detailed";
     [ObservableProperty] private bool showOnDiscord = true;
-    [ObservableProperty] private string discordAppId = "";   // the Application ID of the "AltDeck" app made at discord.com/developers
+    [ObservableProperty] private string discordAppId = "";   // not used any more (AltDeck has its own built-in app); kept so older settings.json files load as before
     [ObservableProperty] private bool closeToTray;
     [ObservableProperty] private bool skipSplash;
     [ObservableProperty] private bool detailedView = true;

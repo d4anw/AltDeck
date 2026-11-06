@@ -97,7 +97,7 @@ public partial class MainViewModel : ObservableObject
     partial void OnPanicHotkeyStatusChanged(string value) => OnPropertyChanged(nameof(PanicHotkeyDescription));
 
     private const string DiscordBaseText =
-        "Your Discord profile shows “Playing AltDeck” and how many alts run. Needs the Discord desktop app, and an Application ID named AltDeck from discord.com/developers/applications.";
+        "Your Discord profile shows “Playing AltDeck” and how many alts run. Just keep the Discord desktop app open.";
     [ObservableProperty] private string discordStatus = "";
     public string DiscordDescription => string.IsNullOrEmpty(DiscordStatus) ? DiscordBaseText : DiscordBaseText + "\n" + DiscordStatus;
     partial void OnDiscordStatusChanged(string value) => OnPropertyChanged(nameof(DiscordDescription));
@@ -316,7 +316,6 @@ public partial class MainViewModel : ObservableObject
                 if (!_applyingPreset) ApplyPreset(Settings.PerfPreset);
                 break;
             case nameof(AppSettings.ShowOnDiscord):
-            case nameof(AppSettings.DiscordAppId):
                 _discord.Reset();
                 break;
             case nameof(AppSettings.AutoRejoin):
@@ -484,7 +483,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         RunningCount = live.Count;
-        _discord.Update(Settings.ShowOnDiscord, Settings.DiscordAppId, live.Count);
+        _discord.Update(Settings.ShowOnDiscord, live.Count);
         DiscordStatus = _discord.Status;
         AccountCount = Accounts.Count;
         CpuPercent = Math.Min(100, ClientMon.TotalCpu);
