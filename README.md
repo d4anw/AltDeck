@@ -9,8 +9,8 @@
 A local-only multi-account launcher for Windows 10 and 11.<br>
 Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 
-[![Latest release](https://img.shields.io/github/v/release/d4anw/AltDeck?style=for-the-badge&color=ff7a1a&labelColor=111111&label=release)](https://github.com/d4anw/AltDeck/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/d4anw/AltDeck/total?style=for-the-badge&color=2b2b2b&labelColor=111111)](https://github.com/d4anw/AltDeck/releases)
+[![Latest release](https://img.shields.io/github/v/release/d4anw/AltDeck?style=for-the-badge&color=ff7a1a&labelColor=111111&label=release&cacheSeconds=3600)](https://github.com/d4anw/AltDeck/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/d4anw/AltDeck/total?style=for-the-badge&color=2b2b2b&labelColor=111111&cacheSeconds=3600)](https://github.com/d4anw/AltDeck/releases)
 [![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=for-the-badge&logo=windows&labelColor=111111)](#-install)
 
 ![.NET 8](https://img.shields.io/badge/.NET-8-512bd4?style=flat-square&logo=dotnet&logoColor=white)
