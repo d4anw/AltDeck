@@ -1,120 +1,291 @@
-# AltDeck v0.4.1
-Multi-account Roblox launcher for your own accounts. Windows 10/11. Black theme with orange accents (change it in Settings).
+<div align="center">
 
-## Build an AltDeck.exe to share
-Double-click `Build AltDeck.exe.bat` (needs the .NET 8 SDK, same as `dotnet run`). It makes `publish\AltDeck.exe`:
-one file, about 60-70 MB, that runs on any 64-bit Windows 10/11 PC without installing .NET. Send just that file.
-Each person's accounts, settings and logs stay in their own `%AppData%\AltDeck`, never in the exe.
-Windows SmartScreen may say "Windows protected your PC" because the exe isn't code-signed: More info > Run anyway.
-The "Sign in with a browser" option needs the Microsoft Edge WebView2 Runtime (already on Windows 11).
+<img src="AltDeck.ico" alt="AltDeck logo" width="96">
 
-## Run
-Needs the .NET 8 SDK (and the WebView2 Runtime, preinstalled on Windows 11).
-Close ALL Roblox windows, then double-click `Run AltDeck.bat` (or run `dotnet run` in this folder).
+# AltDeck
 
-## What works
-- Home: client cards, CPU / memory / GPU dials, Show / Minimize / Tile windows / Minimize all, Play again, Anti-AFK (experimental)
-- Live previews (Home, Detailed view on): each card shows a picture of that client's window, refreshed every second.
-  A minimized window can't be photographed, so its card keeps the last picture and says "Minimized · preview paused".
-  With "Minimize on launch", a new client stays up for about 12 seconds first so its card gets a real picture of the game.
-- GPU: each card and the Home dial show GPU load (the busiest GPU engine, like Task Manager) and the video memory the clients hold.
-  Read from Windows' own GPU counters (Windows 10 1709+); on a PC without them the dial says N/A.
-- Show on Discord (Settings): your Discord profile shows "Playing AltDeck" and how many alts are running.
-  Create a free app at discord.com/developers/applications, name it AltDeck (that name is what Discord shows), copy its
-  Application ID from General Information into Settings. For the picture on the card, upload the logo under Rich Presence > Art Assets
-  with the name altdeck_logo. Keep the Discord desktop app open. In Discord, "Share your
-  detected activity" (Settings > Activity Privacy) must be on.
-- Play: pick accounts, paste a game link / place ID / private server link (including roblox.com/share?code=...&type=Server links), favourites, multi-instance status + fix button
-- Accounts: search, status + group filters, favourites, per-account details, add by browser login or cookie, live presence
-- Settings: theme, accent colour, density, background image, multi-instance, launch delay, auto-rejoin / auto-restart with give-up limit, close grace, tray, hotkey, stop timer, master password
-- Performance: three profiles (Max alts / Balanced / Roblox defaults) plus fine-tune. FPS cap and the graphics flags (MSAA, texture quality,
-  rendering mode, gray sky, no grass) are written to Roblox as FastFlags just before each launch; "Lowest graphics" sets Roblox's own quality level.
-  "Start muted" sets Roblox's volume to 0 for the launch. All of it is put back ~90 seconds after the last launch, when AltDeck closes, and after a crash, so normal Roblox is untouched.
-  Running clients: start tiny (with a normal title bar so you can move/close them), minimize on launch, and a CPU limit for clients you are not looking at. A "Full quality" account is left alone.
-  Under Bloxstrap / Fishstrap and similar launchers the flags are skipped (they keep their own).
-- Hold to stop all (hold the red sidebar button for 1 second)
+### All your Roblox accounts in one launcher, signed in and ready to play.
 
-## Not released yet
-- Auto-rejoin now also catches Roblox's "Disconnected" box (Error 277 and the like). The client stays open on that box, so before,
-  nothing noticed. AltDeck reads each client's own log in `%LocalAppData%\Roblox\logs` (matched to the account by its user ID),
-  and when a disconnect isn't followed by a new join within 5 s, it closes that client and relaunches it.
-  Teleports (reason 285) are ignored. Error 273 (the account joined from somewhere else) is logged but not rejoined.
-  A client AltDeck started that hasn't joined any server after 3 minutes counts as a failed join too.
-- The first rejoin goes back to the same server; later tries go to any server. Private servers keep their own link.
-- If your internet or Roblox is down, rejoins wait (checking every 5 s) and start once it's back. Waiting doesn't use up a try.
-- Rejoins are launched one at a time, at least 5 s (or your launch delay) apart, and also never at the same moment as the launch queue.
-- A rejoined client's window goes back to where the old window was.
-- Stop all also cancels rejoins that are still waiting.
-- Keep sign-ins apart (Settings > Launching, on by default): every Roblox client shares one sign-in store
-  (`%LocalAppData%\Roblox\LocalStorage\RobloxCookies.dat` and the account-switcher entries in `appStorage.json`). Each new client
-  loaded the previous one's sign-in first, and with 6 clients one session got signed out seconds after launch: every request
-  then got 401 Unauthorized, so the game's teleports failed with Error 769 and its anti-AFK rejoin stopped working.
-  Now the store is emptied right before each launch. Your own Roblox sign-in is backed up to `roblox-signin-backup` in the
-  data folder and put back ~90 s after the last launch, when AltDeck closes, or at the next start after a crash.
-- Client windows can be smaller than Roblox's 800×600 minimum. AltDeck places windows without asking Roblox first
-  (SWP_NOSENDCHANGING), so "Start clients tiny" (420×280), tiling and layouts get the exact size. When you move a small window,
-  or drag its edges in past 800×600, Roblox still holds it to its minimum during the drag; when you let go AltDeck sets it to
-  what the mouse asked for (smallest 200×150). Nothing is injected into Roblox: it's a WinEvent hook watching from outside.
-- Tile windows ▾ picks the screen. Show all retries windows that didn't come back.
-- "Connection Failed … No response from server (Error 279)" is caught too. Roblox shows it when it sends a client to a server
-  that's gone (after "Roblox has shut down this game server for maintenance", Error 275, every rejoin went to the dead server
-  and sat on this box). No disconnect line is written for it, so AltDeck reads "Failed to connect to server" instead.
-  A join or teleport the server hasn't accepted after 90 s counts as failed too, whatever box Roblox shows.
-- After a shutdown (275), a 279 or a client that never got in, the first rejoin doesn't go back to that same server.
-- Keep trying after that (Settings > Launching, on by default): past the give-up limit, AltDeck tries once every 5 minutes
-  until it works instead of stopping. Turn it off to get the old "give up and tell me" behaviour.
-- A client that still loses its sign-in (5 or more 401s, a 401 on joining, or "Teleport failed because A Http error")
-  is relaunched right away with a fresh sign-in, instead of sitting there until Roblox kicks it for being idle.
+A local-only multi-account launcher for Windows 10 and 11.<br>
+Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 
-## New in 0.4.1
-- Per-account stats removed.
-- Only one AltDeck runs at a time. Starting it again brings the running one to the front (also from the tray).
-- Dialogs, the login window and the server browser get dark title bars in the dark theme.
-- Account details: one Play button that turns into a disabled "Already playing" (before, both could show at once), and the status line always readable.
-- Home: Tile windows, Minimize all and the window layouts are in one "Windows" menu, so the header fits narrow windows; long titles are cut with "…".
-- Clearer launch errors: "signed out" and "Roblox is limiting sign-ins" instead of a generic message.
-- The version shown in the app, the exe's details and backups all come from `<Version>` in AltDeck.csproj.
-- `Build AltDeck.exe.bat` makes a single shareable exe.
+[![Latest release](https://img.shields.io/github/v/release/d4anw/AltDeck?style=for-the-badge&color=ff7a1a&labelColor=111111&label=release)](https://github.com/d4anw/AltDeck/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/d4anw/AltDeck/total?style=for-the-badge&color=2b2b2b&labelColor=111111)](https://github.com/d4anw/AltDeck/releases)
+[![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=for-the-badge&logo=windows&labelColor=111111)](#-install)
 
-## New in 0.4.0
-- Launch queue: launching several accounts shows a panel in the corner ("3 of 8 launched, next: Alt4 in 7 s") with Pause / Resume,
-  Skip next, Cancel, and a skip button on each waiting row. Launching more while it runs adds them to the end. "Stop all" also cancels it.
-  Each account's sign-in is checked just before it launches (unless it was checked in the last 10 minutes); a signed-out one is skipped.
-- Launch presets (Play page, step 3): "+ Save current picks" saves the ticked accounts and the target. Click a preset to launch it.
-  Right-click for: load without launching, replace with current picks, set a hotkey (works from any app, also from the tray), rename, delete.
-- Sign-in check (Settings > Automation, every 30 min by default, 0 = off): quietly checks every account and tells you when one expired.
-  A red badge on Accounts shows how many; click it to see them. Rate limits and outages no longer count as "signed out".
-- Activity page (sidebar): timestamped launches, drops, rejoins, give-ups, frozen restarts, sign-in problems and errors.
-  "Problems only" filter, Copy (oldest first, for bug reports), Open log folder. Also written to `logs\altdeck-YYYY-MM-DD.log`
-  in the data folder, kept for 14 days.
-- Window layouts (Home > Windows): save where each account's client window is, restore it later. Windows are matched by account,
-  so it works after a relaunch. Minimized windows can't be measured, so show them before saving.
-- Backup (Settings > Data): Export writes every account (with its sign-in), favourites, presets and layouts into one `.altdeck` file
-  locked with a password you choose (PBKDF2-SHA256 600,000 rounds + AES-256-GCM). Unlike `vault.dat` it isn't tied to this Windows user,
-  so it works on another PC or after a reinstall. Import only adds: accounts you already have are kept, a signed-out one gets the backup's sign-in.
-- "Protect each client's sign-in" is gone: it never did anything, and each client already gets its own sign-in ticket at launch.
+![.NET 8](https://img.shields.io/badge/.NET-8-512bd4?style=flat-square&logo=dotnet&logoColor=white)
+![WPF](https://img.shields.io/badge/UI-WPF-ff7a1a?style=flat-square)
+![C#](https://img.shields.io/badge/C%23-12-239120?style=flat-square)
+![No telemetry](https://img.shields.io/badge/telemetry-none-ff7a1a?style=flat-square)
 
-## New in 0.3.1
-- App icon (`AltDeck.ico`): shown on the taskbar, in the exe, and in Alt+Tab.
-- Start-up splash animation (logo, name, progress line). Turn it off with Settings > General > Skip splash screen.
-- The Language setting is gone (AltDeck is English only).
+<br>
 
-## New in 0.3.0
-- Master password (Settings > Security): locks the vault with your own password (PBKDF2-SHA256, 600,000 rounds, + AES-256-GCM). Optional and off by default.
-  Once on, AltDeck asks for it once at every start. It cannot be recovered: if you forget it, delete `vault.dat` in the data folder and add your accounts again.
-  "Turn off" goes back to Windows-only (DPAPI) protection.
-- Close to tray (Settings > General): the window hides, clients and auto-rejoin keep working. Click the tray icon to open it, right-click for Stop all / Quit.
-- Panic hotkey (Settings > Automation): click the box and press the keys (e.g. Ctrl+Shift+F12). Stops every client from any app. Backspace turns it off.
-- Stop timer (Settings > Automation): 30m / 1h / 2h / 4h, then every Roblox client is closed. AltDeck and the PC stay on. Not remembered across restarts.
-- Auto-restart (Settings > Launching): relaunches a client whose process ended, or whose window has been "Not responding" for 30 s, into the same game.
-  Shares the give-up limit with auto-rejoin. Per-account "Bring it back if it drops" still applies. (A client that exits is brought back by either switch.)
-- Launch arguments (Settings > Launching, and per account under More details): extra words after the launch link. When any are set, AltDeck starts
-  the launcher registered for `roblox-player:` links (Roblox's, or Bloxstrap and the like) directly instead of opening the link.
-- Browse servers (Play page): lists the open public servers of the game in the target box (fewest players / most players / lowest ping). Double-click one to use it.
-- Join someone (Play page): enter a username; AltDeck checks where they are using one of your signed-in accounts and fills in that server.
-  Roblox only shows this to accounts the player allows (friends, or everyone if they let anyone join).
+[**⬇ Download**](https://github.com/d4anw/AltDeck/releases/latest) &nbsp;·&nbsp;
+[Quick start](#-quick-start) &nbsp;·&nbsp;
+[Privacy](#-safety-and-privacy) &nbsp;·&nbsp;
+[Changelog](#-changelog) &nbsp;·&nbsp;
+[Build from source](#-build-from-source)
 
-## Troubleshooting
-- Second account closes the first: the Play page shows whether multi-instance is ON. If OFF, press "Close Roblox & enable multi-instance".
-- Blank login window: install the Microsoft Edge WebView2 Runtime.
-- Errors show in a message box and on the Activity page. For a bug report, use Copy on the Activity page (or send the day's log file).
+</div>
+
+<br>
+
+## 📑 Contents
+
+| For everyone | For developers |
+|---|---|
+| [What is AltDeck?](#-what-is-altdeck) | [Build from source](#-build-from-source) |
+| [Features](#-features) | [Project layout](#-project-layout) |
+| [Install](#-install) | [Changelog](#-changelog) |
+| [Quick start](#-quick-start) | |
+| [Safety and privacy](#-safety-and-privacy) | |
+| [Troubleshooting](#-troubleshooting) | |
+
+<br>
+
+## 💡 What is AltDeck?
+
+Playing on more than one Roblox account normally means signing out, signing back in, finding the game again,
+and only having one Roblox window open at a time. AltDeck takes care of that.
+
+- **Add each account once**, by signing in through a browser window or by pasting a cookie.
+- **Launch one account or many** into any game, private server or share link.
+- **Run several Roblox clients side by side**, with live previews and CPU / memory / GPU dials.
+- **Get kicked or crash? AltDeck rejoins for you**, back into the same server when it can.
+
+Everything runs on your PC. There's no AltDeck account, no AltDeck server and no tracking.
+
+<br>
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🔐 Encrypted vault
+Sign-ins are encrypted with **Windows DPAPI**, or with your own **master password**
+(PBKDF2-SHA256, 600,000 rounds + AES-256-GCM). Portable password-locked `.altdeck` backups.
+
+</td>
+<td width="50%" valign="top">
+
+### 👥 Accounts
+Search, status and group filters, favourites, per-account details and live presence.
+Add by browser login or by cookie.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🚀 Play anything
+Game links, place IDs, private servers and `roblox.com/share` links. Launch presets with
+their own hotkeys, a server browser and "join someone".
+
+</td>
+<td valign="top">
+
+### 🪟 Multi-instance
+Run many clients at once. A launch queue with pause, skip and cancel. Window layouts
+you can save and restore, and windows smaller than Roblox's 800×600 minimum.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🔁 Auto-rejoin and restart
+Catches disconnects (Error 277, 279 and others), crashes and frozen windows, then relaunches
+into the same game. Waits for your internet to come back first.
+
+</td>
+<td valign="top">
+
+### 🖥️ Home
+A card for every client with a live preview, plus CPU, memory and GPU dials. Show, minimize,
+tile, Play again and Anti-AFK (experimental).
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🎚️ Performance
+Three profiles (Max alts / Balanced / Roblox defaults) plus fine-tune: FPS cap, graphics flags,
+start muted, start tiny and a CPU limit for background clients.
+
+</td>
+<td valign="top">
+
+### 🎨 Your look
+Black theme with orange accents by default. Change the accent colour, density and background
+image, or turn on Discord "Playing AltDeck" status.
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><b>All features, in detail</b></summary>
+<br>
+
+| Area | What you get |
+|---|---|
+| 🔐 **Vault** | `vault.dat` in `%AppData%\AltDeck`, encrypted with Windows DPAPI for your user. Optional master password (asked once at every start, can't be recovered). Export / import an `.altdeck` backup locked with a password you choose; it works on another PC. Import only adds. |
+| 👥 **Accounts** | Sign in through an isolated browser window (the profile is deleted after the session cookie is captured), or paste a cookie. Search, status and group filters, favourites, live presence. A periodic sign-in check (every 30 min by default) tells you when one expired. |
+| 🚀 **Play** | Game links, place IDs, private server links, `roblox.com/share?code=…&type=Server` links. Favourites. Launch presets: save the ticked accounts and target, then launch them in one click or with a global hotkey. Browse servers (fewest / most players / lowest ping). Join someone by username. |
+| 🪟 **Launch queue** | "3 of 8 launched, next: Alt4 in 7 s" with Pause / Resume, Skip next and Cancel. Each account's sign-in is checked right before it launches. Launch delay and custom launch arguments (default and per account). |
+| 🔁 **Recovery** | Auto-rejoin reads each client's Roblox log to catch disconnects; the first rejoin goes back to the same server. Auto-restart for crashes and windows "Not responding" for 30 s. Give-up limit, or keep trying every 5 minutes. Sign-ins are kept apart so clients don't sign each other out. |
+| 🖥️ **Home** | Live previews refreshed every second (a minimized window keeps its last picture). GPU load and video memory from Windows' own counters. Windows menu: Tile windows, Minimize all, save / restore layouts. |
+| 🎚️ **Performance** | FPS cap, MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
+| ⏲️ **Automation** | Panic hotkey to stop every client, a stop timer (30m / 1h / 2h / 4h), hold-to-stop-all button, close to tray. |
+| 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy for bug reports. Also written to `%AppData%\AltDeck\logs`, kept for 14 days. |
+| 💬 **Discord** | Optional "Playing AltDeck" status showing how many alts are running (needs your own Discord application ID). |
+
+</details>
+
+<br>
+
+## 📥 Install
+
+1. Download **`AltDeck.exe`** from the [latest release](https://github.com/d4anw/AltDeck/releases/latest).
+2. Run it. It's one file, needs no install and doesn't need .NET.
+3. Windows SmartScreen may say *"Windows protected your PC"* because the exe isn't code-signed: click **More info → Run anyway**.
+
+> [!NOTE]
+> "Sign in with a browser" needs the **Microsoft Edge WebView2 Runtime**. It's already on Windows 11.
+
+<br>
+
+## 🏁 Quick start
+
+1. **Close all Roblox windows**, then open AltDeck.
+2. Go to **Accounts → Add** and sign in through the browser window (or paste a cookie).
+3. Go to **Play**, tick the accounts you want and paste a game link or place ID.
+4. Press **Launch**. If the second client closes the first one, press **Close Roblox & enable multi-instance** on the Play page.
+
+<details>
+<summary><b>Set up Discord status (optional)</b></summary>
+<br>
+
+1. Create a free app at [discord.com/developers/applications](https://discord.com/developers/applications) and name it **AltDeck** (Discord shows that name).
+2. Copy its **Application ID** from General Information into AltDeck's Settings.
+3. For the picture, upload the logo under **Rich Presence → Art Assets** with the name `altdeck_logo`.
+4. Keep the Discord desktop app open, with **Share your detected activity** on (Settings → Activity Privacy).
+
+</details>
+
+<br>
+
+## 🔒 Safety and privacy
+
+- **Your data stays on your PC.** Accounts, settings and logs live in `%AppData%\AltDeck`, never in the exe or in this repo.
+- **Sign-ins are encrypted** with Windows DPAPI, or your master password if you set one.
+- **Nothing is sent anywhere except Roblox** (and Discord, only if you turn on the Discord status).
+- **No telemetry**, no accounts, no AltDeck server.
+- **Nothing is injected into Roblox.** Window sizing uses a hook that watches from outside, and graphics settings use Roblox's own FastFlags file, which is put back after launch.
+
+> [!WARNING]
+> Never share your `vault.dat`, an `.altdeck` backup or a `.ROBLOSECURITY` cookie. Anyone who has them can sign in as you.
+
+<br>
+
+## 🛠️ Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| The second account closes the first | The Play page shows whether multi-instance is ON. If it's OFF, press **Close Roblox & enable multi-instance**. |
+| The login window is blank | Install the Microsoft Edge WebView2 Runtime. |
+| Forgot the master password | It can't be recovered. Close AltDeck, delete `vault.dat` in `%AppData%\AltDeck` and add your accounts again (or import a backup). |
+| Something else went wrong | Errors show in a message box and on the **Activity** page. Use **Copy** there for a bug report. |
+
+<br>
+
+## 🔨 Build from source
+
+Needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+| To | Do |
+|---|---|
+| Run it | Double-click `Run AltDeck.bat`, or run `dotnet run` in this folder |
+| Make a shareable exe | Double-click `Build AltDeck.exe.bat`. It makes `publish\AltDeck.exe` (one file, ~60–70 MB, runs on any 64-bit Windows 10/11 PC without .NET) |
+
+The version shown in the app, the exe's details and backups all come from `<Version>` in `AltDeck.csproj`.
+
+<br>
+
+## 📁 Project layout
+
+```
+AltDeck/
+├─ Views/            Home, Play, Accounts, Performance, Activity and Settings pages
+├─ ViewModels/       MainViewModel (app state and commands)
+├─ Services/         Vault, Launcher, RobloxApi, auto-rejoin, monitors, tray, hotkeys, Discord …
+├─ Models/           Account, settings, presets, layouts
+├─ Controls/         Dials, avatars, setting rows
+├─ *.xaml            Main window, splash, login and dialogs
+└─ AltDeck.csproj    .NET 8 WPF project (version lives here)
+```
+
+<br>
+
+## 📝 Changelog
+
+<details open>
+<summary><b>Not released yet</b></summary>
+<br>
+
+- Auto-rejoin also catches Roblox's "Disconnected" box (Error 277 and the like) by reading each client's log in `%LocalAppData%\Roblox\logs`. Teleports (285) are ignored; Error 273 is logged but not rejoined. A client that hasn't joined after 3 minutes counts as a failed join.
+- The first rejoin goes back to the same server; later tries go to any server. Private servers keep their own link. After a shutdown (275), a 279 or a client that never got in, the first rejoin picks a different server.
+- If your internet or Roblox is down, rejoins wait and start once it's back, without using up a try.
+- Rejoins launch one at a time, at least 5 s apart, and the new window goes where the old one was.
+- "Connection Failed (Error 279)" is caught too, and a join that hasn't been accepted after 90 s counts as failed.
+- **Keep sign-ins apart** (on by default): the shared Roblox sign-in store is emptied right before each launch, so clients no longer sign each other out. Your own Roblox sign-in is backed up and put back afterwards.
+- **Keep trying** (on by default): past the give-up limit, AltDeck tries every 5 minutes until it works.
+- A client that loses its sign-in is relaunched right away with a fresh one.
+- Client windows can be smaller than Roblox's 800×600 minimum (smallest 200×150). Tile windows lets you pick the screen.
+
+</details>
+
+<details>
+<summary><b>0.4.1</b></summary>
+<br>
+
+- Only one AltDeck runs at a time; starting it again brings the running one to the front.
+- Dark title bars on dialogs, the login window and the server browser in the dark theme.
+- Account details: one Play button that turns into "Already playing".
+- Home: Tile windows, Minimize all and layouts are in one Windows menu.
+- Clearer launch errors ("signed out", "Roblox is limiting sign-ins").
+- `Build AltDeck.exe.bat` makes a single shareable exe. Per-account stats removed.
+
+</details>
+
+<details>
+<summary><b>0.4.0</b></summary>
+<br>
+
+- Launch queue panel with Pause / Resume, Skip next and Cancel.
+- Launch presets with global hotkeys.
+- Periodic sign-in check with a badge for expired accounts.
+- Activity page and daily log files.
+- Window layouts: save and restore where each account's window is.
+- Encrypted `.altdeck` backups.
+
+</details>
+
+<details>
+<summary><b>0.3.x</b></summary>
+<br>
+
+- **0.3.1:** app icon, start-up splash (can be skipped), English only.
+- **0.3.0:** master password, close to tray, panic hotkey, stop timer, auto-restart, launch arguments, server browser, join someone.
+
+</details>
+
+<br>
+
+## 📜 Disclaimer
+
+AltDeck is a fan-made tool and is not affiliated with, endorsed by or connected to Roblox Corporation.
+Use it only with accounts you own, and follow Roblox's Terms of Use.
