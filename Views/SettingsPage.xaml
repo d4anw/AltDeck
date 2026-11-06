@@ -1,0 +1,256 @@
+<UserControl x:Class="AltDeck.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:AltDeck.Controls">
+  <ScrollViewer x:Name="Scroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid Margin="32,26,32,40">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="24"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <Border HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="2" Style="{StaticResource CardBox}"
+              Padding="16,10" CornerRadius="12">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="AltDeck" Width="64" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Text="{Binding VersionText}" FontFamily="Consolas" FontSize="12"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Roblox" Width="64" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Text="{Binding RobloxVersion}" FontFamily="Consolas" FontSize="12"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="Settings" FontSize="28" FontWeight="Bold"/>
+
+      <!-- ================= left column ================= -->
+      <StackPanel Grid.Row="0" Margin="0,70,0,0">
+        <StackPanel x:Name="SecGeneral">
+          <TextBlock Text="General" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Theme" Description="System follows Windows (dark or light).">
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton Style="{StaticResource Seg}" Content="Dark" GroupName="theme"
+                               IsChecked="{Binding Settings.Theme, Converter={StaticResource Eq}, ConverterParameter=Dark, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="Light" GroupName="theme"
+                               IsChecked="{Binding Settings.Theme, Converter={StaticResource Eq}, ConverterParameter=Light, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="System" GroupName="theme" Margin="0"
+                               IsChecked="{Binding Settings.Theme, Converter={StaticResource Eq}, ConverterParameter=System, Mode=TwoWay}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,16">
+                <StackPanel>
+                  <TextBlock Text="Accent colour" FontWeight="SemiBold"/>
+                  <TextBlock Text="Buttons, switches and highlights. Pick a preset or any colour." FontSize="12" Margin="0,3,0,12"
+                             Style="{StaticResource MutedText}"/>
+                  <StackPanel Orientation="Horizontal">
+                    <RadioButton Style="{StaticResource Swatch}" Background="#FF8A1F" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FF8A1F, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#FF5A5F" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FF5A5F, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#FF5CA8" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FF5CA8, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#FFB020" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FFB020, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#FFD54A" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FFD54A, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#B6F23C" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#B6F23C, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#2DD4BF" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#2DD4BF, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#4DA3FF" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#4DA3FF, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Swatch}" Background="#A78BFA" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#A78BFA, Mode=TwoWay}"/>
+                    <Button Style="{StaticResource Subtle}" Content="Custom…" Command="{Binding PromptAccentCommand}" Margin="6,0,0,0"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+              <ctl:SettingRow Title="Background image" Description="Your own picture behind the app (PNG, JPEG, WebP or GIF).">
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Choose…" Click="ChooseBg_Click"/>
+                  <Button Content="Clear" Click="ClearBg_Click" Margin="0"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Density" Description="Row height in the accounts list.">
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton Style="{StaticResource Seg}" Content="Detailed" GroupName="density"
+                               IsChecked="{Binding Settings.Density, Converter={StaticResource Eq}, ConverterParameter=Detailed, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="Compact" GroupName="density" Margin="0"
+                               IsChecked="{Binding Settings.Density, Converter={StaticResource Eq}, ConverterParameter=Compact, Mode=TwoWay}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Show on Discord" Description="{Binding DiscordDescription, Mode=OneWay}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBox Text="{Binding Settings.DiscordAppId}" Width="190" FontFamily="Consolas" Margin="0,0,14,0"
+                           ToolTip="Application ID from discord.com/developers/applications (General Information)"/>
+                  <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.ShowOnDiscord}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Close to tray" Description="The window hides; running clients and auto-rejoin keep working.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.CloseToTray}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Skip splash screen" Description="Opens AltDeck right away, without the start-up animation.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.SkipSplash}"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel x:Name="SecAutomation" Margin="0,28,0,0">
+          <TextBlock Text="Automation" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Panic hotkey" Description="{Binding PanicHotkeyDescription, Mode=OneWay}">
+                <TextBox Text="{Binding Settings.PanicHotkey, Mode=OneWay}" Width="170" FontFamily="Consolas" IsReadOnly="True"
+                         ToolTip="Click here, then press the keys" PreviewKeyDown="Hotkey_PreviewKeyDown"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Sign-in check"
+                              Description="Every this many minutes AltDeck quietly checks each account's sign-in and tells you when one has expired (a red badge on Accounts, and a tray balloon while hidden). 0 turns it off; the shortest is 5. A sign-in is also checked right before it launches.">
+                <StackPanel Orientation="Horizontal">
+                  <TextBox Text="{Binding Settings.HealthCheckMinutes}" Width="64" FontFamily="Consolas"/>
+                  <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Stop timer" Description="{Binding StopTimerDescription, Mode=OneWay}">
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="30m" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="30"/>
+                  <Button Content="1h" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="60"/>
+                  <Button Content="2h" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="120"/>
+                  <Button Content="4h" Padding="12,8" Margin="0" Command="{Binding StartStopTimerCommand}" CommandParameter="240"/>
+                  <Button Content="Cancel" Padding="12,8" Margin="8,0,0,0" Command="{Binding CancelStopTimerCommand}"
+                          Visibility="{Binding StopTimerActive, Converter={StaticResource BoolVis}}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel x:Name="SecShortcuts" Margin="0,28,0,0">
+          <TextBlock Text="Shortcuts" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Hold to stop all" Description="Press and hold the red button in the sidebar for one second."/>
+              <ctl:SettingRow Title="Right-click a favourite" Description="On the Play page, right-click a favourite chip to remove it."/>
+              <ctl:SettingRow Title="Preset hotkeys" Description="On the Play page, right-click a preset and pick Set hotkey. It launches that preset from any app, even with AltDeck in the tray."/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </StackPanel>
+
+      <!-- ================= right column ================= -->
+      <StackPanel Grid.Column="2" Margin="0,70,0,0">
+        <StackPanel x:Name="SecLaunching">
+          <TextBlock Text="Launching" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Multi-instance"
+                              Description="AltDeck holds Roblox's single-instance lock while it runs, so each account gets its own client. Turn it on before the first client starts.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.MultiInstance}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Launch delay" Description="Wait between two launches when several accounts launch at once.">
+                <StackPanel Orientation="Horizontal">
+                  <TextBox Text="{Binding Settings.LaunchDelay}" Width="64" FontFamily="Consolas"/>
+                  <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Window layout" Description="Where new clients appear: next to each other, or all in the same spot on top of each other. Applies to clients AltDeck starts.">
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton Style="{StaticResource Seg}" Content="Side by side" GroupName="winlayout"
+                               IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='Side by side', Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="On top" GroupName="winlayout" Margin="0"
+                               ToolTip="On top of each other"
+                               IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='On top of each other', Mode=TwoWay}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Performance settings" Description="FPS cap, graphics, CPU and memory settings are in the Performance tab.">
+                <Button Content="Open Performance" Margin="0" Command="{Binding GoPerformanceCommand}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Auto-rejoin" Description="When a client shows Roblox's &quot;Disconnected&quot; or &quot;Connection Failed&quot; box (Error 277, 279, kicked, server shut down), or is stuck joining, AltDeck closes it and relaunches it, back into the same server first. Read from Roblox's own logs. If your internet or Roblox is down, it waits until it's back (that doesn't count as a try). Launches are spaced out and windows go back to their old spot. Turn it off for one account in its details.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRejoin}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Keep sign-ins apart"
+                              Description="All Roblox clients share one sign-in store, and with 6 or more one of them can get signed out (teleports then fail with Error 769). Before each launch AltDeck empties that store so the new client sees no other account. Your own Roblox sign-in is backed up and put back about 90 s after the last launch.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.IsolateSignIns}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Auto-restart after a crash"
+                              Description="Relaunch a client that closes without AltDeck closing it, or whose window stops responding for 30 s. Uses the same give-up limit as auto-rejoin.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRestart}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Anti-AFK"
+                              Description="So Roblox doesn't disconnect idle clients after 20 minutes, each client in a game gets a key press. Experimental.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AntiAfk}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Give up after"
+                              Description="Rejoins of one account within this time. Each waits twice as long as the one before (at most a minute); past the limit AltDeck slows down or leaves it (below). Time spent waiting for the internet doesn't count.">
+                <StackPanel Orientation="Horizontal">
+                  <TextBox Text="{Binding Settings.GiveUpTries}" Width="56" FontFamily="Consolas"/>
+                  <TextBlock Text="tries in" Margin="8,0,8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                  <TextBox Text="{Binding Settings.GiveUpMinutes}" Width="56" FontFamily="Consolas"/>
+                  <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Keep trying after that"
+                              Description="Past the give-up limit, try once every 5 minutes until it works instead of stopping. Helps when Roblox keeps sending clients to a server that was shut down. Off: leave the account and tell you.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.KeepTrying}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Close grace" Description="How long a client AltDeck closes gets to close by itself before it is ended.">
+                <StackPanel Orientation="Horizontal">
+                  <TextBox Text="{Binding Settings.CloseGrace}" Width="64" FontFamily="Consolas"/>
+                  <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Launch arguments"
+                              Description="Extra words for every client, after its launch link. An account can have its own in its details. With arguments set, AltDeck starts Roblox's launcher directly instead of opening the link.">
+                <TextBox Text="{Binding Settings.LaunchArgs}" Width="200" FontFamily="Consolas"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel x:Name="SecSecurity" Margin="0,28,0,0">
+          <TextBlock Text="Security" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Vault encryption" Description="Accounts are encrypted on this PC with Windows DPAPI for your Windows user, or with your master password if you set one. They never leave this PC except to Roblox."/>
+              <ctl:SettingRow Title="Master password"
+                              Description="Lock the vault with your own password (PBKDF2-SHA256 + AES-256-GCM). AltDeck asks for it once each time it starts. It can't be recovered if you forget it.">
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Set up" Margin="0" Command="{Binding SetMasterPasswordCommand}"
+                          Visibility="{Binding HasMasterPassword, Converter={StaticResource BoolVisInv}}"/>
+                  <StackPanel Orientation="Horizontal" Visibility="{Binding HasMasterPassword, Converter={StaticResource BoolVis}}">
+                    <Button Content="Change" Command="{Binding ChangeMasterPasswordCommand}"/>
+                    <Button Content="Turn off" Margin="0" Command="{Binding RemoveMasterPasswordCommand}"/>
+                  </StackPanel>
+                </StackPanel>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel x:Name="SecData" Margin="0,28,0,0">
+          <TextBlock Text="Data" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Data folder" Description="Where AltDeck keeps its vault, settings and activity logs.">
+                <Button Content="Open folder" Margin="0" Command="{Binding OpenDataFolderCommand}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Export backup"
+                              Description="Saves every account (with its sign-in), favourites, presets and window layouts into one file locked with a password you choose. Unlike the vault, it works on another PC or after reinstalling Windows. Keep the file private.">
+                <Button Content="Export…" Margin="0" Command="{Binding ExportBackupCommand}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Import backup"
+                              Description="Adds the accounts, favourites, presets and layouts from a backup file. Nothing you already have is replaced; a signed-out account gets the backup's sign-in.">
+                <Button Content="Import…" Margin="0" Command="{Binding ImportBackupCommand}"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel x:Name="SecAbout" Margin="0,28,0,0">
+          <TextBlock Text="About" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="AltDeck" Description="A multi-account Roblox launcher for your own accounts."/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </StackPanel>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

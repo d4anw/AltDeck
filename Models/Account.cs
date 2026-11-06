@@ -1,0 +1,69 @@
+using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace AltDeck.Models;
+
+public partial class Account : ObservableObject
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public long UserId { get; set; }
+    public string Cookie { get; set; } = "";   // only ever stored inside the encrypted vault
+
+    [ObservableProperty] private string username = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Label))]
+    [NotifyPropertyChangedFor(nameof(Initials))]
+    private string displayName = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Label))]
+    [NotifyPropertyChangedFor(nameof(Initials))]
+    private string alias = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GroupList))]
+    private string groups = "";
+
+    [ObservableProperty] private string avatarUrl = "";
+    [ObservableProperty] private string notes = "";
+    [ObservableProperty] private string launchArgs = "";   // extra words for this account's clients, after the global ones
+    [ObservableProperty] private bool fullQuality;
+    [ObservableProperty] private bool bringBack = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StarGlyph))]
+    private bool isFavourite;
+
+    // ---- runtime-only state (never saved) ----
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private string statusKind = "offline";
+
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [NotifyPropertyChangedFor(nameof(PlayStatusText))]
+    private string statusText = "Unchecked";
+
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private string checkedText = "";
+
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [NotifyPropertyChangedFor(nameof(PlayStatusText))]
+    [NotifyPropertyChangedFor(nameof(CanPick))]
+    private bool isPlaying;
+
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private bool isSelected;
+
+    [JsonIgnore] public DateTime? LastChecked { get; set; }
+    [JsonIgnore] public string Label => string.IsNullOrWhiteSpace(Alias) ? DisplayName : Alias;
+    [JsonIgnore] public string Initials => string.IsNullOrWhiteSpace(Label) ? "?" : Label.Trim().Substring(0, Math.Min(2, Label.Trim().Length)).ToUpperInvariant();
+    [JsonIgnore] public string[] GroupList => (Groups ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    [JsonIgnore] public string StarGlyph => IsFavourite ? "\uE735" : "\uE734";
+    [JsonIgnore] public string PlayStatusText => IsPlaying ? "Already playing" : StatusText;
+    [JsonIgnore] public bool CanPick => !IsPlaying;
+}

@@ -1,0 +1,184 @@
+<UserControl x:Class="AltDeck.Views.PlayPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:AltDeck.Controls">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,26,32,32" MaxWidth="1000" HorizontalAlignment="Left">
+      <TextBlock Text="Play" FontSize="28" FontWeight="Bold"/>
+      <TextBlock Text="Who plays, where, then press the big button." Margin="0,4,0,18" Style="{StaticResource MutedText}"/>
+
+      <!-- multi-instance status -->
+      <Border Style="{StaticResource CardBox}" Padding="18,14" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="{Binding LockStatus, Mode=OneWay}" TextWrapping="Wrap"/>
+          <Button Content="Close Roblox &amp; enable multi-instance" Command="{Binding FreeLockCommand}"
+                  HorizontalAlignment="Left" Margin="0,10,0,0"/>
+        </StackPanel>
+      </Border>
+
+      <!-- step 1 -->
+      <Border Style="{StaticResource CardBox}" Margin="0,0,0,16">
+        <StackPanel>
+          <Grid Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal">
+              <Border Width="30" Height="30" CornerRadius="15" Background="{DynamicResource Card2}">
+                <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
+              </Border>
+              <TextBlock Text="Who's playing?" FontSize="16" FontWeight="SemiBold" Margin="14,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <TextBlock Text="{Binding PickedText, Mode=OneWay}" Margin="0,0,16,0" VerticalAlignment="Center" FontSize="12"
+                         Style="{StaticResource MutedText}"/>
+              <Button Style="{StaticResource Subtle}" Content="Select all" Click="SelectAll_Click" Foreground="{DynamicResource Fg}"/>
+            </StackPanel>
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Accounts}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <ToggleButton Style="{StaticResource PickCard}" IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanPick}">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <CheckBox IsChecked="{Binding IsSelected}" IsHitTestVisible="False" Focusable="False" VerticalAlignment="Center"/>
+                    <ctl:AvatarView Grid.Column="1" Width="36" Height="36" Margin="12,0,12,0" Url="{Binding AvatarUrl}" Initials="{Binding Initials}"/>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/>
+                      <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center"
+                                 Fill="{Binding StatusKind, Converter={StaticResource StatusBrush}}"/>
+                        <TextBlock Text="{Binding PlayStatusText, Mode=OneWay}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                   Style="{StaticResource MutedText}"/>
+                      </StackPanel>
+                    </StackPanel>
+                  </Grid>
+                </ToggleButton>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- step 2 -->
+      <Border Style="{StaticResource CardBox}" Margin="0,0,0,16">
+        <StackPanel>
+          <Grid Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal">
+              <Border Width="30" Height="30" CornerRadius="15" Background="{DynamicResource Card2}">
+                <TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
+              </Border>
+              <TextBlock Text="Where to?" FontSize="16" FontWeight="SemiBold" Margin="14,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Style="{StaticResource Subtle}" Content="Join someone" Command="{Binding JoinSomeoneCommand}"
+                      ToolTip="Find the server a friend (or anyone who lets you join) is in"/>
+              <Button Style="{StaticResource Subtle}" Content="Browse servers" Command="{Binding BrowseServersCommand}" Margin="8,0,0,0"
+                      ToolTip="Pick one of the game's public servers"/>
+            </StackPanel>
+          </Grid>
+          <TextBlock Text="Game link, private server, or place ID" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8"/>
+          <Grid>
+            <TextBox Text="{Binding TargetText, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" Padding="14,12"/>
+            <TextBlock Text="Paste it here" FontFamily="Consolas" Margin="16,0,0,0" VerticalAlignment="Center"
+                       IsHitTestVisible="False" Foreground="{DynamicResource Muted}">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                  <Setter Property="Visibility" Value="Collapsed"/>
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding TargetText}" Value="">
+                      <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+          </Grid>
+          <TextBlock Text="Favourites" FontSize="12" Margin="0,16,0,8" Style="{StaticResource MutedText}"/>
+          <WrapPanel>
+            <ItemsControl ItemsSource="{Binding Settings.Favourites}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button Style="{StaticResource Chip}" ToolTip="Right-click to remove" PreviewMouseRightButtonUp="Fav_RightClick"
+                          Command="{Binding DataContext.UseFavouriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE735;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0"
+                                 Foreground="{DynamicResource Accent}" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding Name}"/>
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Style="{StaticResource Chip}" Content="+ Save current" Command="{Binding SaveFavouriteCommand}"/>
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- step 3 -->
+      <Border Style="{StaticResource CardBox}">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <Border Width="30" Height="30" CornerRadius="15" Background="{DynamicResource Card2}">
+              <TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
+            </Border>
+            <TextBlock Text="Ready?" FontSize="16" FontWeight="SemiBold" Margin="14,0,0,0" VerticalAlignment="Center"/>
+          </StackPanel>
+
+          <TextBlock Text="Presets: one click picks the accounts and the server, and launches. Right-click one for a hotkey and more."
+                     FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap" Style="{StaticResource MutedText}"/>
+          <WrapPanel Margin="0,0,0,16">
+            <ItemsControl ItemsSource="{Binding Settings.Presets}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button Style="{StaticResource Chip}" ToolTip="{Binding ToolTipText, Mode=OneWay}"
+                          PreviewMouseRightButtonUp="Preset_RightClick"
+                          Command="{Binding DataContext.LaunchPresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="11" Margin="0,0,8,0"
+                                 Foreground="{DynamicResource Accent}" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding Name, Mode=OneWay}"/>
+                      <TextBlock Text="{Binding Hotkey, Mode=OneWay}" FontFamily="Consolas" FontSize="11" Margin="8,0,0,0"
+                                 VerticalAlignment="Center" Style="{StaticResource MutedText}"
+                                 Visibility="{Binding HasHotkey, Converter={StaticResource BoolVis}}"/>
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Style="{StaticResource Chip}" Content="+ Save current picks" Command="{Binding SavePresetCommand}"
+                    ToolTip="Saves the ticked accounts and the target above as a preset"/>
+          </WrapPanel>
+          <Button Style="{StaticResource Big}" Margin="0" IsEnabled="{Binding CanLaunch}" Command="{Binding LaunchCommand}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding LaunchButtonText, Mode=OneWay}"/>
+            </StackPanel>
+          </Button>
+          <TextBlock Text="AltDeck starts Roblox and joins the game for you." HorizontalAlignment="Center" FontSize="12"
+                     Margin="0,16,0,0" Style="{StaticResource MutedText}"/>
+          <Button Style="{StaticResource Subtle}" Content="More options  &#x25BE;" HorizontalAlignment="Center" Margin="0,6,0,0"
+                  Click="MoreOptions_Click"/>
+          <StackPanel x:Name="MoreOpts" Visibility="Collapsed" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+              <TextBlock Text="Wait between launches (s):" VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <TextBox Text="{Binding Settings.LaunchDelay}" Width="70"/>
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

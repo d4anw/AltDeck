@@ -1,0 +1,237 @@
+<UserControl x:Class="AltDeck.Views.HomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:AltDeck.Controls">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,26,32,32">
+
+      <!-- tabs -->
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal">
+          <Button Content="Overview" Command="{Binding SelectTabCommand}" CommandParameter="Overview">
+            <Button.Style>
+              <Style TargetType="Button" BasedOn="{StaticResource Tab}">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsOverviewSelected}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <ItemsControl ItemsSource="{Binding ClientMon.Clients}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Command="{Binding DataContext.SelectTabCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding Key}">
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource Tab}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsTabSelected}" Value="True">
+                          <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="9" Height="9" Margin="0,0,8,0" VerticalAlignment="Center"
+                             Fill="{Binding StatusKind, Converter={StaticResource StatusBrush}}"/>
+                    <TextBlock Text="{Binding Name, Mode=OneWay}" VerticalAlignment="Center"/>
+                    <Button Style="{StaticResource IconBtn}" Content="&#xE711;" Width="22" Height="22" FontSize="9"
+                            Margin="8,0,-4,0" ToolTip="Close this client"
+                            Command="{Binding DataContext.CloseClientCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"/>
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button Style="{StaticResource Tab}" Content="+" Command="{Binding GoPlayCommand}" Padding="14,8"/>
+        </StackPanel>
+        <Button Grid.Column="1" Style="{StaticResource Primary}" Margin="0" Command="{Binding HomePlayCommand}"
+                Padding="18,10">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding HomePlayText, Mode=OneWay}"/>
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <!-- header -->
+      <Grid Margin="0,24,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+          <TextBlock Text="{Binding HomeTitle, Mode=OneWay}" FontSize="28" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+          <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <TextBlock Text="{Binding HomeSubtitle, Mode=OneWay}" VerticalAlignment="Center" Style="{StaticResource MutedText}"
+                       TextTrimming="CharacterEllipsis" MaxWidth="420"/>
+            <Button Style="{StaticResource Subtle}" Content="{Binding AutoRejoinLinkText, Mode=OneWay}"
+                    Command="{Binding ToggleAutoRejoinCommand}" Foreground="{DynamicResource Fg}" Margin="6,0,0,0"/>
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="Detailed view" VerticalAlignment="Center" Margin="0,0,10,0" Style="{StaticResource MutedText}"/>
+          <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.DetailedView}" Margin="0,0,14,0"/>
+          <Button Content="Tile windows  &#x25BE;" Click="Tile_Click" ToolTip="Move the client windows to a screen and arrange them in a grid there"/>
+          <Button Content="Minimize all" Command="{Binding MinimizeAllCommand}" ToolTip="Minimize every client window"/>
+          <Button Content="Show all" Command="{Binding ShowAllCommand}" ToolTip="Bring every minimized client window back"/>
+          <Button Content="Save layout" Command="{Binding SaveLayoutCommand}" ToolTip="Remember where the client windows are"/>
+          <Button Content="Layouts  &#x25BE;" Click="Windows_Click" ToolTip="Restore or delete a saved layout"/>
+          <Button Content="&#xE712;" FontFamily="{StaticResource Icons}" Click="HomeMore_Click"/>
+          <Button Style="{StaticResource Primary}" Content="Play more" Command="{Binding GoPlayCommand}" Margin="0"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- stats -->
+      <Border Style="{StaticResource CardBox}" Margin="0,22,0,0" Padding="26,20">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.1*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Roblox clients" FontSize="16" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+              <Ellipse Width="10" Height="10" Fill="{DynamicResource Accent}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding RoomText, Mode=OneWay}" Foreground="{DynamicResource Accent}"/>
+            </StackPanel>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <ctl:Dial Width="64" Height="64" Value="{Binding CpuPercent}" Text="{Binding CpuText}"/>
+            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="CPU" FontWeight="SemiBold"/>
+              <TextBlock Text="All clients" FontSize="12" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </StackPanel>
+          <StackPanel Grid.Column="2" Orientation="Horizontal">
+            <ctl:Dial Width="64" Height="64" Value="{Binding MemPercent}" Text="{Binding MemPercent, StringFormat='0\%'}"/>
+            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="Memory" FontWeight="SemiBold"/>
+              <TextBlock Text="{Binding MemText, Mode=OneWay}" FontSize="12" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </StackPanel>
+          <StackPanel Grid.Column="3" Orientation="Horizontal">
+            <ctl:Dial Width="64" Height="64" Value="{Binding GpuPercent}" Text="{Binding GpuText}"/>
+            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="GPU" FontWeight="SemiBold"/>
+              <TextBlock Text="{Binding GpuSubText, Mode=OneWay}" FontSize="12" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- anti-afk -->
+      <Border Style="{StaticResource CardBox}" Margin="0,16,0,0" Padding="26,18">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Margin="0,0,24,0">
+            <TextBlock Text="Anti-AFK" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0" Style="{StaticResource MutedText}"
+                       Text="So Roblox doesn't disconnect idle clients after 20 minutes, each client in a game gets a key press every few minutes. Experimental."/>
+          </StackPanel>
+          <ToggleButton Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding Settings.AntiAfk}" VerticalAlignment="Center"/>
+        </Grid>
+      </Border>
+
+      <!-- client cards -->
+      <ItemsControl ItemsSource="{Binding CardsView}" Margin="0,22,0,0">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Style="{StaticResource CardBox}" Width="372" Margin="0,0,16,16" Padding="14">
+              <StackPanel>
+                <Border Background="{DynamicResource Card2}" CornerRadius="10" Height="170" Margin="0,0,0,14"
+                        Visibility="{Binding DataContext.Settings.DetailedView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolVis}}">
+                  <Grid>
+                    <!-- until the first picture arrives: the avatar -->
+                    <ctl:AvatarView Width="84" Height="84" Url="{Binding AvatarUrl}" Initials="{Binding Initials}">
+                      <ctl:AvatarView.Style>
+                        <Style TargetType="ctl:AvatarView">
+                          <Setter Property="Visibility" Value="Collapsed"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Preview}" Value="{x:Null}">
+                              <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </ctl:AvatarView.Style>
+                    </ctl:AvatarView>
+                    <!-- the live picture of the client's window (rounded corners via the brush) -->
+                    <Rectangle RadiusX="10" RadiusY="10">
+                      <Rectangle.Fill>
+                        <ImageBrush ImageSource="{Binding Preview}" Stretch="Uniform"/>
+                      </Rectangle.Fill>
+                    </Rectangle>
+                    <!-- why it is not live, if it is not -->
+                    <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10" Padding="10,3"
+                            CornerRadius="8" Background="#B0000000"
+                            Visibility="{Binding PreviewNote, Converter={StaticResource EmptyCollapsed}}">
+                      <TextBlock Text="{Binding PreviewNote, Mode=OneWay}" FontSize="11" Foreground="#E6FFFFFF"/>
+                    </Border>
+                  </Grid>
+                </Border>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <ctl:AvatarView Width="34" Height="34" Url="{Binding AvatarUrl}" Initials="{Binding Initials}" Margin="0,0,12,0"/>
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding PlaceText, Mode=OneWay}" FontSize="12" TextTrimming="CharacterEllipsis"
+                               Style="{StaticResource MutedText}"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="9" Height="9" Margin="0,0,6,0" Fill="{Binding StatusKind, Converter={StaticResource StatusBrush}}"/>
+                    <TextBlock Text="{Binding StatusText, Mode=OneWay}" FontSize="12"
+                               Foreground="{Binding StatusKind, Converter={StaticResource StatusBrush}}"/>
+                  </StackPanel>
+                </Grid>
+                <TextBlock HorizontalAlignment="Right" FontFamily="Consolas" FontSize="11" Margin="0,8,0,0"
+                           Style="{StaticResource MutedText}">
+                  <Run Text="CPU "/><Run Text="{Binding Cpu, Mode=OneWay, StringFormat='0.0'}"/><Run Text="%  ·  GPU "/><Run Text="{Binding Gpu, Mode=OneWay, StringFormat='0'}"/><Run Text="%  ·  "/><Run Text="{Binding MemoryMb, Mode=OneWay, StringFormat='0'}"/><Run Text=" MB"/>
+                </TextBlock>
+                <Grid Margin="0,12,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <Button Content="Show" Command="{Binding DataContext.ShowClientCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}"/>
+                  <Button Grid.Column="1" Content="Minimize"
+                          Visibility="{Binding IsAlive, Converter={StaticResource BoolVis}}"
+                          Command="{Binding DataContext.MinimizeClientCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}"/>
+                  <Button Grid.Column="1" Content="Play again" Style="{StaticResource Primary}"
+                          Visibility="{Binding IsClosed, Converter={StaticResource BoolVis}}"
+                          Command="{Binding DataContext.PlayAgainCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}"/>
+                  <Button Grid.Column="2" Content="&#xE712;" FontFamily="{StaticResource Icons}" Margin="0" Click="CardMore_Click"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

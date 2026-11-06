@@ -1,0 +1,189 @@
+<UserControl x:Class="AltDeck.Views.PerformancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:AltDeck.Controls"
+             FontSize="14">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,18,32,32" MaxWidth="1000" HorizontalAlignment="Left">
+      <TextBlock Text="Performance" FontSize="28" FontWeight="Bold"/>
+      <TextBlock Margin="0,4,0,24" Style="{StaticResource MutedText}"
+                 Text="Pick how hard AltDeck works your PC. You see what changes before anything is applied."/>
+
+      <!-- ===== presets ===== -->
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="24"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="24"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="24"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <RadioButton Grid.Column="0" Style="{StaticResource PresetCard}" GroupName="preset"
+                     IsChecked="{Binding Settings.PerfPreset, Converter={StaticResource Eq}, ConverterParameter='Max alts', Mode=TwoWay}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Text="Max alts" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource RadioDot}">
+                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="12" HorizontalAlignment="Center"
+                           VerticalAlignment="Center" Foreground="{DynamicResource AccentFg}"
+                           Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}, Converter={StaticResource BoolVis}}"/>
+              </Border>
+            </Grid>
+            <TextBlock Text="Most clients, least detail." Margin="0,15,0,9" Style="{StaticResource MutedText}"/>
+            <TextBlock Text="10 FPS" Margin="0,3"/>
+            <TextBlock Text="Lowest graphics" Margin="0,3"/>
+            <TextBlock Text="Start clients tiny" Margin="0,3"/>
+            <TextBlock Text="Minimize on launch" Margin="0,3"/>
+            <TextBlock Text="Background clients share the CPU, at most 25% each" Margin="0,3" TextWrapping="Wrap"/>
+            <TextBlock Text="Mark your main account Full quality" Margin="0,3" TextWrapping="Wrap"/>
+            <TextBlock Text="No flags under Bloxstrap and the like" Margin="0,3" TextWrapping="Wrap"/>
+            <TextBlock Text="Use Anti-AFK in the background" Margin="0,3" TextWrapping="Wrap"/>
+            <TextBlock Text="Graphics changes apply on the next launch" Margin="0,3" TextWrapping="Wrap"/>
+          </StackPanel>
+        </RadioButton>
+
+        <RadioButton Grid.Column="2" Style="{StaticResource PresetCard}" GroupName="preset"
+                     IsChecked="{Binding Settings.PerfPreset, Converter={StaticResource Eq}, ConverterParameter='Balanced', Mode=TwoWay}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Text="Balanced" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource RadioDot}">
+                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="12" HorizontalAlignment="Center"
+                           VerticalAlignment="Center" Foreground="{DynamicResource AccentFg}"
+                           Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}, Converter={StaticResource BoolVis}}"/>
+              </Border>
+            </Grid>
+            <TextBlock Text="A good start for most PCs." Margin="0,15,0,9" Style="{StaticResource MutedText}"/>
+            <TextBlock Text="30 FPS" Margin="0,3"/>
+            <TextBlock Text="Lowest graphics" Margin="0,3"/>
+            <TextBlock Text="Stay on screen" Margin="0,3"/>
+            <TextBlock Text="Background clients held to 50% CPU" Margin="0,3" TextWrapping="Wrap"/>
+          </StackPanel>
+        </RadioButton>
+
+        <RadioButton Grid.Column="4" Style="{StaticResource PresetCard}" GroupName="preset"
+                     IsChecked="{Binding Settings.PerfPreset, Converter={StaticResource Eq}, ConverterParameter='Roblox defaults', Mode=TwoWay}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Text="Roblox defaults" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource RadioDot}">
+                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="12" HorizontalAlignment="Center"
+                           VerticalAlignment="Center" Foreground="{DynamicResource AccentFg}"
+                           Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}, Converter={StaticResource BoolVis}}"/>
+              </Border>
+            </Grid>
+            <TextBlock Text="AltDeck leaves Roblox as it is." Margin="0,15,0,9" Style="{StaticResource MutedText}"/>
+            <TextBlock Text="No FPS cap" Margin="0,3"/>
+            <TextBlock Text="Your own graphics" Margin="0,3"/>
+            <TextBlock Text="Stay on screen" Margin="0,3"/>
+            <TextBlock Text="No CPU limits" Margin="0,3"/>
+          </StackPanel>
+        </RadioButton>
+
+        <RadioButton Grid.Column="6" Style="{StaticResource PresetCard}" GroupName="preset"
+                     IsEnabled="{Binding Settings.HasCustomPerf}"
+                     IsChecked="{Binding Settings.PerfPreset, Converter={StaticResource Eq}, ConverterParameter='Custom', Mode=TwoWay}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Text="My preset" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource RadioDot}">
+                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="12" HorizontalAlignment="Center"
+                           VerticalAlignment="Center" Foreground="{DynamicResource AccentFg}"
+                           Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}, Converter={StaticResource BoolVis}}"/>
+              </Border>
+            </Grid>
+            <TextBlock Text="Your own settings." Margin="0,15,0,9" Style="{StaticResource MutedText}"/>
+            <TextBlock Text="{Binding Settings.CustomPerfSummary}" Margin="0,3" TextWrapping="Wrap"/>
+            <TextBlock Text="Change the Fine-tune settings below, then press Save as my preset." Margin="0,9,0,0"
+                       TextWrapping="Wrap" Style="{StaticResource MutedText}"/>
+          </StackPanel>
+        </RadioButton>
+      </Grid>
+
+      <!-- ===== fine-tune ===== -->
+      <Border Style="{StaticResource CardBox}" Margin="0,24,0,0" Padding="20,18,20,4">
+        <StackPanel>
+          <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,16">
+            <Grid>
+              <TextBlock Text="Fine-tune" FontSize="16" FontWeight="SemiBold"/>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Settings.PerfPreset, StringFormat='Using {0}'}" FontSize="13" Margin="0,0,16,0"
+                           VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                <Button Style="{StaticResource Chip}" Content="Save as my preset" Command="{Binding SaveCustomPerfCommand}"/>
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <ctl:SettingRow Title="FPS cap" DescriptionSize="13"
+                          Description="The most frames per second each client draws. Lower uses less of your PC.">
+            <StackPanel Orientation="Horizontal">
+              <Slider x:Name="FpsSlider" Style="{StaticResource PerfSlider}" Width="340"
+                      Minimum="5" Maximum="240" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Value="{Binding Settings.FpsCap, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+              <TextBox x:Name="FpsBox" Width="80" Height="44" Padding="10,0" FontFamily="Consolas" FontSize="16" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Fg}" MaxLength="4" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                       Text="{Binding Settings.FpsCap, Mode=OneWay}"
+                       KeyDown="FpsBox_KeyDown" LostKeyboardFocus="FpsBox_LostKeyboardFocus"/>
+              <TextBlock Text="FPS" Margin="10,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </ctl:SettingRow>
+          <ctl:SettingRow Title="Lowest graphics" DescriptionSize="13"
+                          Description="Saves a lot of GPU and CPU with many clients. Your own Roblox setting is put back afterwards.">
+            <ToggleButton Style="{StaticResource SwitchLarge}" IsChecked="{Binding Settings.LowestGraphics}"/>
+          </ctl:SettingRow>
+          <ctl:SettingRow Title="Start muted" DescriptionSize="13"
+                          Description="Games start with the volume at 0, so you don't have to turn every client down. Your own volume is put back afterwards.">
+            <ToggleButton Style="{StaticResource SwitchLarge}" IsChecked="{Binding Settings.MuteOnStart}"/>
+          </ctl:SettingRow>
+          <ctl:SettingRow Title="Minimize on launch" DescriptionSize="13"
+                          Description="Each client is minimized once it has loaded, so it stays out of your way. Turn off to keep the windows open.">
+            <ToggleButton Style="{StaticResource SwitchLarge}" IsChecked="{Binding Settings.MinimizeOnLaunch}"/>
+          </ctl:SettingRow>
+          <ctl:SettingRow Title="Lighter rendering" DescriptionSize="13"
+                          Description="Turns on the graphics flags below. Uses much less GPU memory.">
+            <ToggleButton Style="{StaticResource SwitchLarge}" IsChecked="{Binding Settings.LighterRendering}"/>
+          </ctl:SettingRow>
+
+          <!-- ===== graphics flags ===== -->
+          <Border Background="{DynamicResource Page}" CornerRadius="14" Padding="20,10" Margin="0,12,0,16"
+                  Visibility="{Binding Settings.LighterRendering, Converter={StaticResource BoolVis}}">
+            <StackPanel>
+              <TextBlock Text="Graphics flags" FontWeight="SemiBold" Margin="0,10,0,0"/>
+              <TextBlock FontSize="13" Margin="0,2,0,0" TextWrapping="Wrap" Style="{StaticResource MutedText}"
+                         Text="Written to Roblox as FastFlags while each client starts. Skipped under Bloxstrap and the like, which keep their own."/>
+              <ctl:SettingRow Title="Anti-aliasing (MSAA)" DescriptionSize="13" Description="Lower is faster, but edges look jagged.">
+                <ComboBox SelectedValuePath="Content" SelectedValue="{Binding Settings.Msaa}" Width="140" MinWidth="140" Height="44">
+                  <ComboBoxItem Content="x1"/><ComboBoxItem Content="x2"/><ComboBoxItem Content="x4"/><ComboBoxItem Content="x8"/>
+                </ComboBox>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Texture quality" DescriptionSize="13" Description="Lowest uses the least GPU memory.">
+                <ComboBox SelectedValuePath="Content" SelectedValue="{Binding Settings.TextureQuality}" Width="140" MinWidth="140" Height="44">
+                  <ComboBoxItem Content="Lowest"/><ComboBoxItem Content="Low"/><ComboBoxItem Content="Medium"/><ComboBoxItem Content="High"/>
+                </ComboBox>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Rendering mode" DescriptionSize="13"
+                              Description="Change it only if you get artifacts or crashes. Roblox may ignore Vulkan and OpenGL.">
+                <ComboBox SelectedValuePath="Content" SelectedValue="{Binding Settings.RenderingMode}" Width="140" MinWidth="140" Height="44">
+                  <ComboBoxItem Content="Roblox default"/><ComboBoxItem Content="Direct3D 11"/><ComboBoxItem Content="Vulkan"/><ComboBoxItem Content="OpenGL"/>
+                </ComboBox>
+              </ctl:SettingRow>
+
+              <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Margin="0,16,0,0" Padding="0,0,0,2">
+                <TextBlock Text="Strip visuals" FontWeight="SemiBold"/>
+              </Border>
+              <ctl:SettingRow Title="Gray sky" DescriptionSize="13" Description="Replaces the skybox with flat gray.">
+                <ToggleButton Style="{StaticResource SwitchLarge}" IsChecked="{Binding Settings.GraySky}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="No grass" DescriptionSize="13" Description="Removes terrain grass decoration.">
+                <ToggleButton Style="{StaticResource SwitchLarge}" IsChecked="{Binding Settings.NoGrass}"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

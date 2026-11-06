@@ -1,0 +1,245 @@
+<Window x:Class="AltDeck.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:views="clr-namespace:AltDeck.Views"
+        Icon="AltDeck.ico" Title="AltDeck" Width="1320" Height="820" MinWidth="1020" MinHeight="660"
+        WindowStyle="None" Background="{DynamicResource Bg}" Foreground="{DynamicResource Fg}"
+        FontFamily="Segoe UI" FontSize="13" WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <Style x:Key="TitleBtn" TargetType="Button">
+      <Setter Property="Width" Value="46"/>
+      <Setter Property="Height" Value="46"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <shell:WindowChrome.WindowChrome>
+    <shell:WindowChrome CaptionHeight="46" ResizeBorderThickness="6" GlassFrameThickness="0"
+                        CornerRadius="0" UseAeroCaptionButtons="False"/>
+  </shell:WindowChrome.WindowChrome>
+
+  <Grid x:Name="Root">
+    <Image x:Name="BgImage" Stretch="UniformToFill" Opacity="0.15" IsHitTestVisible="False"/>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="46"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- ===== title bar ===== -->
+      <Grid Grid.Row="0">
+        <StackPanel Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
+          <Grid Width="18" Height="18" Margin="0,0,10,0">
+            <Rectangle Width="9" Height="9" Fill="{DynamicResource Accent}" HorizontalAlignment="Left" VerticalAlignment="Top" RadiusX="2" RadiusY="2"/>
+            <Rectangle Width="9" Height="9" Fill="{DynamicResource Accent}" HorizontalAlignment="Right" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2"/>
+            <Rectangle Width="7" Height="7" Fill="{DynamicResource Muted}" HorizontalAlignment="Right" VerticalAlignment="Top" RadiusX="2" RadiusY="2"/>
+          </Grid>
+          <TextBlock Text="AltDeck" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+          <Button Style="{StaticResource TitleBtn}" Content="&#xE72C;" ToolTip="Check all sign-ins" Command="{Binding CheckAllCommand}"/>
+          <Button Style="{StaticResource TitleBtn}" Content="&#xE706;" ToolTip="Switch light / dark" Command="{Binding ToggleThemeCommand}"/>
+          <Button Style="{StaticResource TitleBtn}" Content="&#xE72E;" ToolTip="Security: vault and master password"
+                  Command="{Binding GoSectionCommand}" CommandParameter="Security"/>
+          <Rectangle Width="1" Height="18" Fill="{DynamicResource Line}" Margin="6,0"/>
+          <Button Style="{StaticResource TitleBtn}" Content="&#xE921;" Click="Min_Click"/>
+          <Button x:Name="MaxBtn" Style="{StaticResource TitleBtn}" Content="&#xE922;" Click="Max_Click"/>
+          <Button Style="{StaticResource TitleBtn}" Content="&#xE8BB;" Click="Close_Click"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- ===== body ===== -->
+      <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="232"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- sidebar -->
+        <Grid Margin="12,4,6,12">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <RadioButton Style="{StaticResource Nav}" Tag="&#xE80F;" GroupName="nav"
+                           IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Home, Mode=TwoWay}">
+                <Grid>
+                  <TextBlock Text="Home" VerticalAlignment="Center"/>
+                  <Border HorizontalAlignment="Right" Background="{DynamicResource Card2}" CornerRadius="9" Padding="7,1">
+                    <TextBlock Text="{Binding RunningCount}" FontSize="11" Foreground="{DynamicResource Fg}"/>
+                  </Border>
+                </Grid>
+              </RadioButton>
+              <RadioButton Style="{StaticResource Nav}" Tag="&#xE768;" GroupName="nav" Content="Play"
+                           IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Play, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Nav}" Tag="&#xE716;" GroupName="nav"
+                           IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Accounts, Mode=TwoWay}">
+                <Grid>
+                  <TextBlock Text="Accounts" VerticalAlignment="Center"/>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Background="{DynamicResource Red}" Margin="0,0,6,0" Padding="7,1" Cursor="Hand"
+                            ToolTip="{Binding ExpiredSignInText}" Command="{Binding ShowNeedsSignInCommand}"
+                            Visibility="{Binding HasExpiredSignIns, Converter={StaticResource BoolVis}}">
+                      <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                          <Border Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                          </Border>
+                        </ControlTemplate>
+                      </Button.Template>
+                      <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
+                        <Run Text="&#x26A0;"/><Run Text=" "/><Run Text="{Binding NeedsSignInCount, Mode=OneWay}"/>
+                      </TextBlock>
+                    </Button>
+                    <Border Background="{DynamicResource Card2}" CornerRadius="9" Padding="7,1">
+                      <TextBlock Text="{Binding AccountCount}" FontSize="11" Foreground="{DynamicResource Fg}"/>
+                    </Border>
+                  </StackPanel>
+                </Grid>
+              </RadioButton>
+              <RadioButton Style="{StaticResource Nav}" Tag="&#xE9D9;" GroupName="nav" Content="Performance"
+                           IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Performance, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Nav}" Tag="&#xE81C;" GroupName="nav" Content="Activity"
+                           IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Activity, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Nav}" Tag="&#xE713;" GroupName="nav" Content="Settings"
+                           IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Settings, Mode=TwoWay}"/>
+              <StackPanel Margin="40,2,0,0"
+                          Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Settings}">
+                <Button Style="{StaticResource Subtle}" Content="General" Command="{Binding GoSectionCommand}" CommandParameter="General"/>
+                <Button Style="{StaticResource Subtle}" Content="Automation" Command="{Binding GoSectionCommand}" CommandParameter="Automation"/>
+                <Button Style="{StaticResource Subtle}" Content="Security" Command="{Binding GoSectionCommand}" CommandParameter="Security"/>
+                <Button Style="{StaticResource Subtle}" Content="Data" Command="{Binding GoSectionCommand}" CommandParameter="Data"/>
+                <Button Style="{StaticResource Subtle}" Content="About" Command="{Binding GoSectionCommand}" CommandParameter="About"/>
+                <Button Style="{StaticResource Subtle}" Content="Launching" Command="{Binding GoSectionCommand}" CommandParameter="Launching"/>
+                <Button Style="{StaticResource Subtle}" Content="Shortcuts" Command="{Binding GoSectionCommand}" CommandParameter="Shortcuts"/>
+              </StackPanel>
+              <TextBlock Text="{Binding LockBadge, Mode=OneWay}" Margin="14,18,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </ScrollViewer>
+
+          <StackPanel Grid.Row="1">
+            <Grid>
+              <Button x:Name="HoldBtn" Style="{StaticResource Danger}" Content="Hold to stop all" Margin="0,0,0,4"
+                      HorizontalAlignment="Stretch" Padding="14,12"/>
+              <ProgressBar x:Name="HoldBar" Height="3" Maximum="100" VerticalAlignment="Bottom" Margin="14,0,14,6"
+                           Foreground="{DynamicResource Red}" Background="Transparent" BorderThickness="0"
+                           IsHitTestVisible="False" Visibility="Collapsed"/>
+            </Grid>
+            <StackPanel Orientation="Horizontal" Margin="6,12,0,0">
+              <TextBlock Text="&#xE72E;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center"
+                         Style="{StaticResource MutedText}"/>
+              <TextBlock Text="Encrypted on this PC" FontSize="12" Margin="8,0,0,0" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+
+        <!-- page area -->
+        <Border Grid.Column="1" Margin="0,2,12,12" CornerRadius="20" Background="{DynamicResource Page}"
+                BorderBrush="{DynamicResource Line}" BorderThickness="1">
+          <Grid>
+            <views:HomePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Home}"/>
+            <views:PlayPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Play}"/>
+            <views:AccountsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Accounts}"/>
+            <views:PerformancePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Performance}"/>
+            <views:SettingsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Settings}"/>
+            <views:ActivityPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Activity}"/>
+
+            <!-- toast: bottom centre, or top centre while the launch queue panel is in the corner -->
+            <Border Padding="18,11" Background="{DynamicResource Card2}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
+                    CornerRadius="12" MaxWidth="620"
+                    Visibility="{Binding StatusMessage, Converter={StaticResource EmptyCollapsed}}">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="HorizontalAlignment" Value="Center"/>
+                  <Setter Property="VerticalAlignment" Value="Bottom"/>
+                  <Setter Property="Margin" Value="0,0,0,24"/>
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding QueueVisible}" Value="True">
+                      <Setter Property="VerticalAlignment" Value="Top"/>
+                      <Setter Property="Margin" Value="0,18,0,0"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <TextBlock Text="{Binding StatusMessage, Mode=OneWay}" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- launch queue -->
+            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,20" Width="360" Padding="16,14"
+                    Background="{DynamicResource Card2}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="14"
+                    Visibility="{Binding QueueVisible, Converter={StaticResource BoolVis}}">
+              <StackPanel>
+                <Grid>
+                  <StackPanel>
+                    <TextBlock Text="{Binding QueueTitle, Mode=OneWay}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding QueueSubtitle, Mode=OneWay}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                               Style="{StaticResource MutedText}"
+                               Visibility="{Binding QueueSubtitle, Converter={StaticResource EmptyCollapsed}}"/>
+                  </StackPanel>
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE8BB;" Width="26" Height="26" FontSize="10"
+                          HorizontalAlignment="Right" VerticalAlignment="Top" ToolTip="Hide"
+                          Command="{Binding DismissQueueCommand}"
+                          Visibility="{Binding QueueRunning, Converter={StaticResource BoolVisInv}}"/>
+                </Grid>
+                <ProgressBar Height="4" Margin="0,10,0,8" Maximum="100" Value="{Binding QueueProgress, Mode=OneWay}"
+                             Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}" BorderThickness="0"/>
+                <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                  <ItemsControl ItemsSource="{Binding LaunchQueue}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,3">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="22"/>
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Text="{Binding Name, Mode=OneWay}" TextTrimming="CharacterEllipsis" FontSize="12"/>
+                          <TextBlock Grid.Column="1" Text="{Binding State, Mode=OneWay}" FontSize="12" Margin="8,0,4,0"
+                                     Foreground="{Binding State, Converter={StaticResource QueueBrush}}"/>
+                          <Button Grid.Column="2" Style="{StaticResource IconBtn}" Content="&#xE711;" Width="20" Height="20"
+                                  FontSize="9" Margin="0" ToolTip="Skip this one"
+                                  Command="{Binding DataContext.SkipItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  CommandParameter="{Binding}"
+                                  Visibility="{Binding IsWaiting, Converter={StaticResource BoolVis}}"/>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0"
+                            Visibility="{Binding QueueRunning, Converter={StaticResource BoolVis}}">
+                  <Button Content="{Binding QueuePauseText, Mode=OneWay}" Padding="12,6" Command="{Binding ToggleQueuePauseCommand}"/>
+                  <Button Content="Skip next" Padding="12,6" Command="{Binding SkipNextCommand}"/>
+                  <Button Content="Cancel" Padding="12,6" Margin="0" Command="{Binding CancelQueueCommand}"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>
