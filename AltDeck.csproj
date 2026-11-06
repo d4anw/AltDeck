@@ -10,7 +10,7 @@
     <ApplicationIcon>AltDeck.ico</ApplicationIcon>
     <LangVersion>latest</LangVersion>
     <!-- shown in Settings > About and in the exe's Properties > Details. Change it here only. -->
-    <Version>0.4.2</Version>
+    <Version>0.4.3</Version>
     <Product>AltDeck</Product>
     <AssemblyTitle>AltDeck</AssemblyTitle>
     <Description>Multi-account Roblox launcher</Description>

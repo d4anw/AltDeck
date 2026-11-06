@@ -235,7 +235,7 @@ AltDeck/
 ## 📝 Changelog
 
 <details open>
-<summary><b>Not released yet</b></summary>
+<summary><b>0.4.3</b></summary>
 <br>
 
 - **Add many accounts at once:** paste as many cookies as you like, one per line.
