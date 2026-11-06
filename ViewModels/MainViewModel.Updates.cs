@@ -16,6 +16,8 @@ namespace AltDeck.ViewModels;
 public partial class MainViewModel
 {
     private bool _updateBusy;
+    private bool _updateOffered;                                       // the update window was shown this run
+    private readonly TaskCompletionSource _startCheckDone = new();    // the start-up update check has finished
 
     private const string UpdateBaseText =
         "When a new version of AltDeck is out, asks when AltDeck opens whether to update. Off: check by hand under About.";
@@ -51,7 +53,11 @@ public partial class MainViewModel
     }
 
     /// <summary>Called by the window once it's shown.</summary>
-    public Task CheckForUpdatesAtStartAsync() => CheckForUpdateAsync(manual: false);
+    public async Task CheckForUpdatesAtStartAsync()
+    {
+        try { await CheckForUpdateAsync(manual: false); }
+        finally { _startCheckDone.TrySetResult(); }
+    }
 
     /// <summary>The person chose Update and the download is done: don't show "What's new" for a version they just read about.</summary>
     public void UpdateAccepted(UpdateInfo u)
@@ -72,6 +78,9 @@ public partial class MainViewModel
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(3));   // after the main window is up
+            // An update is waiting? Then these notes are about to be out of date: the update window shows the new ones instead.
+            await Task.WhenAny(_startCheckDone.Task, Task.Delay(TimeSpan.FromSeconds(20)));
+            if (_updateOffered) return;
             var notes = await Updater.GetReleaseNotesAsync(Updater.Current);
             if (notes != null) WhatsNew?.Invoke(Updater.Current, notes);
         }
@@ -132,6 +141,7 @@ public partial class MainViewModel
             string? notes = null;
             try { notes = await Updater.GetReleaseNotesAsync(u.Version); } catch { }
             UpdateStatus = $"AltDeck {u.Version} is available.";
+            _updateOffered = true;
             UpdateAvailable?.Invoke(u, notes, manual);
         }
         catch (Exception ex)
