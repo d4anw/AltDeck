@@ -141,7 +141,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 | 🔁 **Recovery** | Auto-rejoin reads each client's Roblox log to catch disconnects; the first rejoin goes back to the same server. Auto-restart for crashes and windows "Not responding" for 30 s. Give-up limit, or keep trying every 5 minutes. Sign-ins are kept apart so clients don't sign each other out. |
 | 🖥️ **Home** | Live previews refreshed every second (a minimized window keeps its last picture). GPU load and video memory from Windows' own counters. Windows menu: Tile windows, Minimize all, save / restore layouts. |
 | 🎚️ **Performance** | FPS cap, MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
-| ⬆️ **Auto-update** | Checks GitHub Releases at start and every 6 hours, downloads the new `AltDeck.exe` in the background, checks it against GitHub's SHA-256, then asks to restart. Choose later and it installs when you close AltDeck. Switch it off or check by hand in Settings. |
+| ⬆️ **Updates** | When AltDeck opens it checks GitHub Releases. If a new version is out it asks whether to update, shows what's new, downloads with a progress bar, checks the file against GitHub's SHA-256 and restarts into it. "Not now" asks again next start; "Don't notify me about updates again" stops asking. Check by hand anytime under Settings → About. |
 | ⏲️ **Automation** | Panic hotkey to stop every client, a stop timer (30m / 1h / 2h / 4h), hold-to-stop-all button, close to tray. |
 | 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy. Also written to `%AppData%\AltDeck\logs`, kept for 14 days. |
 | 🐞 **Report a bug** | One button (Activity page, or Settings → About) opens a GitHub issue with your AltDeck and Windows versions filled in, and copies your Activity log so you can paste it in after checking it for names. |
@@ -213,7 +213,7 @@ Needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 The version shown in the app, the exe's details and backups all come from `<Version>` in `AltDeck.csproj`.
 
-**Releasing an update:** raise `<Version>`, build the exe, and publish a GitHub release tagged `v<version>` with the file attached as exactly `AltDeck.exe`. Everyone's AltDeck picks it up within 6 hours (or at their next start).
+**Releasing an update:** raise `<Version>`, build the exe, and publish a GitHub release tagged `v<version>` with the file attached as exactly `AltDeck.exe`. Everyone's AltDeck offers it the next time they open it.
 
 <br>
 
@@ -235,6 +235,16 @@ AltDeck/
 ## 📝 Changelog
 
 <details open>
+<summary><b>0.4.4</b></summary>
+<br>
+
+- **New update window:** when a new version is out, AltDeck asks as soon as it opens, shows what's new, downloads with a progress bar and restarts into the new version by itself.
+- **Not now** asks again next time; tick **Don't notify me about updates again** to stop the question (Settings → General → Ask about updates). You can always check by hand under Settings → About.
+- "What's new" no longer pops up at the same time as an update.
+
+</details>
+
+<details>
 <summary><b>0.4.3</b></summary>
 <br>
 
