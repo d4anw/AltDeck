@@ -24,7 +24,9 @@
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
         <Button Content="Copy" Command="{Binding CopyLogCommand}" ToolTip="Copy the lines shown, oldest first"/>
         <Button Content="Open log folder" Command="{Binding OpenLogFolderCommand}"/>
-        <Button Content="Clear list" Margin="0" Command="{Binding ClearLogCommand}" ToolTip="Empties this list. The files are kept."/>
+        <Button Content="Clear list" Command="{Binding ClearLogCommand}" ToolTip="Empties this list. The files are kept."/>
+        <Button Content="Report a bug" Margin="0" Command="{Binding ReportBugCommand}"
+                ToolTip="Opens a bug report on GitHub and copies this log so you can paste it in"/>
       </StackPanel>
     </Grid>
 

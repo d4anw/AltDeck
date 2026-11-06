@@ -537,7 +537,10 @@ public partial class MainViewModel : ObservableObject
             : $"In {(string.IsNullOrEmpty(first.PlaceName) ? "place " + first.Target!.PlaceId : first.PlaceName)}. Auto-rejoin is {(Settings.AutoRejoin ? "on" : "off")}.";
         AutoRejoinLinkText = Settings.AutoRejoin ? "Turn off" : "Turn on";
 
-        AccountsSubtitle = $"{Accounts.Count} total";
+        var known = Accounts.Where(a => a.Robux != null).ToList();
+        AccountsSubtitle = $"{Accounts.Count} total"
+            + (known.Count > 0 ? $" · R$ {known.Sum(a => a.Robux ?? 0):N0} across {(known.Count == Accounts.Count ? "all" : known.Count.ToString())}" : "")
+            + (Accounts.Count(a => a.IsPremium) is int p and > 0 ? $" · {p} Premium" : "");
         var k = Accounts.Count(a => a.StatusKind == "signedout" || a.StatusKind == "check");
         NeedsSignInText = k > 0 ? $"{k} need{(k == 1 ? "s" : "")} sign-in" : "";
         var expired = Accounts.Count(a => a.StatusKind == "signedout");   // only real expiries, not "couldn't reach Roblox"
@@ -566,6 +569,12 @@ public partial class MainViewModel : ObservableObject
             a.DisplayName = u.DisplayName;
             if (string.IsNullOrEmpty(a.AvatarUrl)) a.AvatarUrl = await RobloxApi.GetAvatarUrlAsync(u.Id);
 
+            // Robux and Premium: keep the last known values if Roblox doesn't answer this time
+            var robux = RobloxApi.GetRobuxAsync(a.Cookie, u.Id);
+            var premium = RobloxApi.GetPremiumAsync(a.Cookie, u.Id);
+            if (await robux is long r) a.Robux = r;
+            if (await premium is bool prem) a.IsPremium = prem;
+
             var p = await RobloxApi.GetPresenceAsync(a.Cookie, u.Id);
             if (a.IsPlaying) SetStatus(a, "ingame", "In game");
             else if (p == null) SetStatus(a, "online", "Ready");
@@ -585,22 +594,8 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            var cookie = RobloxApi.CleanCookie(rawCookie);
-            var user = await RobloxApi.GetAuthenticatedUserAsync(cookie);
-            if (user == null) return "That cookie isn't valid, or it has expired.";
-
-            var acc = Accounts.FirstOrDefault(a => a.UserId == user.Id);
-            if (acc == null)
-            {
-                acc = new Account { UserId = user.Id };
-                Accounts.Add(acc);
-                HookAccount(acc);
-            }
-            acc.Cookie = cookie;
-            acc.Username = user.Name;
-            acc.DisplayName = user.DisplayName;
-            acc.AvatarUrl = await RobloxApi.GetAvatarUrlAsync(user.Id);
-            await CheckAccountAsync(acc);
+            var (acc, _, error) = await AddOrUpdateCoreAsync(rawCookie);
+            if (acc == null) return error;
             _vault.Save(Accounts);
             RebuildGroups();
             UpdatePicked();

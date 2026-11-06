@@ -180,6 +180,34 @@ public static class RobloxApi
     public record Presence(int Type, string Location, long PlaceId, string? GameId = null, long RootPlaceId = 0);
 
     /// <summary>Online / in game / in Studio status for one account, fetched with that account's own session.</summary>
+    /// <summary>The account's Robux balance, or null when Roblox didn't say (signed out, rate limited, down).</summary>
+    public static async Task<long?> GetRobuxAsync(string cookie, long userId)
+    {
+        try
+        {
+            using var r = Req(HttpMethod.Get, $"https://economy.roblox.com/v1/users/{userId}/currency", cookie);
+            using var resp = await Http.SendAsync(r);
+            if (!resp.IsSuccessStatusCode) return null;
+            using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+            return doc.RootElement.TryGetProperty("robux", out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : null;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Whether the account has Roblox Premium, or null when Roblox didn't say.</summary>
+    public static async Task<bool?> GetPremiumAsync(string cookie, long userId)
+    {
+        try
+        {
+            using var r = Req(HttpMethod.Get, $"https://premiumfeatures.roblox.com/v1/users/{userId}/validate-membership", cookie);
+            using var resp = await Http.SendAsync(r);
+            if (!resp.IsSuccessStatusCode) return null;
+            var text = (await resp.Content.ReadAsStringAsync()).Trim();
+            return bool.TryParse(text, out var b) ? b : null;
+        }
+        catch { return null; }
+    }
+
     public static async Task<Presence?> GetPresenceAsync(string cookie, long userId)
     {
         string? csrf = null;

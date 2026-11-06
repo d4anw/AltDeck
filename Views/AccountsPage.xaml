@@ -122,6 +122,7 @@
               <ColumnDefinition Width="32"/>
               <ColumnDefinition Width="*" MinWidth="170"/>
               <ColumnDefinition Width="140"/>
+              <ColumnDefinition Width="120"/>
               <ColumnDefinition Width="110"/>
               <ColumnDefinition Width="40"/>
               <ColumnDefinition Width="40"/>
@@ -129,7 +130,8 @@
             <CheckBox IsChecked="{Binding AllVisibleSelected}"/>
             <TextBlock Grid.Column="1" Text="Account" FontSize="12" Style="{StaticResource MutedText}"/>
             <TextBlock Grid.Column="2" Text="Status" FontSize="12" Style="{StaticResource MutedText}"/>
-            <TextBlock Grid.Column="3" Text="Groups" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Grid.Column="3" Text="Robux" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Grid.Column="4" Text="Groups" FontSize="12" Style="{StaticResource MutedText}"/>
           </Grid>
           <ListBox Grid.Row="1" ItemsSource="{Binding AccountsView}" SelectedItem="{Binding SelectedAccount}"
                    Background="Transparent" BorderThickness="0" ItemContainerStyle="{StaticResource Row}"
@@ -141,6 +143,7 @@
                     <ColumnDefinition Width="32"/>
                     <ColumnDefinition Width="*" MinWidth="170"/>
                     <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="110"/>
                     <ColumnDefinition Width="40"/>
                     <ColumnDefinition Width="40"/>
@@ -166,7 +169,9 @@
                     <TextBlock Text="{Binding StatusText, Mode=OneWay}" TextTrimming="CharacterEllipsis" MaxWidth="110"
                                ToolTip="{Binding StatusText, Mode=OneWay}"/>
                   </StackPanel>
-                  <ItemsControl Grid.Column="3" ItemsSource="{Binding GroupList}" VerticalAlignment="Center" ClipToBounds="True">
+                  <TextBlock Grid.Column="3" Text="{Binding RobuxText, Mode=OneWay}" VerticalAlignment="Center"
+                             TextTrimming="CharacterEllipsis" ToolTip="{Binding RobuxText, Mode=OneWay}" Margin="0,0,8,0"/>
+                  <ItemsControl Grid.Column="4" ItemsSource="{Binding GroupList}" VerticalAlignment="Center" ClipToBounds="True">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
@@ -182,7 +187,7 @@
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
-                  <Button Grid.Column="4" Content="{Binding StarGlyph}"
+                  <Button Grid.Column="5" Content="{Binding StarGlyph}"
                           Command="{Binding DataContext.ToggleFavouriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                           CommandParameter="{Binding}">
                     <Button.Style>
@@ -195,7 +200,7 @@
                       </Style>
                     </Button.Style>
                   </Button>
-                  <Button Grid.Column="5" Style="{StaticResource IconBtn}" Content="&#xE768;" Margin="0"
+                  <Button Grid.Column="6" Style="{StaticResource IconBtn}" Content="&#xE768;" Margin="0"
                           Visibility="{Binding IsPlaying, Converter={StaticResource BoolVisInv}}"
                           Command="{Binding DataContext.PlayOneCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                           CommandParameter="{Binding}"/>
@@ -238,6 +243,9 @@
             </StackPanel>
           </StackPanel>
 
+          <TextBlock Text="{Binding RobuxText, Mode=OneWay}" Margin="0,14,0,0" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Accent}"
+                     Visibility="{Binding RobuxText, Converter={StaticResource EmptyCollapsed}}"/>
           <Grid Margin="0,18,0,14">
             <StackPanel Orientation="Horizontal">
               <Ellipse Width="9" Height="9" Margin="0,0,8,0" VerticalAlignment="Center"

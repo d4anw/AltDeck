@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Threading;
 using AltDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,10 +25,24 @@ public partial class MainViewModel
     /// <summary>A checked download is ready. The window asks whether to restart now.</summary>
     public event Action<UpdateInfo>? UpdateReady;
 
+    /// <summary>This copy was just updated: the window shows these release notes once.</summary>
+    public event Action<Version, string>? WhatsNew;
+
     /// <summary>Called once from the constructor.</summary>
     private void SetupUpdates()
     {
         Updater.CleanUp();
+
+        // "What's new" once per version. A fresh install has nothing to compare with; settings from 0.4.2 and older
+        // have no LastSeenVersion yet, so an existing settings.json without one counts as an update too.
+        var last = Settings.LastSeenVersion;
+        if (last != AppVersion)
+        {
+            bool updated = last.Length > 0 || SettingsStore.ExistedAtStart;
+            Settings.LastSeenVersion = AppVersion;
+            if (updated) _ = ShowWhatsNewAsync();
+        }
+
         if (!Updater.CanUpdate) UpdateStatus = "This copy isn't the AltDeck.exe from GitHub Releases, so it doesn't update itself.";
 
         var first = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };   // let start-up and the sign-in checks go first
@@ -33,6 +50,44 @@ public partial class MainViewModel
         first.Start();
         _updateTimer.Tick += async (_, _) => await CheckForUpdateAsync(manual: false);
         _updateTimer.Start();
+    }
+
+    private async Task ShowWhatsNewAsync()
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(3));   // after the main window is up
+            var notes = await Updater.GetReleaseNotesAsync(Updater.Current);
+            if (notes != null) WhatsNew?.Invoke(Updater.Current, notes);
+        }
+        catch { }   // offline or GitHub busy: skip it, it's only a nicety
+    }
+
+    /// <summary>Opens a new GitHub issue with the versions filled in, and copies the Activity log to paste into it.</summary>
+    [RelayCommand]
+    private void ReportBug()
+    {
+        var lines = _log.Entries.Take(80).Reverse().Select(e => e.ToString()).ToList();   // newest 80, oldest first
+        bool copied = false;
+        if (lines.Count > 0)
+            try { Clipboard.SetText(string.Join(Environment.NewLine, lines)); copied = true; } catch { }
+
+        var nl = "\n";
+        var body =
+            "**What happened?**" + nl + nl + nl +
+            "**What did you expect to happen?**" + nl + nl + nl +
+            "**Steps to make it happen again**" + nl + "1. " + nl + "2. " + nl + nl +
+            "<details><summary>Activity log</summary>" + nl + nl + "```" + nl +
+            (copied ? "(press Ctrl+V here; check it for account names first)" : "(open the Activity page, press Copy and paste it here)") +
+            nl + "```" + nl + "</details>" + nl + nl +
+            "---" + nl + $"AltDeck {AppVersion} · {RuntimeInformation.OSDescription.Trim()} · {RuntimeInformation.OSArchitecture}";
+        var url = $"https://github.com/{Updater.Repo}/issues/new?labels=bug&body={Uri.EscapeDataString(body)}";
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch { StatusMessage = "Couldn't open your browser."; return; }
+
+        StatusMessage = copied
+            ? "Opened a bug report on GitHub. Your Activity log is copied: check it for names, then paste it in."
+            : "Opened a bug report on GitHub.";
     }
 
     [RelayCommand]

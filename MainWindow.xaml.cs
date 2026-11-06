@@ -48,6 +48,12 @@ public partial class MainWindow : Window
         };
         _tray.QuitRequested += () => { _reallyExit = true; Close(); };
         _vm.UpdateReady += u => Dispatcher.InvokeAsync(() => AskToRestartForUpdate(u));
+        _vm.WhatsNew += (v, notes) => Dispatcher.InvokeAsync(() =>
+        {
+            var w = new WhatsNewWindow(v, notes);
+            if (IsVisible) w.Owner = this; else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            w.Show();
+        });
         _vm.Notify += msg => { if (!IsVisible) _tray.Balloon("AltDeck", msg); };
         _vm.PropertyChanged += (_, e) =>
         {

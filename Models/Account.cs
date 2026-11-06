@@ -59,7 +59,20 @@ public partial class Account : ObservableObject
     [property: JsonIgnore]
     private bool isSelected;
 
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [NotifyPropertyChangedFor(nameof(RobuxText))]
+    private long? robux;
+
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [NotifyPropertyChangedFor(nameof(RobuxText))]
+    private bool isPremium;
+
     [JsonIgnore] public DateTime? LastChecked { get; set; }
+    /// <summary>"R$ 1,234", plus "· Premium". Empty until the account has been checked.</summary>
+    [JsonIgnore] public string RobuxText =>
+        Robux is long r ? $"R$ {r:N0}{(IsPremium ? "  ·  Premium" : "")}" : (IsPremium ? "Premium" : "");
     [JsonIgnore] public string Label => string.IsNullOrWhiteSpace(Alias) ? DisplayName : Alias;
     [JsonIgnore] public string Initials => string.IsNullOrWhiteSpace(Label) ? "?" : Label.Trim().Substring(0, Math.Min(2, Label.Trim().Length)).ToUpperInvariant();
     [JsonIgnore] public string[] GroupList => (Groups ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

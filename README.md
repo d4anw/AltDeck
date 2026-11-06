@@ -37,7 +37,7 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 | [What is AltDeck?](#-what-is-altdeck) | [Build from source](#-build-from-source) |
 | [Features](#-features) | [Project layout](#-project-layout) |
 | [Install](#-install) | [Changelog](#-changelog) |
-| [Quick start](#-quick-start) | |
+| [Quick start](#-quick-start) | [License](#️-license) |
 | [Safety and privacy](#-safety-and-privacy) | |
 | [Troubleshooting](#-troubleshooting) | |
 
@@ -71,8 +71,8 @@ Sign-ins are encrypted with **Windows DPAPI**, or with your own **master passwor
 <td width="50%" valign="top">
 
 ### 👥 Accounts
-Search, status and group filters, favourites, per-account details and live presence.
-Add by browser login or by cookie.
+Robux and Premium per account, live presence, groups and favourites. Add by browser login,
+paste many cookies at once, or import an `AccountData.json` file.
 
 </td>
 </tr>
@@ -133,7 +133,9 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 | Area | What you get |
 |---|---|
 | 🔐 **Vault** | `vault.dat` in `%AppData%\AltDeck`, encrypted with Windows DPAPI for your user. Optional master password (asked once at every start, can't be recovered). Export / import an `.altdeck` backup locked with a password you choose; it works on another PC. Import only adds. |
-| 👥 **Accounts** | Sign in through an isolated browser window (the profile is deleted after the session cookie is captured), or paste a cookie. Search, status and group filters, favourites, live presence. A periodic sign-in check (every 30 min by default) tells you when one expired. |
+| 👥 **Accounts** | Sign in through an isolated browser window (the profile is deleted after the session cookie is captured), or paste cookies: one or many at once, one per line. Search, status and group filters, favourites, live presence. A periodic sign-in check (every 30 min by default) tells you when one expired. |
+| 📥 **Import** | Import a list of accounts from an `AccountData.json` file (or a `.txt` with one cookie per line). Names, notes and groups in the file fill in what's empty; accounts you already have are refreshed, not doubled; passwords in the file are ignored. Encrypted files can't be read: save them unencrypted first. |
+| 💰 **Robux & Premium** | Each account's Robux balance and Premium status in the list and its details, plus the total Robux across all your accounts. Refreshed with every sign-in check. |
 | 🚀 **Play** | Game links, place IDs, private server links, `roblox.com/share?code=…&type=Server` links. Favourites. Launch presets: save the ticked accounts and target, then launch them in one click or with a global hotkey. Browse servers (fewest / most players / lowest ping). Join someone by username. |
 | 🪟 **Launch queue** | "3 of 8 launched, next: Alt4 in 7 s" with Pause / Resume, Skip next and Cancel. Each account's sign-in is checked right before it launches. Launch delay and custom launch arguments (default and per account). |
 | 🔁 **Recovery** | Auto-rejoin reads each client's Roblox log to catch disconnects; the first rejoin goes back to the same server. Auto-restart for crashes and windows "Not responding" for 30 s. Give-up limit, or keep trying every 5 minutes. Sign-ins are kept apart so clients don't sign each other out. |
@@ -141,7 +143,9 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 | 🎚️ **Performance** | FPS cap, MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
 | ⬆️ **Auto-update** | Checks GitHub Releases at start and every 6 hours, downloads the new `AltDeck.exe` in the background, checks it against GitHub's SHA-256, then asks to restart. Choose later and it installs when you close AltDeck. Switch it off or check by hand in Settings. |
 | ⏲️ **Automation** | Panic hotkey to stop every client, a stop timer (30m / 1h / 2h / 4h), hold-to-stop-all button, close to tray. |
-| 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy for bug reports. Also written to `%AppData%\AltDeck\logs`, kept for 14 days. |
+| 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy. Also written to `%AppData%\AltDeck\logs`, kept for 14 days. |
+| 🐞 **Report a bug** | One button (Activity page, or Settings → About) opens a GitHub issue with your AltDeck and Windows versions filled in, and copies your Activity log so you can paste it in after checking it for names. |
+| 🆕 **What's new** | After an update, AltDeck shows that version's release notes once. |
 | 💬 **Discord** | "Playing AltDeck" on your Discord profile with how many alts are running. Works out of the box with the Discord desktop app open; switch it off in Settings. |
 
 </details>
@@ -194,7 +198,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 | The second account closes the first | The Play page shows whether multi-instance is ON. If it's OFF, press **Close Roblox & enable multi-instance**. |
 | The login window is blank | Install the Microsoft Edge WebView2 Runtime. |
 | Forgot the master password | It can't be recovered. Close AltDeck, delete `vault.dat` in `%AppData%\AltDeck` and add your accounts again (or import a backup). |
-| Something else went wrong | Errors show in a message box and on the **Activity** page. Use **Copy** there for a bug report. |
+| Something else went wrong | Errors show in a message box and on the **Activity** page. Press **Report a bug** there to tell us (needs a free GitHub account). |
 
 <br>
 
@@ -231,6 +235,18 @@ AltDeck/
 ## 📝 Changelog
 
 <details open>
+<summary><b>Not released yet</b></summary>
+<br>
+
+- **Add many accounts at once:** paste as many cookies as you like, one per line.
+- **Import accounts from a file:** `AccountData.json`, or a `.txt` with one cookie per line.
+- **Robux & Premium** for every account, and your total Robux on the Accounts page.
+- **What's new:** after an update, AltDeck shows what changed.
+- **Report a bug** button on the Activity page and in Settings → About.
+
+</details>
+
+<details>
 <summary><b>0.4.2</b></summary>
 <br>
 
@@ -282,6 +298,12 @@ AltDeck/
 - **0.3.0:** master password, close to tray, panic hotkey, stop timer, auto-restart, launch arguments, server browser, join someone.
 
 </details>
+
+<br>
+
+## ⚖️ License
+
+AltDeck is open source under the [MIT License](LICENSE).
 
 <br>
 

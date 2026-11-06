@@ -11,6 +11,10 @@ public sealed class SettingsStore
     static readonly string FilePath = Path.Combine(Dir, "settings.json");
     public static string DataDir => Dir;
 
+    /// <summary>Whether settings.json was there when AltDeck started, i.e. this isn't a fresh install.
+    /// Read before anything is saved (the class is first touched when App loads the settings).</summary>
+    public static readonly bool ExistedAtStart = File.Exists(FilePath);
+
     public AppSettings Load()
     {
         try

@@ -92,6 +92,15 @@ public static class Updater
         return null;
     }
 
+    /// <summary>The release notes of one version (its GitHub release text), or null when there are none.</summary>
+    public static async Task<string?> GetReleaseNotesAsync(Version v, CancellationToken ct = default)
+    {
+        using var r = await Http.GetAsync($"https://api.github.com/repos/{Repo}/releases/tags/v{v.Major}.{v.Minor}.{Math.Max(v.Build, 0)}", ct);
+        if (!r.IsSuccessStatusCode) return null;
+        var body = (string?)JsonNode.Parse(await r.Content.ReadAsStringAsync(ct))?["body"];
+        return string.IsNullOrWhiteSpace(body) ? null : body;
+    }
+
     /// <summary>Downloads the update next to the running exe (or to <paramref name="targetExe"/>.new) and checks it.</summary>
     public static async Task DownloadAsync(UpdateInfo u, string? targetExe = null, CancellationToken ct = default)
     {

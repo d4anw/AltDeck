@@ -246,7 +246,11 @@
           <Border Style="{StaticResource CardBox}" Padding="24,4">
             <StackPanel>
               <ctl:SettingRow Title="{Binding AboutTitle, Mode=OneWay}" Description="A multi-account Roblox launcher for your own accounts.">
-                <Button Content="Check for updates" Margin="0" Command="{Binding CheckForUpdatesCommand}"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Report a bug" Command="{Binding ReportBugCommand}"
+                          ToolTip="Opens a bug report on GitHub (needs a free GitHub account)"/>
+                  <Button Content="Check for updates" Margin="0" Command="{Binding CheckForUpdatesCommand}"/>
+                </StackPanel>
               </ctl:SettingRow>
             </StackPanel>
           </Border>
