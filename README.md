@@ -9,8 +9,8 @@
 A local-only multi-account launcher for Windows 10 and 11.<br>
 Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 
-[![Latest release](https://img.shields.io/github/v/release/d4anw/AltDeck?style=for-the-badge&color=ff7a1a&labelColor=111111&label=release&cacheSeconds=3600)](https://github.com/d4anw/AltDeck/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/d4anw/AltDeck/total?style=for-the-badge&color=2b2b2b&labelColor=111111&cacheSeconds=3600)](https://github.com/d4anw/AltDeck/releases)
+[![Latest release](https://img.shields.io/github/v/release/d4anw/AltDeck?style=for-the-badge&color=ff7a1a&labelColor=111111&label=release&cacheSeconds=300)](https://github.com/d4anw/AltDeck/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/d4anw/AltDeck/total?style=for-the-badge&color=2b2b2b&labelColor=111111&cacheSeconds=300)](https://github.com/d4anw/AltDeck/releases)
 [![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=for-the-badge&logo=windows&labelColor=111111)](#-install)
 
 ![.NET 8](https://img.shields.io/badge/.NET-8-512bd4?style=flat-square&logo=dotnet&logoColor=white)
@@ -48,7 +48,7 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 Playing on more than one Roblox account normally means signing out, signing back in, finding the game again,
 and only having one Roblox window open at a time. AltDeck takes care of that.
 
-- **Add each account once**, by signing in through a browser window or by pasting a cookie.
+- **Add each account once**: sign in through a browser window, paste many cookies at once, or import an `AccountData.json` file.
 - **Launch one account or many** into any game, private server or share link.
 - **Run several Roblox clients side by side**, with live previews and CPU / memory / GPU dials.
 - **Get kicked or crash? AltDeck rejoins for you**, back into the same server when it can.
@@ -124,6 +124,22 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### ⬆️ Updates itself
+When a new version is out, AltDeck asks as soon as it opens and shows what's new.
+One click downloads it with a progress bar and restarts into the new version.
+
+</td>
+<td valign="top">
+
+### 🐞 Report a bug
+One button opens a GitHub bug report with your versions filled in and copies your
+Activity log to paste in. After every update, "What's new" shows what changed.
+
+</td>
+</tr>
 </table>
 
 <details>
@@ -157,7 +173,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 1. Download **`AltDeck.exe`** from the [latest release](https://github.com/d4anw/AltDeck/releases/latest).
 2. Run it. It's one file, needs no install and doesn't need .NET.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the exe isn't code-signed: click **More info → Run anyway**.
-4. That's it: AltDeck **updates itself** whenever a new release comes out.
+4. That's it. When a new version comes out, AltDeck **asks you to update** the next time you open it.
 
 > [!NOTE]
 > "Sign in with a browser" needs the **Microsoft Edge WebView2 Runtime**. It's already on Windows 11.
@@ -167,7 +183,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 ## 🏁 Quick start
 
 1. **Close all Roblox windows**, then open AltDeck.
-2. Go to **Accounts → Add** and sign in through the browser window (or paste a cookie).
+2. Go to **Accounts → Add account** and sign in through the browser window. Have lots of accounts? Paste many cookies at once (one per line) or import an `AccountData.json` file.
 3. Go to **Play**, tick the accounts you want and paste a game link or place ID.
 4. Press **Launch**. If the second client closes the first one, press **Close Roblox & enable multi-instance** on the Play page.
 
@@ -183,6 +199,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 - **Sign-ins are encrypted** with Windows DPAPI, or your master password if you set one.
 - **Nothing is sent anywhere except Roblox**, plus your running-alt count to the Discord app on your PC (switch it off in Settings).
 - **Updates come only from this repo's GitHub Releases** and are checked against GitHub's SHA-256 before they're installed.
+- **Report a bug only opens GitHub when you click it.** Nothing is sent by itself, and you check the log before pasting it.
 - **No telemetry**, no accounts, no AltDeck server.
 - **Nothing is injected into Roblox.** Window sizing uses a hook that watches from outside, and graphics settings use Roblox's own FastFlags file, which is put back after launch.
 
@@ -197,6 +214,8 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 |---|---|
 | The second account closes the first | The Play page shows whether multi-instance is ON. If it's OFF, press **Close Roblox & enable multi-instance**. |
 | The login window is blank | Install the Microsoft Edge WebView2 Runtime. |
+| "Windows protected your PC" | AltDeck isn't code-signed yet, so SmartScreen warns about it. Click **More info → Run anyway**. |
+| Import says the file is encrypted | AltDeck can only read files saved without encryption. Turn encryption off in the program that saved the file, let it save again, then import that file. |
 | Forgot the master password | It can't be recovered. Close AltDeck, delete `vault.dat` in `%AppData%\AltDeck` and add your accounts again (or import a backup). |
 | Something else went wrong | Errors show in a message box and on the **Activity** page. Press **Report a bug** there to tell us (needs a free GitHub account). |
 
@@ -223,10 +242,10 @@ The version shown in the app, the exe's details and backups all come from `<Vers
 AltDeck/
 ├─ Views/            Home, Play, Accounts, Performance, Activity and Settings pages
 ├─ ViewModels/       MainViewModel (app state and commands)
-├─ Services/         Vault, Launcher, RobloxApi, auto-rejoin, monitors, tray, hotkeys, Discord …
+├─ Services/         Vault, Launcher, RobloxApi, Updater, auto-rejoin, monitors, tray, hotkeys, Discord …
 ├─ Models/           Account, settings, presets, layouts
 ├─ Controls/         Dials, avatars, setting rows
-├─ *.xaml            Main window, splash, login and dialogs
+├─ *.xaml            Main window, splash, login, update window, What's new and dialogs
 └─ AltDeck.csproj    .NET 8 WPF project (version lives here)
 ```
 
