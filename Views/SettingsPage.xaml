@@ -84,6 +84,9 @@
               <ctl:SettingRow Title="Skip splash screen" Description="Opens AltDeck right away, without the start-up animation.">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.SkipSplash}"/>
               </ctl:SettingRow>
+              <ctl:SettingRow Title="Auto-update" Description="{Binding UpdateDescription, Mode=OneWay}">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoUpdate}"/>
+              </ctl:SettingRow>
             </StackPanel>
           </Border>
         </StackPanel>
@@ -242,7 +245,9 @@
           <TextBlock Text="About" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
           <Border Style="{StaticResource CardBox}" Padding="24,4">
             <StackPanel>
-              <ctl:SettingRow Title="AltDeck" Description="A multi-account Roblox launcher for your own accounts."/>
+              <ctl:SettingRow Title="{Binding AboutTitle, Mode=OneWay}" Description="A multi-account Roblox launcher for your own accounts.">
+                <Button Content="Check for updates" Margin="0" Command="{Binding CheckForUpdatesCommand}"/>
+              </ctl:SettingRow>
             </StackPanel>
           </Border>
         </StackPanel>

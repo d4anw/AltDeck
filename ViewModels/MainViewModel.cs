@@ -154,6 +154,7 @@ public partial class MainViewModel : ObservableObject
         _logWatcher.Disconnected += OnClientDisconnected;
         try { _sizeKeeper = new WindowSizeKeeper(); } catch { }
         SetupFeatures();
+        SetupUpdates();
 
         _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); _store.Save(Settings); };
         _vaultTimer.Tick += (_, _) =>
@@ -193,6 +194,7 @@ public partial class MainViewModel : ObservableObject
         try { _sizeKeeper?.Dispose(); } catch { }
         try { _perf.ReleaseAll(); } catch { }
         try { _discord.Close(); } catch { }
+        InstallUpdateOnExit();
         Log(ActivityLog.Info, "AltDeck closed.");
     }
 

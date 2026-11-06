@@ -139,6 +139,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 | 🔁 **Recovery** | Auto-rejoin reads each client's Roblox log to catch disconnects; the first rejoin goes back to the same server. Auto-restart for crashes and windows "Not responding" for 30 s. Give-up limit, or keep trying every 5 minutes. Sign-ins are kept apart so clients don't sign each other out. |
 | 🖥️ **Home** | Live previews refreshed every second (a minimized window keeps its last picture). GPU load and video memory from Windows' own counters. Windows menu: Tile windows, Minimize all, save / restore layouts. |
 | 🎚️ **Performance** | FPS cap, MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
+| ⬆️ **Auto-update** | Checks GitHub Releases at start and every 6 hours, downloads the new `AltDeck.exe` in the background, checks it against GitHub's SHA-256, then asks to restart. Choose later and it installs when you close AltDeck. Switch it off or check by hand in Settings. |
 | ⏲️ **Automation** | Panic hotkey to stop every client, a stop timer (30m / 1h / 2h / 4h), hold-to-stop-all button, close to tray. |
 | 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy for bug reports. Also written to `%AppData%\AltDeck\logs`, kept for 14 days. |
 | 💬 **Discord** | "Playing AltDeck" on your Discord profile with how many alts are running. Works out of the box with the Discord desktop app open; switch it off in Settings. |
@@ -152,6 +153,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 1. Download **`AltDeck.exe`** from the [latest release](https://github.com/d4anw/AltDeck/releases/latest).
 2. Run it. It's one file, needs no install and doesn't need .NET.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the exe isn't code-signed: click **More info → Run anyway**.
+4. That's it: AltDeck **updates itself** whenever a new release comes out.
 
 > [!NOTE]
 > "Sign in with a browser" needs the **Microsoft Edge WebView2 Runtime**. It's already on Windows 11.
@@ -176,6 +178,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 - **Your data stays on your PC.** Accounts, settings and logs live in `%AppData%\AltDeck`, never in the exe or in this repo.
 - **Sign-ins are encrypted** with Windows DPAPI, or your master password if you set one.
 - **Nothing is sent anywhere except Roblox**, plus your running-alt count to the Discord app on your PC (switch it off in Settings).
+- **Updates come only from this repo's GitHub Releases** and are checked against GitHub's SHA-256 before they're installed.
 - **No telemetry**, no accounts, no AltDeck server.
 - **Nothing is injected into Roblox.** Window sizing uses a hook that watches from outside, and graphics settings use Roblox's own FastFlags file, which is put back after launch.
 
@@ -206,6 +209,8 @@ Needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 The version shown in the app, the exe's details and backups all come from `<Version>` in `AltDeck.csproj`.
 
+**Releasing an update:** raise `<Version>`, build the exe, and publish a GitHub release tagged `v<version>` with the file attached as exactly `AltDeck.exe`. Everyone's AltDeck picks it up within 6 hours (or at their next start).
+
 <br>
 
 ## 📁 Project layout
@@ -226,9 +231,10 @@ AltDeck/
 ## 📝 Changelog
 
 <details open>
-<summary><b>Not released yet</b></summary>
+<summary><b>0.4.2</b></summary>
 <br>
 
+- **Auto-update:** AltDeck downloads new releases from GitHub by itself and installs them on restart (Settings → General, and "Check for updates" under About).
 - Discord status works out of the box: AltDeck has its own built-in Discord app, so there's no Application ID to fill in.
 - Auto-rejoin also catches Roblox's "Disconnected" box (Error 277 and the like) by reading each client's log in `%LocalAppData%\Roblox\logs`. Teleports (285) are ignored; Error 273 is logged but not rejoined. A client that hasn't joined after 3 minutes counts as a failed join.
 - The first rejoin goes back to the same server; later tries go to any server. Private servers keep their own link. After a shutdown (275), a 279 or a client that never got in, the first rejoin picks a different server.

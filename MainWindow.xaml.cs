@@ -17,6 +17,8 @@ public partial class MainWindow : Window
     private readonly HotkeyService _hotkey = new();
     private bool _reallyExit;       // true when the person chose Quit (or Windows is signing out): Close must not hide to the tray
     private bool _trayTipShown;
+    private bool _updatePrompted;      // ask about an update once per run
+    private bool _restartAfterUpdate;  // the person chose "Restart now"
 
     public MainWindow()
     {
@@ -45,6 +47,7 @@ public partial class MainWindow : Window
             _tray.Balloon("AltDeck", _vm.StatusMessage);
         };
         _tray.QuitRequested += () => { _reallyExit = true; Close(); };
+        _vm.UpdateReady += u => Dispatcher.InvokeAsync(() => AskToRestartForUpdate(u));
         _vm.Notify += msg => { if (!IsVisible) _tray.Balloon("AltDeck", msg); };
         _vm.PropertyChanged += (_, e) =>
         {
@@ -104,8 +107,28 @@ public partial class MainWindow : Window
         {
             try { _hotkey.Dispose(); } catch { }
             try { _tray.Dispose(); } catch { }
-            _vm.Shutdown();
+            _vm.Shutdown();   // also installs a downloaded update
+            if (_restartAfterUpdate) try { Updater.Restart(); } catch { }
         };
+    }
+
+    private void AskToRestartForUpdate(UpdateInfo u)
+    {
+        if (_updatePrompted) return;
+        _updatePrompted = true;
+        if (!IsVisible)
+        {
+            _tray.Balloon("AltDeck update ready", $"AltDeck {u.Version} installs the next time AltDeck starts.");
+            return;
+        }
+        var answer = MessageBox.Show(this,
+            $"AltDeck {u.Version} is downloaded and ready.\n\nRestart AltDeck now to install it? Your Roblox clients keep running.\n\n" +
+            "Choose No to install it the next time you close AltDeck.",
+            "Update ready", MessageBoxButton.YesNo, MessageBoxImage.Information);
+        if (answer != MessageBoxResult.Yes) return;
+        _restartAfterUpdate = true;
+        _reallyExit = true;
+        Close();
     }
 
     /// <summary>Shows the window (from the tray, minimized or behind other apps). Used when AltDeck is started a second time.</summary>

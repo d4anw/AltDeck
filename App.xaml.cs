@@ -14,6 +14,7 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        Updater.WaitForPreviousCopy(e.Args);   // started by an update: let the old copy finish closing first
         _instance = new Mutex(true, InstanceName, out bool firstCopy);
         if (!firstCopy)
         {
