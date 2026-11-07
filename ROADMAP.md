@@ -29,12 +29,12 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
   - [x] Works for every launch (single or multi); normal Roblox is put back afterwards
 
 ## Phase 2: 🎮 Games → 0.6
-- [ ] Charts: Top Trending, Popular, Top Earning, Up-and-Coming… (icon, name, players online, like %)
-- [ ] Search games
-- [ ] Game page: pictures, description, creator, players, visits, likes, favourite
-- [ ] Server finder: sort by best ping, fewest / most players, servers with your friends
-- [ ] "Join best server" with one account or several alts
-- [ ] Favourites and recently played
+- [x] Charts: Top Trending, Popular, Top Earning, Up-and-Coming… (icon, name, players online, like %)
+- [x] Search games
+- [x] Game page: pictures, description, creator, players, visits, likes, favourite
+- [x] Server finder: sort by best ping, fewest / most players, servers with your friends
+- [x] "Join best server" with one account or several alts
+- [x] Favourites and recently played
 
 ## Phase 3: 👥 Friends → 0.7
 - [ ] Friend list: online / in game / offline, and which game

@@ -22,7 +22,11 @@ public partial class MainViewModel
         Page = "Multi";
     }
 
-    partial void OnPageChanged(string value) => MaybeLoadHome();
+    partial void OnPageChanged(string value)
+    {
+        MaybeLoadHome();
+        MaybeLoadGames();
+    }
 
     [RelayCommand] private void GoPage(string? page) => Page = string.IsNullOrEmpty(page) ? "Home" : page;
     [RelayCommand] private void GoMultiTab(string? tab) => GoMulti(string.IsNullOrEmpty(tab) ? "Running" : tab);

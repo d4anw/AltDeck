@@ -109,10 +109,14 @@ public class LogKindBrushConverter : IValueConverter
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
 
-/// <summary>A count: Visible when above 0, else Collapsed.</summary>
+/// <summary>A count: Visible when above 0, else Collapsed. With ConverterParameter=Inverse: Visible only when 0.</summary>
 public class CountToVisibilityConverter : IValueConverter
 {
-    public object Convert(object? v, Type t, object? p, CultureInfo c) =>
-        v is int n && n > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public object Convert(object? v, Type t, object? p, CultureInfo c)
+    {
+        bool any = v is int n && n > 0;
+        if (string.Equals(p as string, "Inverse", StringComparison.OrdinalIgnoreCase)) any = !any;
+        return any ? Visibility.Visible : Visibility.Collapsed;
+    }
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }

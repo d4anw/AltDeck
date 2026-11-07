@@ -1,0 +1,291 @@
+<UserControl x:Class="AltDeck.Views.GamesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:AltDeck.Controls">
+  <Grid>
+    <!-- ================= the list: charts, search, favourites, recently played ================= -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Visibility="{Binding IsGameOpen, Converter={StaticResource BoolVisInv}}">
+      <StackPanel Margin="32,26,32,32">
+        <Grid>
+          <TextBlock Text="Games" FontSize="28" FontWeight="Bold" VerticalAlignment="Center"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Grid Width="320" Margin="0,0,10,0">
+              <TextBox x:Name="Search" Text="{Binding GameSearchText, UpdateSourceTrigger=PropertyChanged}" Padding="38,9,12,9"
+                       KeyDown="Search_KeyDown"/>
+              <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="14,0,0,0"
+                         VerticalAlignment="Center" IsHitTestVisible="False" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="Search games, press Enter" Margin="38,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                         Foreground="{DynamicResource Muted}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding GameSearchText}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Grid>
+            <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh" Margin="0" Command="{Binding RefreshGamesCommand}"/>
+          </StackPanel>
+        </Grid>
+
+        <!-- chips -->
+        <ItemsControl ItemsSource="{Binding ChartChips}" Margin="0,18,0,0">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Button Margin="0,0,8,8" Command="{Binding DataContext.SelectChartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      CommandParameter="{Binding Id}">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource Chip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{Binding Icon}" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center"
+                             Margin="0,0,7,0" Visibility="{Binding Icon, Converter={StaticResource EmptyCollapsed}}"/>
+                  <TextBlock Text="{Binding Name}"/>
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Text="{Binding GamesTitle}" FontSize="20" FontWeight="Bold" Margin="2,14,0,2"/>
+        <TextBlock Text="{Binding GamesInfo}" Margin="2,0,0,14" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                   Visibility="{Binding GamesInfo, Converter={StaticResource EmptyCollapsed}}"/>
+
+        <ctl:StateView State="{Binding ChartsLoad.State}" Message="{Binding ChartsLoad.Message}" MinHeight="260"
+                       EmptyText="No games here." RetryCommand="{Binding RefreshGamesCommand}">
+          <Grid>
+            <ItemsControl ItemsSource="{Binding ShownGames}" ItemTemplate="{StaticResource GameTileTemplate}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <TextBlock Text="Nothing here yet." Style="{StaticResource MutedText}" Margin="2,8,0,0"
+                       Visibility="{Binding ShownGames.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+          </Grid>
+        </ctl:StateView>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- ================= one game ================= -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Visibility="{Binding IsGameOpen, Converter={StaticResource BoolVis}}">
+      <StackPanel Margin="32,22,32,32">
+        <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseGameCommand}" Margin="-8,0,0,10">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE72B;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock Text="{Binding GamesTitle, StringFormat='Back to {0}'}"/>
+          </StackPanel>
+        </Button>
+
+        <ctl:StateView State="{Binding GameLoad.State}" Message="{Binding GameLoad.Message}" MinHeight="300"
+                       RetryCommand="{Binding RetryOpenGameCommand}">
+          <StackPanel>
+            <!-- top: pictures left, info right -->
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.35*"/>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <Grid>
+                  <Viewbox Stretch="Uniform">
+                    <ctl:RemoteImage Url="{Binding SelectedMedia}" Width="768" Height="432" CornerRadius="28"/>
+                  </Viewbox>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding OpenGame.Media}" Margin="0,10,0,0">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Padding="0" Margin="0,0,8,8" Cursor="Hand"
+                              Command="{Binding DataContext.ShowMediaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              CommandParameter="{Binding}">
+                        <Button.Template>
+                          <ControlTemplate TargetType="Button"><ContentPresenter/></ControlTemplate>
+                        </Button.Template>
+                        <ctl:RemoteImage Url="{Binding}" Width="96" Height="54" CornerRadius="8"/>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <StackPanel Grid.Column="2">
+                <StackPanel Orientation="Horizontal">
+                  <ctl:RemoteImage Url="{Binding OpenGame.IconUrl}" Width="84" Height="84" CornerRadius="18"/>
+                  <StackPanel Margin="16,0,0,0" VerticalAlignment="Center" MaxWidth="320">
+                    <TextBlock Text="{Binding OpenGame.Name}" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding OpenGameMeta}" Margin="0,4,0,0" FontSize="12" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
+                  </StackPanel>
+                </StackPanel>
+                <TextBlock Text="{Binding OpenGameStats}" Margin="0,16,0,18" TextWrapping="Wrap" LineHeight="22"/>
+
+                <Button Style="{StaticResource Primary}" HorizontalAlignment="Stretch" Margin="0,0,0,8" Padding="16,13"
+                        Command="{Binding PlayOpenGameCommand}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock FontWeight="SemiBold"><Run Text="Play as"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue='…'}"/></TextBlock>
+                  </StackPanel>
+                </Button>
+                <UniformGrid Columns="3">
+                  <Button Content="With alts…" Margin="0,0,8,0" Command="{Binding PlayOpenGameWithAltsCommand}"
+                          ToolTip="Fill this game in Multi-launch → Launch to pick several accounts"/>
+                  <Button Margin="0,0,8,0" Command="{Binding ToggleFavouriteGameCommand}">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,7,0">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="&#xE734;"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding OpenGameIsFavourite}" Value="True">
+                                <Setter Property="Text" Value="&#xE735;"/>
+                                <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                      <TextBlock Text="Favourite"/>
+                    </StackPanel>
+                  </Button>
+                  <Button Content="Roblox.com" Margin="0" Command="{Binding OpenGameOnWebCommand}"/>
+                </UniformGrid>
+              </StackPanel>
+            </Grid>
+
+            <!-- description -->
+            <Border Style="{StaticResource CardBox}" Margin="0,22,0,0" Padding="22,18">
+              <StackPanel>
+                <TextBlock Text="About" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto">
+                  <TextBlock Text="{Binding OpenGame.Description}" TextWrapping="Wrap" LineHeight="21" Style="{StaticResource MutedText}"/>
+                </ScrollViewer>
+              </StackPanel>
+            </Border>
+
+            <!-- server finder -->
+            <Border Style="{StaticResource CardBox}" Margin="0,16,0,0" Padding="22,18">
+              <StackPanel>
+                <Grid>
+                  <StackPanel>
+                    <TextBlock Text="Servers" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding ServersInfo}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="Best server with alts…" Command="{Binding JoinServerWithAltsCommand}"
+                            ToolTip="Fill the lowest-ping server in Multi-launch → Launch"/>
+                    <Button Style="{StaticResource Primary}" Margin="0" Command="{Binding JoinBestServerCommand}"
+                            ToolTip="Join the server with the lowest ping that has room, with the account top right">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE945;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Join best server"/>
+                      </StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Grid>
+
+                <Grid Margin="0,14,0,10">
+                  <StackPanel Orientation="Horizontal">
+                    <RadioButton Style="{StaticResource Seg}" Content="Best ping" GroupName="serversort"
+                                 IsChecked="{Binding ServerSort, Converter={StaticResource Eq}, ConverterParameter=Ping, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Seg}" Content="Fewest players" GroupName="serversort"
+                                 IsChecked="{Binding ServerSort, Converter={StaticResource Eq}, ConverterParameter=Fewest, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Seg}" Content="Most players" GroupName="serversort"
+                                 IsChecked="{Binding ServerSort, Converter={StaticResource Eq}, ConverterParameter=Most, Mode=TwoWay}"/>
+                    <RadioButton Style="{StaticResource Seg}" Content="Friends first" GroupName="serversort" Margin="0"
+                                 IsChecked="{Binding ServerSort, Converter={StaticResource Eq}, ConverterParameter=Friends, Mode=TwoWay}"/>
+                  </StackPanel>
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" HorizontalAlignment="Right" Margin="0"
+                          ToolTip="Find servers again" Command="{Binding RefreshServersCommand}"/>
+                </Grid>
+
+                <!-- column titles -->
+                <Grid Margin="10,0,10,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Ping" FontSize="12" Style="{StaticResource MutedText}"
+                             ToolTip="Roblox's figure for the server: the average ping of the players in it. Servers near you usually show lower."/>
+                  <TextBlock Grid.Column="1" Text="Players" FontSize="12" Style="{StaticResource MutedText}"/>
+                  <TextBlock Grid.Column="2" Text="FPS" FontSize="12" Style="{StaticResource MutedText}"/>
+                </Grid>
+
+                <ctl:StateView State="{Binding ServersLoad.State}" Message="{Binding ServersLoad.Message}" MinHeight="140"
+                               EmptyText="No public servers with room right now." RetryCommand="{Binding RefreshServersCommand}">
+                  <ItemsControl ItemsSource="{Binding Servers}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{DynamicResource Card2}" CornerRadius="12" Padding="10,8" Margin="0,0,0,6">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="110"/>
+                              <ColumnDefinition Width="200"/>
+                              <ColumnDefinition Width="70"/>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                              <Ellipse Width="8" Height="8" Margin="0,0,8,0">
+                                <Ellipse.Style>
+                                  <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{DynamicResource Accent}"/>
+                                    <Style.Triggers>
+                                      <DataTrigger Binding="{Binding PingLevel}" Value="0"><Setter Property="Fill" Value="#3DDC84"/></DataTrigger>
+                                      <DataTrigger Binding="{Binding PingLevel}" Value="2"><Setter Property="Fill" Value="{DynamicResource Red}"/></DataTrigger>
+                                    </Style.Triggers>
+                                  </Style>
+                                </Ellipse.Style>
+                              </Ellipse>
+                              <TextBlock Text="{Binding PingText}" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                              <ProgressBar Width="110" Height="6" Maximum="1" Value="{Binding Fill, Mode=OneWay}" BorderThickness="0"
+                                           Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}" Margin="0,0,10,0"/>
+                              <TextBlock Text="{Binding PlayersText}" FontFamily="Consolas"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding FpsText}" FontFamily="Consolas" VerticalAlignment="Center"
+                                       Style="{StaticResource MutedText}"/>
+                            <Border Grid.Column="3" HorizontalAlignment="Left" Background="{DynamicResource Page}" CornerRadius="9" Padding="9,2"
+                                    VerticalAlignment="Center" Visibility="{Binding HasFriends, Converter={StaticResource BoolVis}}"
+                                    ToolTip="{Binding Friends}">
+                              <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Accent}" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding Friends}" FontSize="11" MaxWidth="180" TextTrimming="CharacterEllipsis"/>
+                              </StackPanel>
+                            </Border>
+                            <StackPanel Grid.Column="4" Orientation="Horizontal">
+                              <Button Content="Alts…" Padding="12,6"
+                                      Command="{Binding DataContext.JoinServerWithAltsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding}"/>
+                              <Button Content="Join" Style="{StaticResource Primary}" Padding="16,6" Margin="0"
+                                      Command="{Binding DataContext.JoinServerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding}"/>
+                            </StackPanel>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ctl:StateView>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ctl:StateView>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

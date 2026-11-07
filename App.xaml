@@ -659,5 +659,83 @@
         </Setter.Value>
       </Setter>
     </Style>
+
+    <!-- A game tile (Home rows, Games page). Click opens the game page; the ▶ plays with the account top right;
+         right-click for more. Works inside any page whose DataContext is the main view-model. -->
+    <DataTemplate x:Key="GameTileTemplate">
+      <Grid x:Name="Root" Width="150" Margin="0,0,14,14">
+        <Button Padding="0" Cursor="Hand" HorizontalContentAlignment="Left" ToolTip="{Binding Name}"
+                Command="{Binding DataContext.OpenGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                CommandParameter="{Binding}"
+                Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+          <Button.Template>
+            <ControlTemplate TargetType="Button">
+              <Border x:Name="b" Background="Transparent" CornerRadius="16" Padding="0,0,0,6">
+                <ContentPresenter/>
+              </Border>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                  <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Button.Template>
+          <Button.ContextMenu>
+            <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+              <MenuItem Header="Open game page" Command="{Binding OpenGameCommand}"
+                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+              <MenuItem Command="{Binding PlayGameCommand}"
+                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                <MenuItem.Header>
+                  <TextBlock><Run Text="Play with"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue='this account'}"/></TextBlock>
+                </MenuItem.Header>
+              </MenuItem>
+              <MenuItem Header="Play with several alts…" Command="{Binding PlayGameWithAltsCommand}"
+                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+              <Separator/>
+              <MenuItem Header="Open on roblox.com" Command="{Binding OpenGameOnWebCommand}"
+                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            </ContextMenu>
+          </Button.ContextMenu>
+          <StackPanel>
+            <ctl:RemoteImage Url="{Binding IconUrl}" Width="150" Height="150" CornerRadius="14"/>
+            <TextBlock Text="{Binding Name}" Margin="6,8,6,2" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+            <StackPanel Orientation="Horizontal" Margin="6,0">
+              <TextBlock Text="&#xE8E1;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center"
+                         Foreground="{DynamicResource Muted}" Margin="0,0,4,0"
+                         Visibility="{Binding HasLikes, Converter={StaticResource BoolVis}}"/>
+              <TextBlock Text="{Binding LikeText}" FontSize="11" Foreground="{DynamicResource Muted}" Margin="0,0,10,0"/>
+              <TextBlock Text="{Binding PlayingText}" FontSize="11" Foreground="{DynamicResource Muted}"/>
+            </StackPanel>
+          </StackPanel>
+        </Button>
+        <!-- quick play -->
+        <Button Width="40" Height="40" Margin="0,104,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
+                ToolTip="Play now with the account top right"
+                Command="{Binding DataContext.PlayGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                CommandParameter="{Binding}">
+          <Button.Style>
+            <Style TargetType="Button">
+              <Setter Property="Opacity" Value="0"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="Button">
+                    <Border CornerRadius="20" Background="{DynamicResource Accent}">
+                      <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="14" Foreground="{DynamicResource AccentFg}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                    </Border>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, ElementName=Root}" Value="True">
+                  <Setter Property="Opacity" Value="1"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Button.Style>
+        </Button>
+      </Grid>
+    </DataTemplate>
   </Application.Resources>
 </Application>

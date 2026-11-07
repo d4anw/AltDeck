@@ -3,55 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctl="clr-namespace:AltDeck.Controls">
   <UserControl.Resources>
-    <!-- a game in a row: icon, name, players and likes. Click plays with the account top right, right-click for more. -->
-    <DataTemplate x:Key="GameTileTemplate">
-      <Button Width="150" Margin="0,0,14,0" Padding="0" Cursor="Hand" HorizontalContentAlignment="Left"
-              Command="{Binding DataContext.PlayGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-              CommandParameter="{Binding}" MouseRightButtonUp="GameTile_RightClick"
-              ToolTip="{Binding Name}">
-        <Button.Template>
-          <ControlTemplate TargetType="Button">
-            <Border x:Name="b" Background="Transparent" CornerRadius="16" Padding="0,0,0,6">
-              <ContentPresenter/>
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Button.Template>
-        <StackPanel>
-          <Grid>
-            <ctl:RemoteImage Url="{Binding IconUrl}" Width="150" Height="150" CornerRadius="14"/>
-            <Border x:Name="Play" Background="#B0000000" CornerRadius="14" Opacity="0">
-              <Border Width="44" Height="44" CornerRadius="22" Background="{DynamicResource Accent}"
-                      HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource AccentFg}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
-              </Border>
-            </Border>
-          </Grid>
-          <TextBlock Text="{Binding Name}" Margin="6,8,6,2" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-          <StackPanel Orientation="Horizontal" Margin="6,0">
-            <TextBlock Text="&#xE8E1;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center"
-                       Foreground="{DynamicResource Muted}" Margin="0,0,4,0"
-                       Visibility="{Binding HasLikes, Converter={StaticResource BoolVis}}"/>
-            <TextBlock Text="{Binding LikeText}" FontSize="11" Style="{StaticResource MutedText}" Margin="0,0,10,0"/>
-            <TextBlock Text="{Binding PlayingText}" FontSize="11" Style="{StaticResource MutedText}"/>
-          </StackPanel>
-        </StackPanel>
-        <Button.Triggers>
-          <EventTrigger RoutedEvent="MouseEnter">
-            <BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Play" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard>
-          </EventTrigger>
-          <EventTrigger RoutedEvent="MouseLeave">
-            <BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Play" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/></Storyboard></BeginStoryboard>
-          </EventTrigger>
-        </Button.Triggers>
-      </Button>
-    </DataTemplate>
-
     <!-- a row's header: title, refresh / scroll buttons -->
     <Style x:Key="RowScroll" TargetType="ScrollViewer">
       <Setter Property="HorizontalScrollBarVisibility" Value="Hidden"/>

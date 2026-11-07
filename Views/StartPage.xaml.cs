@@ -33,17 +33,6 @@ public partial class StartPage : UserControl
 
     // ---- right-click menus
 
-    private void GameTile_RightClick(object sender, MouseButtonEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is not GameTile g) return;
-        var who = VM.CurrentAccount?.Label ?? "this account";
-        MenuHelper.Show((FrameworkElement)sender,
-            ($"Play with {who}", () => VM.PlayGameCommand.Execute(g)),
-            ("Play with several alts…", () => VM.PlayGameWithAltsCommand.Execute(g)),
-            ("Open on roblox.com", () => OpenUrl($"https://www.roblox.com/games/{g.PlaceId}")));
-        e.Handled = true;
-    }
-
     private void Friend_RightClick(object sender, MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not FriendTile f) return;

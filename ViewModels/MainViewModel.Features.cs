@@ -293,7 +293,7 @@ public partial class MainViewModel
     }
 
     /// <summary>Puts accounts in the launch queue for this target and starts the queue if it isn't running.</summary>
-    private async Task LaunchAccountsAsync(List<Account> accounts, string targetText, string? via = null)
+    private async Task LaunchAccountsAsync(List<Account> accounts, string targetText, string? via = null, bool showRunning = true)
     {
         if (accounts.Count == 0) return;
         var target = TargetParser.Parse(targetText);
@@ -333,7 +333,8 @@ public partial class MainViewModel
         Log(ActivityLog.Launch, $"Queued {added} account{(added == 1 ? "" : "s")} for {DescribeTarget(target)}{(via != null ? " (" + via + ")" : "")}.");
         _queueGeneration++;
         QueueVisible = true;
-        GoMulti("Running");
+        if (showRunning) GoMulti("Running");
+        RememberRecent(target.PlaceId);
         if (QueueRunning) UpdateQueueTexts(null, null);
         else _ = RunQueueAsync();
     }

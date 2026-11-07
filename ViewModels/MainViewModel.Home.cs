@@ -79,7 +79,7 @@ public partial class MainViewModel
         if (g == null || g.PlaceId == 0) return;
         if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; return; }
         _placeNames[g.PlaceId] = g.Name;
-        await LaunchAccountsAsync(new List<Account> { a }, $"https://www.roblox.com/games/{g.PlaceId}", "Home");
+        await LaunchAccountsAsync(new List<Account> { a }, $"https://www.roblox.com/games/{g.PlaceId}", "Home", showRunning: false);
     }
 
     /// <summary>Open the game in Multi-launch → Launch, to pick several alts.</summary>
@@ -107,7 +107,7 @@ public partial class MainViewModel
         }
         if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; return; }
         if (!string.IsNullOrEmpty(f.Location)) _placeNames[f.PlaceId] = f.Location;
-        await LaunchAccountsAsync(new List<Account> { a }, FriendTarget(f), "join " + f.Label);
+        await LaunchAccountsAsync(new List<Account> { a }, FriendTarget(f), "join " + f.Label, showRunning: false);
     }
 
     [RelayCommand]

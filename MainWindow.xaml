@@ -191,9 +191,7 @@
                 BorderBrush="{DynamicResource Line}" BorderThickness="1">
           <Grid>
             <views:StartPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Home}"/>
-            <views:ComingSoonPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Games}"
-                                  Icon="&#xE7FC;" Title="Games" Version="0.6"
-                                  Body="Charts like Top Trending, Popular and Up-and-Coming, search, and a page for every game. Its server finder sorts servers by best ping, fewest or most players, or where your friends are, and joins the best one with one account or several alts."/>
+            <views:GamesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Games}"/>
             <views:ComingSoonPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Avatar}"
                                   Icon="&#xE77B;" Title="Avatar" Version="0.8"
                                   Body="Change what any of your accounts wears: inventory by category, body colours, scales, R6 / R15 and outfits. Copy one account's look to another alt in one click."/>
