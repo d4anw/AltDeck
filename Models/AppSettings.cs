@@ -18,7 +18,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private string density = "Detailed";
     [ObservableProperty] private bool showOnDiscord = true;
     [ObservableProperty] private bool autoUpdate = true;
-    [ObservableProperty] private string lastSeenVersion = "";   // to show "What's new" once after an update
+    [ObservableProperty] private string lastSeenVersion = "";
+    [ObservableProperty] private string currentAccountId = "";   // the account Home, Games, Avatar, Friends… show (top right)   // to show "What's new" once after an update
     [ObservableProperty] private string discordAppId = "";   // not used any more (AltDeck has its own built-in app); kept so older settings.json files load as before
     [ObservableProperty] private bool closeToTray;
     [ObservableProperty] private bool skipSplash;

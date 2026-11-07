@@ -240,6 +240,30 @@ public partial class MainWindow : Window
         return IntPtr.Zero;   // not handled, so WPF still applies the minimum size
     }
 
+    /// <summary>Top right: pick which account the pages show, or go manage accounts.</summary>
+    private void AccountBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = AccountBtn,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom
+        };
+        foreach (var a in _vm.Accounts.OrderByDescending(x => x.IsFavourite).ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase))
+        {
+            var header = a.Label + (string.IsNullOrEmpty(a.Username) || a.Username == a.Label ? "" : $"  (@{a.Username})")
+                       + (a.StatusKind == "signedout" ? "  · signed out" : "");
+            var item = new System.Windows.Controls.MenuItem { Header = header, IsCheckable = true, IsChecked = a == _vm.CurrentAccount };
+            var account = a;
+            item.Click += (_, _) => _vm.SwitchAccountCommand.Execute(account);
+            menu.Items.Add(item);
+        }
+        if (_vm.Accounts.Count > 0) menu.Items.Add(new System.Windows.Controls.Separator());
+        var manage = new System.Windows.Controls.MenuItem { Header = _vm.Accounts.Count > 0 ? "Manage accounts…" : "Add an account…" };
+        manage.Click += (_, _) => _vm.GoMultiTabCommand.Execute("Accounts");
+        menu.Items.Add(manage);
+        menu.IsOpen = true;
+    }
+
     private void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
     private void Max_Click(object sender, RoutedEventArgs e) =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;

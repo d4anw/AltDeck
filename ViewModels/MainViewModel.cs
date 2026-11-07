@@ -155,6 +155,7 @@ public partial class MainViewModel : ObservableObject
         try { _sizeKeeper = new WindowSizeKeeper(); } catch { }
         SetupFeatures();
         SetupUpdates();
+        SetupShell();
 
         _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); _store.Save(Settings); };
         _vaultTimer.Tick += (_, _) =>
@@ -674,7 +675,7 @@ public partial class MainViewModel : ObservableObject
         if (TargetParser.Parse(TargetText) == null)
         {
             foreach (var x in Accounts) x.IsSelected = x == a;
-            Page = "Play";
+            GoMulti("Launch");
             StatusMessage = "Paste where to play, then launch.";
             return;
         }
@@ -683,7 +684,7 @@ public partial class MainViewModel : ObservableObject
 
     // ------------------------------------------------------------------ navigation / small commands
 
-    [RelayCommand] private void GoPlay() => Page = "Play";
+    [RelayCommand] private void GoPlay() => GoMulti("Launch");
     [RelayCommand] private void GoPerformance() => Page = "Performance";
     [RelayCommand] private void Soon(string? what) => StatusMessage = (what ?? "That") + " is coming in a later version.";
 
@@ -698,7 +699,7 @@ public partial class MainViewModel : ObservableObject
     private async Task HomePlayAsync()
     {
         if (CanLaunch) await LaunchAsync();
-        else Page = "Play";
+        else GoMulti("Launch");
     }
 
     [RelayCommand]
@@ -1342,7 +1343,7 @@ public partial class MainViewModel : ObservableObject
             StatusMessage = string.IsNullOrEmpty(p.Location)
                 ? "Found them. Choose who's playing, then launch."
                 : $"Found them in {p.Location}. Choose who's playing, then launch.";
-            Page = "Play";
+            GoMulti("Launch");
         }
         catch (Exception ex) { StatusMessage = "Couldn't check where they are: " + ex.Message; }
     }

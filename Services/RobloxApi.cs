@@ -9,7 +9,7 @@ namespace AltDeck.Services;
 
 public static class RobloxApi
 {
-    static readonly HttpClient Http = CreateClient();
+    internal static readonly HttpClient Http = CreateClient();   // shared with RobloxHttp
     public record UserInfo(long Id, string Name, string DisplayName);
 
     static HttpClient CreateClient()

@@ -333,7 +333,7 @@ public partial class MainViewModel
         Log(ActivityLog.Launch, $"Queued {added} account{(added == 1 ? "" : "s")} for {DescribeTarget(target)}{(via != null ? " (" + via + ")" : "")}.");
         _queueGeneration++;
         QueueVisible = true;
-        Page = "Home";
+        GoMulti("Running");
         if (QueueRunning) UpdateQueueTexts(null, null);
         else _ = RunQueueAsync();
     }
@@ -542,7 +542,7 @@ public partial class MainViewModel
     {
         foreach (var a in Accounts) a.IsSelected = a.CanPick && p.AccountIds.Contains(a.Id);
         TargetText = p.Target;
-        Page = "Play";
+        GoMulti("Launch");
         StatusMessage = $"Loaded {p.Name}. Change anything, then launch.";
     }
 
@@ -641,7 +641,7 @@ public partial class MainViewModel
     [RelayCommand]
     private void ShowNeedsSignIn()
     {
-        Page = "Accounts";
+        GoMulti("Accounts");
         StatusFilter = "Needs sign-in";
     }
 

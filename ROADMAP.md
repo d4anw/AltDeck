@@ -9,11 +9,11 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 ---
 
 ## Phase 0: The new app shell → 0.5
-- [ ] New sidebar with all the pages above
-- [ ] Account switcher top right (avatar, username, Robux); switching changes the account Home, Games, Avatar, Marketplace, Trades and Friends show
-- [ ] Shared Roblox connection layer: sign-in, security tokens, retries, rate limits
-- [ ] Picture cache for game icons, avatars and items
-- [ ] Shared loading, empty and error states for every page
+- [x] New sidebar with all the pages above
+- [x] Account switcher top right (avatar, username, Robux); switching changes the account Home, Games, Avatar, Marketplace, Trades and Friends show
+- [x] Shared Roblox connection layer: sign-in, security tokens, retries, rate limits
+- [x] Picture cache for game icons, avatars and items
+- [x] Shared loading, empty and error states for every page
 
 ## Phase 1: Home + Multi-launch + FPS → 0.5
 - [ ] 🏠 New Home: friends online (and what they're playing), continue playing, recommended games, your Robux

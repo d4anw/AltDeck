@@ -612,5 +612,50 @@
         </Setter.Value>
       </Setter>
     </Style>
+
+    <!-- StateView: a page's content, or Loading / Empty / Error in its place (Controls/StateView.cs) -->
+    <Style TargetType="ctl:StateView">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ctl:StateView">
+            <Grid>
+              <ContentPresenter x:Name="Body"/>
+              <StackPanel x:Name="LoadingPanel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Width="240">
+                <ProgressBar IsIndeterminate="True" Height="4" Foreground="{DynamicResource Accent}"
+                             Background="{DynamicResource Line}" BorderThickness="0"/>
+                <TextBlock Text="{TemplateBinding Message}" Margin="0,12,0,0" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Muted}" FontSize="12"/>
+              </StackPanel>
+              <StackPanel x:Name="EmptyPanel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360">
+                <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource Icons}" FontSize="28" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Muted}"/>
+                <TextBlock Text="{TemplateBinding EmptyText}" Margin="0,12,0,0" TextWrapping="Wrap" TextAlignment="Center"
+                           Foreground="{DynamicResource Muted}"/>
+              </StackPanel>
+              <StackPanel x:Name="ErrorPanel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380">
+                <TextBlock Text="&#xE783;" FontFamily="{StaticResource Icons}" FontSize="28" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Red}"/>
+                <TextBlock Text="{TemplateBinding Message}" Margin="0,12,0,14" TextWrapping="Wrap" TextAlignment="Center"/>
+                <Button Content="Try again" HorizontalAlignment="Center" Margin="0" Command="{TemplateBinding RetryCommand}"/>
+              </StackPanel>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="State" Value="Loading">
+                <Setter TargetName="Body" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="LoadingPanel" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <Trigger Property="State" Value="Empty">
+                <Setter TargetName="Body" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="EmptyPanel" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <Trigger Property="State" Value="Error">
+                <Setter TargetName="Body" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="ErrorPanel" Property="Visibility" Value="Visible"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </Application.Resources>
 </Application>

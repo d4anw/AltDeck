@@ -37,11 +37,14 @@ public class AvatarView : Grid
         SizeChanged += (_, _) => _txt.FontSize = Math.Max(10, ActualHeight * 0.38);
     }
 
-    private void UpdateImage()
+    private int _version;
+
+    // Through the shared picture cache, so the same avatar isn't downloaded again on every page.
+    private async void UpdateImage()
     {
-        if (Uri.TryCreate(Url, UriKind.Absolute, out var uri))
-            _img.Fill = new ImageBrush(new BitmapImage(uri)) { Stretch = Stretch.UniformToFill };
-        else
-            _img.Fill = null;
+        int v = ++_version;
+        var bmp = await AltDeck.Services.ImageCache.GetAsync(Url);
+        if (v != _version) return;
+        _img.Fill = bmp != null ? new ImageBrush(bmp) { Stretch = Stretch.UniformToFill } : null;
     }
 }
