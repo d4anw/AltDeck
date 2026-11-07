@@ -183,6 +183,7 @@ public partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
+        MaybeLoadHome();   // Home is the first page; load it while the sign-in checks run
         if (Accounts.Count > 0) await CheckAllAsync();
     }
 

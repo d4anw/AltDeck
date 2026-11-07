@@ -22,6 +22,8 @@ public partial class MainViewModel
         Page = "Multi";
     }
 
+    partial void OnPageChanged(string value) => MaybeLoadHome();
+
     [RelayCommand] private void GoPage(string? page) => Page = string.IsNullOrEmpty(page) ? "Home" : page;
     [RelayCommand] private void GoMultiTab(string? tab) => GoMulti(string.IsNullOrEmpty(tab) ? "Running" : tab);
 
@@ -42,6 +44,7 @@ public partial class MainViewModel
         var id = value?.Id ?? "";
         if (Settings.CurrentAccountId != id) Settings.CurrentAccountId = id;
         CurrentAccountChanged?.Invoke(value);
+        MaybeLoadHome();
     }
 
     [RelayCommand]

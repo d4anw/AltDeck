@@ -108,3 +108,11 @@ public class LogKindBrushConverter : IValueConverter
     }
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
+
+/// <summary>A count: Visible when above 0, else Collapsed.</summary>
+public class CountToVisibilityConverter : IValueConverter
+{
+    public object Convert(object? v, Type t, object? p, CultureInfo c) =>
+        v is int n && n > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}

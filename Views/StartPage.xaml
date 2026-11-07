@@ -2,7 +2,63 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctl="clr-namespace:AltDeck.Controls">
-  <!-- Home. Phase 0: who you are and shortcuts. Phase 1 adds friends online, continue playing and recommended games. -->
+  <UserControl.Resources>
+    <!-- a game in a row: icon, name, players and likes. Click plays with the account top right, right-click for more. -->
+    <DataTemplate x:Key="GameTileTemplate">
+      <Button Width="150" Margin="0,0,14,0" Padding="0" Cursor="Hand" HorizontalContentAlignment="Left"
+              Command="{Binding DataContext.PlayGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+              CommandParameter="{Binding}" MouseRightButtonUp="GameTile_RightClick"
+              ToolTip="{Binding Name}">
+        <Button.Template>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="Transparent" CornerRadius="16" Padding="0,0,0,6">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Button.Template>
+        <StackPanel>
+          <Grid>
+            <ctl:RemoteImage Url="{Binding IconUrl}" Width="150" Height="150" CornerRadius="14"/>
+            <Border x:Name="Play" Background="#B0000000" CornerRadius="14" Opacity="0">
+              <Border Width="44" Height="44" CornerRadius="22" Background="{DynamicResource Accent}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource AccentFg}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+              </Border>
+            </Border>
+          </Grid>
+          <TextBlock Text="{Binding Name}" Margin="6,8,6,2" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+          <StackPanel Orientation="Horizontal" Margin="6,0">
+            <TextBlock Text="&#xE8E1;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center"
+                       Foreground="{DynamicResource Muted}" Margin="0,0,4,0"
+                       Visibility="{Binding HasLikes, Converter={StaticResource BoolVis}}"/>
+            <TextBlock Text="{Binding LikeText}" FontSize="11" Style="{StaticResource MutedText}" Margin="0,0,10,0"/>
+            <TextBlock Text="{Binding PlayingText}" FontSize="11" Style="{StaticResource MutedText}"/>
+          </StackPanel>
+        </StackPanel>
+        <Button.Triggers>
+          <EventTrigger RoutedEvent="MouseEnter">
+            <BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Play" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard>
+          </EventTrigger>
+          <EventTrigger RoutedEvent="MouseLeave">
+            <BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Play" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/></Storyboard></BeginStoryboard>
+          </EventTrigger>
+        </Button.Triggers>
+      </Button>
+    </DataTemplate>
+
+    <!-- a row's header: title, refresh / scroll buttons -->
+    <Style x:Key="RowScroll" TargetType="ScrollViewer">
+      <Setter Property="HorizontalScrollBarVisibility" Value="Hidden"/>
+      <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
+    </Style>
+  </UserControl.Resources>
+
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="32,26,32,32">
 
@@ -22,11 +78,16 @@
             <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}"
                        Text="{Binding CurrentAccount.Username, Mode=OneWay, StringFormat='@{0}', FallbackValue='Add an account to get started.'}"/>
           </StackPanel>
-          <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"
-                      Visibility="{Binding CurrentAccount.RobuxText, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">
-            <TextBlock Text="Robux" Style="{StaticResource MutedText}" FontSize="12" HorizontalAlignment="Right"/>
-            <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay}" FontSize="20" FontWeight="Bold"
-                       Foreground="{DynamicResource Accent}" HorizontalAlignment="Right"/>
+          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel VerticalAlignment="Center" Margin="0,0,18,0"
+                        Visibility="{Binding CurrentAccount.RobuxText, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">
+              <TextBlock Text="Robux" Style="{StaticResource MutedText}" FontSize="12" HorizontalAlignment="Right"/>
+              <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay}" FontSize="20" FontWeight="Bold"
+                         Foreground="{DynamicResource Accent}" HorizontalAlignment="Right"/>
+            </StackPanel>
+            <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh Home" Margin="0"
+                    Command="{Binding RefreshHomeCommand}"
+                    Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}"/>
           </StackPanel>
         </Grid>
       </Border>
@@ -43,8 +104,96 @@
         </StackPanel>
       </Border>
 
+      <StackPanel Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}">
+
+        <!-- friends online -->
+        <Grid Margin="2,26,0,10">
+          <TextBlock Text="{Binding FriendsTitle}" FontSize="18" FontWeight="Bold"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=FriendsRow}"/>
+            <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=FriendsRow}"/>
+          </StackPanel>
+        </Grid>
+        <ctl:StateView State="{Binding FriendsLoad.State}" Message="{Binding FriendsLoad.Message}" MinHeight="120"
+                       EmptyText="None of this account's friends are online right now." RetryCommand="{Binding RefreshHomeCommand}">
+          <ScrollViewer x:Name="FriendsRow" Style="{StaticResource RowScroll}" PreviewMouseWheel="Row_Wheel">
+            <ItemsControl ItemsSource="{Binding OnlineFriends}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button Width="104" Margin="0,0,10,0" Padding="6,10" Cursor="Hand"
+                          Command="{Binding DataContext.JoinFriendCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}" MouseRightButtonUp="Friend_RightClick">
+                    <Button.ToolTip>
+                      <TextBlock>
+                        <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" (@"/><Run Text="{Binding Name, Mode=OneWay}"/><Run Text=")"/>
+                        <LineBreak/><Run Text="{Binding StatusText, Mode=OneWay}"/>
+                      </TextBlock>
+                    </Button.ToolTip>
+                    <Button.Template>
+                      <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="Transparent" CornerRadius="14" Padding="{TemplateBinding Padding}">
+                          <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Button.Template>
+                    <StackPanel>
+                      <Grid Width="64" Height="64" HorizontalAlignment="Center">
+                        <ctl:AvatarView Url="{Binding HeadshotUrl}" Initials="{Binding Initials}"/>
+                        <Border Width="16" Height="16" CornerRadius="8" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                BorderThickness="3" BorderBrush="{DynamicResource Page}"
+                                Background="{Binding StatusKind, Converter={StaticResource StatusBrush}}"/>
+                      </Grid>
+                      <TextBlock Text="{Binding Label}" Margin="0,8,0,0" HorizontalAlignment="Center" FontWeight="SemiBold"
+                                 TextTrimming="CharacterEllipsis" MaxWidth="92"/>
+                      <TextBlock Text="{Binding StatusText}" HorizontalAlignment="Center" FontSize="11" TextTrimming="CharacterEllipsis"
+                                 MaxWidth="92" Style="{StaticResource MutedText}"/>
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </ctl:StateView>
+
+        <!-- continue playing -->
+        <Grid Margin="2,26,0,10" Visibility="{Binding ContinueGames.Count, Converter={StaticResource CountVis}}">
+          <TextBlock Text="Continue playing" FontSize="18" FontWeight="Bold"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=ContinueRow}"/>
+            <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=ContinueRow}"/>
+          </StackPanel>
+        </Grid>
+        <ScrollViewer x:Name="ContinueRow" Style="{StaticResource RowScroll}" PreviewMouseWheel="Row_Wheel"
+                      Visibility="{Binding ContinueGames.Count, Converter={StaticResource CountVis}}">
+          <ItemsControl ItemsSource="{Binding ContinueGames}" ItemTemplate="{StaticResource GameTileTemplate}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <!-- recommended -->
+        <Grid Margin="2,26,0,10">
+          <TextBlock Text="Recommended for you" FontSize="18" FontWeight="Bold"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=RecRow}"/>
+            <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=RecRow}"/>
+          </StackPanel>
+        </Grid>
+        <ctl:StateView State="{Binding GamesLoad.State}" Message="{Binding GamesLoad.Message}" MinHeight="200"
+                       EmptyText="Roblox has no recommendations for this account yet." RetryCommand="{Binding RefreshHomeCommand}">
+          <ScrollViewer x:Name="RecRow" Style="{StaticResource RowScroll}" PreviewMouseWheel="Row_Wheel">
+            <ItemsControl ItemsSource="{Binding RecommendedGames}" ItemTemplate="{StaticResource GameTileTemplate}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </ScrollViewer>
+        </ctl:StateView>
+      </StackPanel>
+
       <!-- shortcuts -->
-      <UniformGrid Columns="3" Margin="0,16,0,0">
+      <UniformGrid Columns="3" Margin="0,28,0,0">
         <Button Margin="0,0,12,0" HorizontalContentAlignment="Left" Padding="20,18"
                 Command="{Binding GoMultiTabCommand}" CommandParameter="Running">
           <StackPanel>
@@ -74,15 +223,6 @@
           </StackPanel>
         </Button>
       </UniformGrid>
-
-      <!-- what's coming -->
-      <Border Style="{StaticResource CardBox}" Margin="0,16,0,0">
-        <StackPanel>
-          <TextBlock Text="Coming to Home" FontSize="16" FontWeight="SemiBold"/>
-          <TextBlock Margin="0,6,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap" LineHeight="22"
-                     Text="Friends online and what they're playing, games to continue, recommended games, all for the account you pick top right."/>
-        </StackPanel>
-      </Border>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

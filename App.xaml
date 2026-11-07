@@ -30,6 +30,7 @@
     <local:InverseBoolConverter x:Key="Not"/>
     <local:QueueStateBrushConverter x:Key="QueueBrush"/>
     <local:LogKindBrushConverter x:Key="LogBrush"/>
+    <local:CountToVisibilityConverter x:Key="CountVis"/>
 
     <!-- ===== text + containers ===== -->
     <Style x:Key="MutedText" TargetType="TextBlock">
