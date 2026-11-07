@@ -15,8 +15,8 @@ namespace AltDeck;
 /// </summary>
 public static class SmoothScroll
 {
-    private const double PixelsPerNotch = 110;   // one wheel click
-    private const double Ease = 0.22;            // share of the remaining distance covered each frame
+    private const double PixelsPerNotch = 80;    // one wheel click
+    private const double Ease = 0.18;            // share of the remaining distance covered each frame
 
     private static readonly Dictionary<ScrollViewer, double> Targets = new();
     private static bool _rendering;
