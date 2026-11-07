@@ -47,6 +47,20 @@
         <RadioButton Style="{StaticResource Seg}" GroupName="multitab" Content="Activity" Margin="0"
                      IsChecked="{Binding MultiTab, Converter={StaticResource Eq}, ConverterParameter=Activity, Mode=TwoWay}"/>
       </StackPanel>
+
+      <!-- hold for a second: closes every client, cancels the launch queue and pending rejoins -->
+      <Grid HorizontalAlignment="Right" VerticalAlignment="Center">
+        <Button x:Name="HoldBtn" Style="{StaticResource Danger}" Margin="0" Padding="16,9"
+                ToolTip="Hold for 1 second: closes every Roblox client AltDeck runs, and stops the launch queue and rejoins">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE71A;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+            <TextBlock Text="Hold to stop all"/>
+          </StackPanel>
+        </Button>
+        <ProgressBar x:Name="HoldBar" Height="3" Maximum="100" VerticalAlignment="Bottom" Margin="12,0,12,4"
+                     Foreground="White" Background="Transparent" BorderThickness="0"
+                     IsHitTestVisible="False" Visibility="Collapsed"/>
+      </Grid>
     </Grid>
 
     <Grid Grid.Row="1">

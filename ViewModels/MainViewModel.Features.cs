@@ -16,6 +16,8 @@ public partial class QueueItem : ObservableObject
 {
     public Account Account { get; init; } = null!;
     public LaunchTarget Target { get; init; } = null!;
+    /// <summary>From Multi-launch: auto-rejoin / auto-restart may bring it back (see ClientInfo.Farm).</summary>
+    public bool Farm { get; init; } = true;
     public string Name => Account.Label;
 
     [ObservableProperty]
@@ -293,8 +295,11 @@ public partial class MainViewModel
     }
 
     /// <summary>Puts accounts in the launch queue for this target and starts the queue if it isn't running.</summary>
-    private async Task LaunchAccountsAsync(List<Account> accounts, string targetText, string? via = null, bool showRunning = true)
+    /// <param name="launcher">Started from Home / Games (AltDeck as a normal launcher): stay on the page, don't farm
+    /// (no auto-rejoin / auto-restart), and if the account is already in a game, close that game first.</param>
+    private async Task LaunchAccountsAsync(List<Account> accounts, string targetText, string? via = null, bool launcher = false)
     {
+        bool showRunning = !launcher;
         if (accounts.Count == 0) return;
         var target = TargetParser.Parse(targetText);
         if (target == null) { StatusMessage = "Paste a game link or place ID first."; return; }
@@ -324,12 +329,26 @@ public partial class MainViewModel
             Log(ActivityLog.Info, $"Closed {closed} Roblox process(es) to take the multi-instance lock before launching.");
         }
 
+        if (launcher)
+        {
+            // Pressing Play / Join on a game means "go there now": close the game this account is in first.
+            var open = ClientMon.Clients.Where(c => c.IsAlive && c.Owner != null && accounts.Contains(c.Owner)).ToList();
+            if (open.Count > 0)
+            {
+                StatusMessage = $"Leaving {open[0].Name}'s current game…";
+                foreach (var c in open) ClientMon.KillNow(c);
+                for (int i = 0; i < 25 && open.Any(c => ProcessAlive(c.Pid)); i++) await Task.Delay(200);
+                foreach (var c in open) { ClientMon.Clients.Remove(c); if (c.Owner != null) c.Owner.IsPlaying = false; }
+                Log(ActivityLog.Stop, $"Closed {string.Join(", ", open.Select(c => c.Name))}'s game to join another one.");
+            }
+        }
+
         if (!QueueRunning) LaunchQueue.Clear();   // the last run's finished rows
         int added = 0;
         foreach (var a in accounts)
         {
             if (a.IsPlaying || LaunchQueue.Any(q => q.Account == a && !q.IsDone)) continue;
-            LaunchQueue.Add(new QueueItem { Account = a, Target = target });
+            LaunchQueue.Add(new QueueItem { Account = a, Target = target, Farm = !launcher });
             a.IsSelected = false;
             added++;
         }
@@ -391,7 +410,7 @@ public partial class MainViewModel
                     if (Settings.IsolateSignIns) SignInIsolation.LaunchStarted();
                     _lastLaunchAt = DateTime.UtcNow;
                     _perf.LaunchStarted();
-                    ClientMon.ExpectLaunch(a, next.Target);
+                    ClientMon.ExpectLaunch(a, next.Target, next.Farm);
                     foreach (var old in ClientMon.Clients.Where(c => c.Owner == a && c.IsClosed).ToList())
                         ClientMon.Clients.Remove(old);
                     _ = LoadPlaceNameAsync(a, next.Target.PlaceId);
@@ -714,5 +733,11 @@ public partial class MainViewModel
         Settings.Layouts.Remove(l);
         QueueSettingsSave();
         StatusMessage = $"Deleted layout {l.Name}.";
+    }
+
+    private static bool ProcessAlive(int pid)
+    {
+        try { using var p = System.Diagnostics.Process.GetProcessById(pid); return !p.HasExited; }
+        catch { return false; }
     }
 }

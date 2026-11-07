@@ -931,7 +931,7 @@ public partial class MainViewModel : ObservableObject
                 if (Settings.IsolateSignIns) SignInIsolation.LaunchStarted();
                 _lastLaunchAt = DateTime.UtcNow;
                 _perf.LaunchStarted();
-                ClientMon.ExpectLaunch(c.Owner, c.Target);
+                ClientMon.ExpectLaunch(c.Owner, c.Target, farm: true);   // a relaunch stays a farming client
                 ClientMon.Clients.Remove(c);
                 if (c.LastRect is { } r) _snapBack[c.Owner.Id] = (r, DateTime.UtcNow);
                 return RelaunchResult.Ok;
@@ -970,11 +970,12 @@ public partial class MainViewModel : ObservableObject
         };
 
         // 273 means the account is being played elsewhere: rejoining would kick that session, so leave it.
-        bool bringBack = Settings.AutoRejoin && c.Owner.BringBack && c.Target != null && code != 273;
+        bool bringBack = Settings.AutoRejoin && c.Farm && c.Owner.BringBack && c.Target != null && code != 273;
         if (!bringBack)
         {
             var why = code == 273 ? "Not rejoining so the other session isn't kicked."
                     : !Settings.AutoRejoin ? "Auto-rejoin is off, so it was left as it is."
+                    : !c.Farm ? "It was started from Home or Games, not Multi-launch, so it was left as it is."
                     : !c.Owner.BringBack ? "\"Bring it back if it drops\" is off for this account."
                     : "There's no game to rejoin.";
             Log(ActivityLog.Drop, $"{c.Name} {what}. {why}");
@@ -991,7 +992,7 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Whether a dropped client should still be brought back (nothing was turned off or pressed meanwhile).</summary>
     private bool StillWanted(ClientInfo c, int generation) =>
         generation == _rejoinGeneration && ClientMon.Clients.Contains(c) && c.IsClosed
-        && (Settings.AutoRejoin || Settings.AutoRestart) && c.Owner != null && c.Owner.BringBack;
+        && (Settings.AutoRejoin || Settings.AutoRestart) && c.Farm && c.Owner != null && c.Owner.BringBack;
 
     /// <summary>
     /// Waits until Roblox can be reached again (internet back, Roblox up). One shared wait for every client,
@@ -1031,7 +1032,7 @@ public partial class MainViewModel : ObservableObject
                 Log(ActivityLog.Drop, $"{c.Name}'s client closed without AltDeck closing it (after {c.Uptime}).");
 
             // Auto-rejoin and auto-restart both bring back a client whose process ended without AltDeck closing it.
-            if (!(Settings.AutoRejoin || Settings.AutoRestart) || c.Owner == null || !c.Owner.BringBack || c.Target == null) return;
+            if (!(Settings.AutoRejoin || Settings.AutoRestart) || !c.Farm || c.Owner == null || !c.Owner.BringBack || c.Target == null) return;
 
             int generation = _rejoinGeneration;
             if (!_rejoin.TryGetValue(c.Owner.Id, out var hist)) _rejoin[c.Owner.Id] = hist = new List<DateTime>();
@@ -1137,7 +1138,7 @@ public partial class MainViewModel : ObservableObject
         var now = DateTime.UtcNow;
         var frozen = ClientMon.Clients
             .Where(c => c.IsAlive && c.HungSince is DateTime t && now - t >= HungLimit
-                        && c.Owner != null && c.Owner.BringBack && c.Target != null)
+                        && c.Farm && c.Owner != null && c.Owner.BringBack && c.Target != null)
             .ToList();
         foreach (var c in frozen)
         {

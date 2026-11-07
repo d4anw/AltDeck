@@ -367,7 +367,7 @@ public partial class MainViewModel
         if (s == null || OpenGame is not { } g) return;
         if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; return; }
         _placeNames[g.PlaceId] = g.Name;
-        await LaunchAccountsAsync(new List<Account> { a }, ServerLink(g, s), "server finder", showRunning: false);
+        await LaunchAccountsAsync(new List<Account> { a }, ServerLink(g, s), "server finder", launcher: true);
     }
 
     [RelayCommand]

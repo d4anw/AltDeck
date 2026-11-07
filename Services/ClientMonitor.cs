@@ -13,6 +13,9 @@ public partial class ClientInfo : ObservableObject
     public Account? Owner { get; init; }
     public LaunchTarget? Target { get; init; }
     public bool StoppedByUser { get; set; }
+    /// <summary>Started from Multi-launch (farming): auto-rejoin / auto-restart may bring it back. Clients started from
+    /// Home or Games (AltDeck used as a normal launcher) are left alone when they close or freeze.</summary>
+    public bool Farm { get; init; }
     /// <summary>Ended by auto-restart because it was "Not responding" (so it isn't counted as a drop as well).</summary>
     public bool EndedAsFrozen { get; set; }
     /// <summary>Ended because Roblox showed its "Disconnected" box (already logged with the error code, so not a second drop).</summary>
@@ -79,7 +82,7 @@ public sealed class ClientMonitor
     public event Action<ClientInfo>? ClientDropped;
 
     private readonly Dictionary<int, (TimeSpan Cpu, DateTime At)> _prev = new();
-    private readonly Queue<(Account Acc, LaunchTarget Target, DateTime At)> _pending = new();
+    private readonly Queue<(Account Acc, LaunchTarget Target, DateTime At, bool Farm)> _pending = new();
 
     public double TotalCpu => Clients.Where(c => c.IsAlive).Sum(c => c.Cpu);
     public double TotalMemoryMb => Clients.Where(c => c.IsAlive).Sum(c => c.MemoryMb);
@@ -87,7 +90,7 @@ public sealed class ClientMonitor
     public double TotalGpuMemoryMb => Clients.Where(c => c.IsAlive).Sum(c => c.GpuMemoryMb);
 
     /// <summary>Call right after launching: the next new Roblox process is assigned to this account.</summary>
-    public void ExpectLaunch(Account a, LaunchTarget t) => _pending.Enqueue((a, t, DateTime.UtcNow));
+    public void ExpectLaunch(Account a, LaunchTarget t, bool farm = true) => _pending.Enqueue((a, t, DateTime.UtcNow, farm));
 
     public void Tick()
     {
@@ -123,8 +126,8 @@ public sealed class ClientMonitor
                 try { started = p.StartTime.ToUniversalTime(); } catch { }
                 if (_pending.Count > 0)
                 {
-                    var (acc, target, _) = _pending.Dequeue();
-                    Clients.Add(new ClientInfo { Pid = p.Id, Owner = acc, Target = target, StartedAtUtc = started });
+                    var (acc, target, _, farm) = _pending.Dequeue();
+                    Clients.Add(new ClientInfo { Pid = p.Id, Owner = acc, Target = target, StartedAtUtc = started, Farm = farm });
                 }
                 else Clients.Add(new ClientInfo { Pid = p.Id, StartedAtUtc = started });
             }

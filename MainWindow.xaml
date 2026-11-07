@@ -171,13 +171,6 @@
           </ScrollViewer>
 
           <StackPanel Grid.Row="1">
-            <Grid>
-              <Button x:Name="HoldBtn" Style="{StaticResource Danger}" Content="Hold to stop all" Margin="0,0,0,4"
-                      HorizontalAlignment="Stretch" Padding="14,12"/>
-              <ProgressBar x:Name="HoldBar" Height="3" Maximum="100" VerticalAlignment="Bottom" Margin="14,0,14,6"
-                           Foreground="{DynamicResource Red}" Background="Transparent" BorderThickness="0"
-                           IsHitTestVisible="False" Visibility="Collapsed"/>
-            </Grid>
             <StackPanel Orientation="Horizontal" Margin="6,12,0,0">
               <TextBlock Text="&#xE72E;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center"
                          Style="{StaticResource MutedText}"/>

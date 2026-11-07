@@ -114,7 +114,7 @@
           <TextBlock Text="Shortcuts" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
           <Border Style="{StaticResource CardBox}" Padding="24,4">
             <StackPanel>
-              <ctl:SettingRow Title="Hold to stop all" Description="Press and hold the red button in the sidebar for one second."/>
+              <ctl:SettingRow Title="Hold to stop all" Description="On the Multi-launch page, press and hold the red button top right for one second."/>
               <ctl:SettingRow Title="Right-click a favourite" Description="On the Play page, right-click a favourite chip to remove it."/>
               <ctl:SettingRow Title="Preset hotkeys" Description="On the Play page, right-click a preset and pick Set hotkey. It launches that preset from any app, even with AltDeck in the tray."/>
             </StackPanel>

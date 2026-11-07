@@ -11,8 +11,6 @@ namespace AltDeck;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm = new MainViewModel();
-    private readonly DispatcherTimer _hold = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
-    private DateTime _holdStart;
     private readonly TrayService _tray = new();
     private readonly HotkeyService _hotkey = new();
     private bool _reallyExit;       // true when the person chose Quit (or Windows is signing out): Close must not hide to the tray
@@ -88,25 +86,6 @@ public partial class MainWindow : Window
             }
         };
 
-        _hold.Tick += (_, _) =>
-        {
-            var p = (DateTime.Now - _holdStart).TotalSeconds;
-            HoldBar.Value = Math.Min(100, p * 100);
-            if (p >= 1)
-            {
-                StopHold();
-                _vm.StopAllCommand.Execute(null);
-            }
-        };
-        HoldBtn.PreviewMouseLeftButtonDown += (_, _) =>
-        {
-            _holdStart = DateTime.Now;
-            HoldBar.Value = 0;
-            HoldBar.Visibility = Visibility.Visible;
-            _hold.Start();
-        };
-        HoldBtn.PreviewMouseLeftButtonUp += (_, _) => StopHold();
-        HoldBtn.MouseLeave += (_, _) => StopHold();
 
         // back / forward: the mouse's side buttons and Alt+← / Alt+→
         PreviewMouseDown += (_, e) =>
@@ -204,13 +183,6 @@ public partial class MainWindow : Window
         if (i < 0 || i >= presets.Count) return;
         try { await _vm.RunPresetAsync(presets[i], "hotkey"); }
         catch (Exception ex) { _vm.StatusMessage = ex.Message; }
-    }
-
-    private void StopHold()
-    {
-        _hold.Stop();
-        HoldBar.Visibility = Visibility.Collapsed;
-        HoldBar.Value = 0;
     }
 
     private void ApplyBackground()
