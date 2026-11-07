@@ -446,7 +446,8 @@
         <Setter.Value>
           <ControlTemplate TargetType="TextBox">
             <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1.5" CornerRadius="10">
-              <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+              <!-- Style null: the text area keeps Windows' own layout, not the page scroll style -->
+              <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" Style="{x:Null}"/>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/></Trigger>

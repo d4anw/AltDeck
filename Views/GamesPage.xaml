@@ -10,23 +10,8 @@
         <Grid>
           <TextBlock Text="Games" FontSize="28" FontWeight="Bold" VerticalAlignment="Center"/>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <Grid Width="320" Margin="0,0,10,0">
-              <TextBox x:Name="Search" Text="{Binding GameSearchText, UpdateSourceTrigger=PropertyChanged}" Padding="38,9,12,9"
-                       KeyDown="Search_KeyDown"/>
-              <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="14,0,0,0"
-                         VerticalAlignment="Center" IsHitTestVisible="False" Style="{StaticResource MutedText}"/>
-              <TextBlock Text="Search games, press Enter" Margin="38,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
-                         Foreground="{DynamicResource Muted}">
-                <TextBlock.Style>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding GameSearchText}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </TextBlock.Style>
-              </TextBlock>
-            </Grid>
+            <ctl:SearchBox Width="320" Margin="0,0,10,0" Text="{Binding GameSearchText}" Placeholder="Search games, press Enter"
+                           SubmitCommand="{Binding SearchGamesCommand}" SubmitOnClear="True"/>
             <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh" Margin="0" Command="{Binding RefreshGamesCommand}"/>
           </StackPanel>
         </Grid>

@@ -145,7 +145,12 @@ public partial class MainViewModel
         f.IsFavourite = fav;
         foreach (var t in OnlineFriends.Concat(AllFriends).Where(t => t.UserId == f.UserId)) t.IsFavourite = fav;
         Resort(OnlineFriends);
-        Resort(AllFriends);
+        if (_friendsAll.Count > 0)
+        {
+            foreach (var t in _friendsAll.Where(t => t.UserId == f.UserId)) t.IsFavourite = fav;
+            _friendsAll = FavouritesFirst(_friendsAll);
+            ShowFriendsPage();
+        }
         if (OpenProfile?.UserId == f.UserId) OnPropertyChanged(nameof(ProfileIsFavourite));
         StatusMessage = fav ? $"{f.Label} is a favourite friend now." : $"{f.Label} is no longer a favourite.";
     }

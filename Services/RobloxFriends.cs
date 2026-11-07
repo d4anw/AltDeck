@@ -72,7 +72,8 @@ public static class RobloxFriends
 {
     // ------------------------------------------------------------------ the friend list
 
-    /// <summary>All the account's friends with presence, names and pictures. Order: in a game, Studio, online, offline.</summary>
+    /// <summary>All the account's friends with presence and names (pictures: <see cref="FillHeadshotsAsync"/>, per page).
+    /// Order: in a game, Studio, online, offline.</summary>
     public static async Task<List<FriendTile>> GetAllFriendsAsync(string cookie, long userId, CancellationToken ct)
     {
         using var friendsDoc = await RobloxHttp.GetJsonAsync($"https://friends.roblox.com/v1/users/{userId}/friends", cookie, ct);
@@ -82,8 +83,9 @@ public static class RobloxFriends
                 if (Long(f, "id") is > 0 and var id) ids.Add(id);
         if (ids.Count == 0) return new();
 
-        var presence = new Dictionary<long, (int Type, string Loc, long Place, string? Job)>();
-        foreach (var chunk in ids.Chunk(50))
+        // presence and names at the same time, every chunk in parallel
+        var presence = new System.Collections.Concurrent.ConcurrentDictionary<long, (int Type, string Loc, long Place, string? Job)>();
+        var presenceTasks = ids.Chunk(50).Select(async chunk =>
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://presence.roblox.com/v1/presence/users", cookie, new { userIds = chunk }, ct);
             foreach (var p in doc.RootElement.GetProperty("userPresences").EnumerateArray())
@@ -94,9 +96,10 @@ public static class RobloxFriends
                     Long(p, "rootPlaceId") is > 0 and var root ? root : Long(p, "placeId"),
                     Str(p, "gameId") is { Length: > 0 } g ? g : null);
             }
-        }
-
-        var names = await GetNamesAsync(ids, ct);
+        }).ToList();
+        var namesTask = GetNamesAsync(ids, ct);
+        await Task.WhenAll(presenceTasks);
+        var names = await namesTask;
         var tiles = ids.Select(id =>
         {
             presence.TryGetValue(id, out var pr);
@@ -110,10 +113,16 @@ public static class RobloxFriends
         .OrderBy(f => f.PresenceType switch { 2 => 0, 3 => 1, 1 => 2, _ => 3 })
         .ThenBy(f => f.Label, StringComparer.OrdinalIgnoreCase)
         .ToList();
-
-        var heads = await Thumbnails.GetAsync("AvatarHeadShot", tiles.Select(t => t.UserId), "150x150", ct);
-        foreach (var t in tiles) if (heads.TryGetValue(t.UserId, out var url)) t.HeadshotUrl = url;
         return tiles;
+    }
+
+    /// <summary>Pictures for the friends on screen (the rest stay initials until shown).</summary>
+    public static async Task FillHeadshotsAsync(IEnumerable<FriendTile> tiles, CancellationToken ct)
+    {
+        var need = tiles.Where(t => t.HeadshotUrl.Length == 0).ToList();
+        if (need.Count == 0) return;
+        var heads = await Thumbnails.GetAsync("AvatarHeadShot", need.Select(t => t.UserId), "150x150", ct);
+        foreach (var t in need) if (heads.TryGetValue(t.UserId, out var url)) t.HeadshotUrl = url;
     }
 
     // ------------------------------------------------------------------ requests
@@ -285,14 +294,14 @@ public static class RobloxFriends
 
     static async Task<Dictionary<long, (string? Name, string? Display)>> GetNamesAsync(IEnumerable<long> ids, CancellationToken ct)
     {
-        var names = new Dictionary<long, (string?, string?)>();
-        foreach (var chunk in ids.Distinct().Chunk(100))
+        var names = new System.Collections.Concurrent.ConcurrentDictionary<long, (string?, string?)>();
+        await Task.WhenAll(ids.Distinct().Chunk(100).Select(async chunk =>
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://users.roblox.com/v1/users", null, new { userIds = chunk, excludeBannedUsers = false }, ct);
             foreach (var u in doc.RootElement.GetProperty("data").EnumerateArray())
                 names[Long(u, "id")] = (Str(u, "name"), Str(u, "displayName"));
-        }
-        return names;
+        }));
+        return new Dictionary<long, (string?, string?)>(names);
     }
 
     static async Task Safe(Func<Task> work) { try { await work(); } catch { } }

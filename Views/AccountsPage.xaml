@@ -49,24 +49,7 @@
 
       <!-- filters -->
       <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,18,0,16">
-        <Grid Width="290" Margin="0,0,10,0">
-          <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="38,9,12,9"/>
-          <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="14,0,0,0"
-                     VerticalAlignment="Center" IsHitTestVisible="False" Style="{StaticResource MutedText}"/>
-          <TextBlock Text="Filter by name, @user, id" Margin="38,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
-                     Foreground="{DynamicResource Muted}">
-            <TextBlock.Style>
-              <Style TargetType="TextBlock">
-                <Setter Property="Visibility" Value="Collapsed"/>
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding SearchText}" Value="">
-                    <Setter Property="Visibility" Value="Visible"/>
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBlock.Style>
-          </TextBlock>
-        </Grid>
+        <ctl:SearchBox Width="290" Margin="0,0,10,0" Text="{Binding SearchText}" Placeholder="Filter by name, @user, id"/>
         <ComboBox ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding StatusFilter}" MinWidth="140" Margin="0,0,10,0"/>
         <Button Content="All" Margin="0,0,8,0" Command="{Binding SetGroupCommand}" CommandParameter="">
           <Button.Style>

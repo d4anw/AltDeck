@@ -18,22 +18,44 @@ public partial class MainViewModel
 
     // ================================================================== friend list
 
+    /// <summary>The friends on screen: the current page(s) of the full list, or of the filter's matches.</summary>
     public ObservableCollection<FriendTile> AllFriends { get; } = new();
     public Loader AllFriendsLoad { get; } = new();
-    private ICollectionView? _friendsView;
-    public ICollectionView FriendsView => _friendsView ??= MakeFriendsView();
+    private List<FriendTile> _friendsAll = new();
+    private const int FriendsPageSize = 40;
+    private int _friendsShown = FriendsPageSize;
 
     [ObservableProperty] private string friendsFilter = "";
     [ObservableProperty] private string friendsSummary = "";
-    partial void OnFriendsFilterChanged(string value) => FriendsView.Refresh();
+    [ObservableProperty] private bool hasMoreFriends;
+    [ObservableProperty] private string moreFriendsText = "";
 
-    private ICollectionView MakeFriendsView()
+    partial void OnFriendsFilterChanged(string value)
     {
-        var v = new CollectionViewSource { Source = AllFriends }.View;
-        v.Filter = o => o is FriendTile f && (FriendsFilter.Trim().Length == 0
-            || f.Label.Contains(FriendsFilter.Trim(), StringComparison.OrdinalIgnoreCase)
-            || f.Name.Contains(FriendsFilter.Trim().TrimStart('@'), StringComparison.OrdinalIgnoreCase));
-        return v;
+        _friendsShown = FriendsPageSize;
+        ShowFriendsPage();
+    }
+
+    [RelayCommand]
+    private void ShowMoreFriends()
+    {
+        _friendsShown += FriendsPageSize;
+        ShowFriendsPage();
+    }
+
+    /// <summary>Puts the first pages of friends (or of the filter's matches) on screen and loads just their pictures.</summary>
+    private void ShowFriendsPage()
+    {
+        var q = (FriendsFilter ?? "").Trim().TrimStart('@');
+        var source = q.Length == 0 ? _friendsAll : _friendsAll.Where(f =>
+            f.Label.Contains(q, StringComparison.OrdinalIgnoreCase) || f.Name.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+        var page = source.Take(_friendsShown).ToList();
+        AllFriends.Clear();
+        foreach (var f in page) AllFriends.Add(f);
+        int left = source.Count - page.Count;
+        HasMoreFriends = left > 0;
+        MoreFriendsText = left > 0 ? $"Show more ({left} left)" : "";
+        _ = RobloxFriends.FillHeadshotsAsync(page, CancellationToken.None);
     }
 
     private DateTime _friendsLoadedAt = DateTime.MinValue;
@@ -55,6 +77,8 @@ public partial class MainViewModel
         _friendsLoadedFor = a;
         _friendsLoadedAt = DateTime.Now;
         AllFriends.Clear();
+        _friendsAll = new();
+        HasMoreFriends = false;
         Requests.Clear();
         FriendsSummary = "";
         if (a == null || string.IsNullOrEmpty(a.Cookie))
@@ -69,7 +93,9 @@ public partial class MainViewModel
             var list = await RobloxFriends.GetAllFriendsAsync(a.Cookie, a.UserId, ct);
             if (ct.IsCancellationRequested || a != CurrentAccount) return false;
             foreach (var f in list) f.IsFavourite = Settings.FavouriteFriends.Contains(f.UserId);
-            foreach (var f in FavouritesFirst(list)) AllFriends.Add(f);
+            _friendsAll = FavouritesFirst(list);
+            _friendsShown = FriendsPageSize;
+            ShowFriendsPage();
             int online = list.Count(f => f.IsOnline), inGame = list.Count(f => f.PresenceType == 2);
             FriendsSummary = $"{list.Count} friend{(list.Count == 1 ? "" : "s")} · {online} online" + (inGame > 0 ? $" · {inGame} in a game" : "");
             return list.Count > 0;
@@ -278,6 +304,7 @@ public partial class MainViewModel
         try
         {
             await RobloxFriends.UnfriendAsync(a.Cookie, userId);
+            _friendsAll.RemoveAll(x => x.UserId == userId);
             var f = AllFriends.FirstOrDefault(x => x.UserId == userId);
             if (f != null) AllFriends.Remove(f);
             var o = OnlineFriends.FirstOrDefault(x => x.UserId == userId);

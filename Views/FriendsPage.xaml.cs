@@ -14,13 +14,6 @@ public partial class FriendsPage : UserControl
     private MainViewModel VM => (MainViewModel)DataContext;
     private string Me => VM.CurrentAccount?.Label ?? "this account";
 
-    private void PlayerSearch_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Enter) return;
-        VM.SearchPlayersCommand.Execute(null);
-        e.Handled = true;
-    }
-
     // ---- a friend card: a click (or right-click) opens its menu
 
     private void Friend_Click(object sender, RoutedEventArgs e) => ShowFriendMenu(sender as FrameworkElement);

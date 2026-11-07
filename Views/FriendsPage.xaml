@@ -90,17 +90,19 @@
 
         <!-- friends -->
         <StackPanel Visibility="{Binding FriendsTab, Converter={StaticResource PageVis}, ConverterParameter=Friends}">
-          <Grid Width="320" HorizontalAlignment="Left" Margin="0,0,0,14">
-            <TextBox Text="{Binding FriendsFilter, UpdateSourceTrigger=PropertyChanged}" Padding="38,9,12,9"/>
-            <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="14,0,0,0"
-                       VerticalAlignment="Center" IsHitTestVisible="False" Style="{StaticResource MutedText}"/>
-          </Grid>
+          <ctl:SearchBox Width="320" HorizontalAlignment="Left" Margin="0,0,0,14" Text="{Binding FriendsFilter}" Placeholder="Filter your friends"/>
           <ctl:StateView State="{Binding AllFriendsLoad.State}" Message="{Binding AllFriendsLoad.Message}" MinHeight="200"
                          EmptyText="This account has no friends yet. Find players in the tab above."
                          RetryCommand="{Binding RefreshFriendsCommand}">
-            <ItemsControl ItemsSource="{Binding FriendsView}" ItemTemplate="{StaticResource FriendCard}">
-              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-            </ItemsControl>
+            <StackPanel>
+              <ItemsControl ItemsSource="{Binding AllFriends}" ItemTemplate="{StaticResource FriendCard}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+              <TextBlock Text="No friends match that." Style="{StaticResource MutedText}" Margin="2,4,0,0"
+                         Visibility="{Binding AllFriends.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+              <Button Content="{Binding MoreFriendsText}" HorizontalAlignment="Left" Margin="0,4,0,0" Command="{Binding ShowMoreFriendsCommand}"
+                      Visibility="{Binding HasMoreFriends, Converter={StaticResource BoolVis}}"/>
+            </StackPanel>
           </ctl:StateView>
         </StackPanel>
 
@@ -112,7 +114,7 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate>
                 <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
-                        CornerRadius="14" Padding="14,10" Margin="0,0,0,8" MaxWidth="760" HorizontalAlignment="Left">
+                        CornerRadius="14" Padding="14,10" Margin="0,0,0,8" Width="720" HorizontalAlignment="Left">
                   <Grid>
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto"/>
@@ -129,13 +131,11 @@
                       </StackPanel>
                     </Button>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                      <Button Content="Decline" Command="{Binding DataContext.DeclineRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      <Button Content="Decline" MinWidth="96" Command="{Binding DataContext.DeclineRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding}"/>
-                      <Button Style="{StaticResource Primary}" Margin="0"
+                      <Button Content="Accept" Style="{StaticResource Primary}" Margin="0" MinWidth="96"
                               Command="{Binding DataContext.AcceptRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              CommandParameter="{Binding}">
-                        <TextBlock><Run Text="Accept as"/> <Run Text="{Binding DataContext.CurrentAccount.Label, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}"/></TextBlock>
-                      </Button>
+                              CommandParameter="{Binding}"/>
                     </StackPanel>
                   </Grid>
                 </Border>
@@ -146,22 +146,8 @@
 
         <!-- find players -->
         <StackPanel Visibility="{Binding FriendsTab, Converter={StaticResource PageVis}, ConverterParameter=Find}">
-          <Grid Width="420" HorizontalAlignment="Left" Margin="0,0,0,14">
-            <TextBox Text="{Binding PlayerSearchText, UpdateSourceTrigger=PropertyChanged}" Padding="38,9,12,9" KeyDown="PlayerSearch_KeyDown"/>
-            <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="14,0,0,0"
-                       VerticalAlignment="Center" IsHitTestVisible="False" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="Username or user ID, press Enter" Margin="38,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
-                       Foreground="{DynamicResource Muted}">
-              <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                  <Setter Property="Visibility" Value="Collapsed"/>
-                  <Style.Triggers>
-                    <DataTrigger Binding="{Binding PlayerSearchText}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-                  </Style.Triggers>
-                </Style>
-              </TextBlock.Style>
-            </TextBlock>
-          </Grid>
+          <ctl:SearchBox Width="420" HorizontalAlignment="Left" Margin="0,0,0,14" Text="{Binding PlayerSearchText}"
+                         Placeholder="Username or user ID, press Enter" SubmitCommand="{Binding SearchPlayersCommand}"/>
           <ctl:StateView State="{Binding PlayersLoad.State}" Message="{Binding PlayersLoad.Message}" MinHeight="160"
                          EmptyText="No players found with that name." RetryCommand="{Binding SearchPlayersCommand}">
             <ItemsControl ItemsSource="{Binding PlayerHits}">

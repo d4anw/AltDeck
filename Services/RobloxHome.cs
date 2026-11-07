@@ -20,8 +20,8 @@ public static class RobloxHome
         if (ids.Count == 0) return new();
 
         // 2. who's online and where (same presence service AltDeck already uses for your own accounts)
-        var online = new List<(long Id, int Type, string Loc, long Place, string? Job)>();
-        foreach (var chunk in ids.Chunk(50))
+        var online = new System.Collections.Concurrent.ConcurrentBag<(long Id, int Type, string Loc, long Place, string? Job)>();
+        await Task.WhenAll(ids.Chunk(50).Select(async chunk =>
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://presence.roblox.com/v1/presence/users", cookie, new { userIds = chunk }, ct);
             foreach (var p in doc.RootElement.GetProperty("userPresences").EnumerateArray())
@@ -32,8 +32,8 @@ public static class RobloxHome
                             Long(p, "rootPlaceId") is > 0 and var root ? root : Long(p, "placeId"),
                             Str(p, "gameId") is { Length: > 0 } g ? g : null));
             }
-        }
-        if (online.Count == 0) return new();
+        }));
+        if (online.IsEmpty) return new();
 
         // 3. names
         var names = new Dictionary<long, (string Name, string Display)>();
