@@ -292,14 +292,20 @@ public static class RobloxFriends
 
     // ------------------------------------------------------------------ helpers
 
+    // names barely ever change: remember them for the session, so friend lists need far fewer requests
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (string?, string?)> NameCache = new();
+
     static async Task<Dictionary<long, (string? Name, string? Display)>> GetNamesAsync(IEnumerable<long> ids, CancellationToken ct)
     {
         var names = new System.Collections.Concurrent.ConcurrentDictionary<long, (string?, string?)>();
-        await Task.WhenAll(ids.Distinct().Chunk(100).Select(async chunk =>
+        var missing = new List<long>();
+        foreach (var id in ids.Distinct())
+            if (NameCache.TryGetValue(id, out var known)) names[id] = known; else missing.Add(id);
+        await Task.WhenAll(missing.Chunk(100).Select(async chunk =>
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://users.roblox.com/v1/users", null, new { userIds = chunk, excludeBannedUsers = false }, ct);
             foreach (var u in doc.RootElement.GetProperty("data").EnumerateArray())
-                names[Long(u, "id")] = (Str(u, "name"), Str(u, "displayName"));
+                names[Long(u, "id")] = NameCache[Long(u, "id")] = (Str(u, "name"), Str(u, "displayName"));
         }));
         return new Dictionary<long, (string?, string?)>(names);
     }

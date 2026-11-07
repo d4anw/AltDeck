@@ -11,8 +11,11 @@ namespace AltDeck.Services;
 public sealed class RobloxException : Exception
 {
     public HttpStatusCode? Status { get; }
+    /// <summary>For "too many requests": seconds until Roblox allows more (0 = unknown).</summary>
+    public int WaitSeconds { get; init; }
     public RobloxException(string message, HttpStatusCode? status = null, Exception? inner = null) : base(message, inner) => Status = status;
     public bool SignedOut => Status is HttpStatusCode.Unauthorized;
+    public bool TooMany => Status is HttpStatusCode.TooManyRequests;
 }
 
 /// <summary>
@@ -28,6 +31,56 @@ public static class RobloxHttp
     static readonly ConcurrentDictionary<string, string> Csrf = new();
 
     const int MaxTries = 3;
+    const int MaxLimitTries = 5;          // "too many requests" is retried more often: it always clears after a while
+    const int MaxWaitSeconds = 20;        // longest single wait for Roblox's limit inside one request
+
+    /// <summary>
+    /// Per Roblox service (presence.roblox.com, users.roblox.com…): at most 4 requests at a time, and Roblox's own counter
+    /// (x-ratelimit-remaining / -reset) so we slow down before it says no. When it does say no, every request to that
+    /// service waits until the reset instead of each one failing.
+    /// </summary>
+    sealed class HostGate
+    {
+        public readonly SemaphoreSlim Slots = new(4);
+        public int Remaining = int.MaxValue;
+        public DateTime ResetAt = DateTime.MinValue;
+        public DateTime BlockedUntil = DateTime.MinValue;
+    }
+    static readonly ConcurrentDictionary<string, HostGate> Gates = new();
+
+    static async Task WaitForGateAsync(HostGate g, CancellationToken ct)
+    {
+        DateTime until;
+        lock (g)
+        {
+            if (g.ResetAt <= DateTime.UtcNow) g.Remaining = int.MaxValue;   // a new window: the old count no longer applies
+            until = g.BlockedUntil;
+            // nearly out of requests for this window: wait for the reset (and use one of the next window's)
+            if (g.Remaining <= 1 && g.ResetAt > DateTime.UtcNow && g.ResetAt > until) until = g.ResetAt;
+            if (g.Remaining != int.MaxValue) g.Remaining--;
+        }
+        var wait = until - DateTime.UtcNow;
+        if (wait > TimeSpan.Zero) await Task.Delay(wait > TimeSpan.FromSeconds(MaxWaitSeconds) ? TimeSpan.FromSeconds(MaxWaitSeconds) : wait, ct);
+    }
+
+    static void ReadLimitHeaders(HostGate g, HttpResponseMessage resp)
+    {
+        int? remaining = Header(resp, "x-ratelimit-remaining"), reset = Header(resp, "x-ratelimit-reset");
+        lock (g)
+        {
+            if (remaining != null) g.Remaining = remaining.Value;
+            if (reset != null) g.ResetAt = DateTime.UtcNow.AddSeconds(Math.Max(1, reset.Value));
+            if (resp.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                int secs = reset ?? (int)(resp.Headers.RetryAfter?.Delta?.TotalSeconds ?? 5);
+                g.BlockedUntil = DateTime.UtcNow.AddSeconds(Math.Clamp(secs, 1, 60));
+                g.Remaining = 0;
+            }
+        }
+    }
+
+    static int? Header(HttpResponseMessage resp, string name) =>
+        resp.Headers.TryGetValues(name, out var v) && int.TryParse(v.First().Split(',')[0].Trim(), out var n) ? n : null;
 
     /// <summary>GET and parse JSON. <paramref name="cookie"/> may be null for public data.</summary>
     public static Task<JsonDocument> GetJsonAsync(string url, string? cookie = null, CancellationToken ct = default) =>
@@ -62,8 +115,11 @@ public static class RobloxHttp
         bool changes = method != HttpMethod.Get && method != HttpMethod.Head;
         string? key = cookie != null ? Key(cookie) : null;
 
+        var gate = Gates.GetOrAdd(new Uri(url).Host, _ => new HostGate());
+
         for (int attempt = 1; ; attempt++)
         {
+            await WaitForGateAsync(gate, ct);
             using var req = new HttpRequestMessage(method, url);
             if (cookie != null) req.Headers.TryAddWithoutValidation("Cookie", ".ROBLOSECURITY=" + cookie);
             if (changes && key != null && Csrf.TryGetValue(key, out var token)) req.Headers.TryAddWithoutValidation("X-CSRF-TOKEN", token);
@@ -71,6 +127,7 @@ public static class RobloxHttp
             else if (changes) req.Content = new StringContent("", Encoding.UTF8, "application/json");
 
             HttpResponseMessage resp;
+            await gate.Slots.WaitAsync(ct);
             try { resp = await Http.SendAsync(req, ct); }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
@@ -78,9 +135,12 @@ public static class RobloxHttp
                 if (attempt < MaxTries) { await Task.Delay(1000 * attempt, ct); continue; }
                 throw new RobloxException("Roblox isn't answering. Check your internet and try again.", null, ex);
             }
+            finally { gate.Slots.Release(); }
 
             using (resp)
             {
+                ReadLimitHeaders(gate, resp);
+
                 // Roblox answers the first change with 403 + a fresh token: remember it and send the request again.
                 if (resp.StatusCode == HttpStatusCode.Forbidden && key != null
                     && resp.Headers.TryGetValues("x-csrf-token", out var fresh) && attempt < MaxTries)
@@ -89,13 +149,8 @@ public static class RobloxHttp
                     continue;
                 }
 
-                if (resp.StatusCode == HttpStatusCode.TooManyRequests && attempt < MaxTries)
-                {
-                    var wait = resp.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(2 * attempt);
-                    if (wait > TimeSpan.FromSeconds(10)) wait = TimeSpan.FromSeconds(10);
-                    await Task.Delay(wait, ct);
-                    continue;
-                }
+                // too many requests: the gate now holds every request to this service until Roblox's reset; just go again
+                if (resp.StatusCode == HttpStatusCode.TooManyRequests && attempt < MaxLimitTries) continue;
 
                 if ((int)resp.StatusCode >= 500 && attempt < MaxTries)
                 {
@@ -105,7 +160,9 @@ public static class RobloxHttp
 
                 var text = await resp.Content.ReadAsStringAsync(ct);
                 if (resp.IsSuccessStatusCode) return text;
-                throw new RobloxException(Describe(resp.StatusCode, text), resp.StatusCode);
+                int waitLeft;
+                lock (gate) waitLeft = (int)Math.Ceiling(Math.Max(0, (gate.BlockedUntil - DateTime.UtcNow).TotalSeconds));
+                throw new RobloxException(Describe(resp.StatusCode, text), resp.StatusCode) { WaitSeconds = waitLeft };
             }
         }
     }
