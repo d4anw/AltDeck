@@ -527,21 +527,47 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <!-- scrollbar: a thin rounded handle on an invisible track. Wider and brighter on hover, orange while dragged.
+         Kept clear of the page's rounded corners. Horizontal bars are hidden (rows scroll with buttons / Shift + wheel). -->
     <Style TargetType="ScrollBar">
-      <Setter Property="Width" Value="8"/>
+      <Setter Property="Width" Value="14"/>
+      <Setter Property="MinWidth" Value="14"/>
       <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Margin" Value="0,10,2,10"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ScrollBar">
-            <Grid Background="Transparent">
+            <Grid x:Name="Bar" Background="Transparent">
               <Track x:Name="PART_Track" IsDirectionReversed="True">
-                <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/></Track.DecreaseRepeatButton>
-                <Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/></Track.IncreaseRepeatButton>
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False">
+                    <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+                  </RepeatButton>
+                </Track.DecreaseRepeatButton>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False">
+                    <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+                  </RepeatButton>
+                </Track.IncreaseRepeatButton>
                 <Track.Thumb>
-                  <Thumb>
+                  <Thumb MinHeight="36">
                     <Thumb.Template>
                       <ControlTemplate TargetType="Thumb">
-                        <Border Background="{DynamicResource Line}" CornerRadius="4" Margin="1"/>
+                        <Border x:Name="Handle" Width="5" CornerRadius="3" HorizontalAlignment="Right" Margin="0,0,3,0"
+                                Background="{DynamicResource Muted}" Opacity="0.35"/>
+                        <ControlTemplate.Triggers>
+                          <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
+                            <Setter TargetName="Handle" Property="Width" Value="8"/>
+                            <Setter TargetName="Handle" Property="CornerRadius" Value="4"/>
+                            <Setter TargetName="Handle" Property="Opacity" Value="0.6"/>
+                          </DataTrigger>
+                          <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="Handle" Property="Width" Value="8"/>
+                            <Setter TargetName="Handle" Property="CornerRadius" Value="4"/>
+                            <Setter TargetName="Handle" Property="Opacity" Value="1"/>
+                            <Setter TargetName="Handle" Property="Background" Value="{DynamicResource Accent}"/>
+                          </Trigger>
+                        </ControlTemplate.Triggers>
                       </ControlTemplate>
                     </Thumb.Template>
                   </Thumb>

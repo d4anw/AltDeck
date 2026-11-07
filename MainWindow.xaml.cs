@@ -87,6 +87,8 @@ public partial class MainWindow : Window
         };
 
 
+        SmoothScroll.Attach(this);   // gliding mouse-wheel scrolling everywhere
+
         // back / forward: the mouse's side buttons and Alt+← / Alt+→
         PreviewMouseDown += (_, e) =>
         {
