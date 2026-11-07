@@ -5,7 +5,7 @@
   <UserControl.Resources>
     <!-- a friend: picture with status dot (and a star for favourites), name, what they're doing. Click: menu. -->
     <DataTemplate x:Key="FriendCard">
-      <Button Width="236" Margin="0,0,12,12" Padding="12,10" HorizontalContentAlignment="Stretch" Cursor="Hand"
+      <Button Width="236" Margin="0,0,12,12" Padding="12,10" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
               Click="Friend_Click" MouseRightButtonUp="Friend_RightClick">
         <Button.Template>
           <ControlTemplate TargetType="Button">
@@ -122,7 +122,9 @@
                       <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <ctl:AvatarView Width="44" Height="44" Url="{Binding HeadshotUrl}" Initials="{Binding Initials}"/>
-                    <Button Grid.Column="1" Style="{StaticResource Subtle}" HorizontalAlignment="Left" Margin="6,0,0,0" Padding="6,4"
+                    <!-- Focusable off on everything in a request row: when the row disappears, Windows would otherwise move
+                         focus to another row and scroll the page there -->
+                    <Button Grid.Column="1" Style="{StaticResource Subtle}" HorizontalAlignment="Left" Margin="6,0,0,0" Padding="6,4" Focusable="False"
                             Command="{Binding DataContext.OpenProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}" ToolTip="View profile">
                       <StackPanel>
@@ -131,9 +133,9 @@
                       </StackPanel>
                     </Button>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                      <Button Content="Decline" MinWidth="96" Command="{Binding DataContext.DeclineRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      <Button Content="Decline" MinWidth="96" Focusable="False" Command="{Binding DataContext.DeclineRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding}"/>
-                      <Button Content="Accept" Style="{StaticResource Primary}" Margin="0" MinWidth="96"
+                      <Button Content="Accept" Style="{StaticResource Primary}" Margin="0" MinWidth="96" Focusable="False"
                               Command="{Binding DataContext.AcceptRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding}"/>
                     </StackPanel>
