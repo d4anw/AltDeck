@@ -1,0 +1,87 @@
+<UserControl x:Class="AltDeck.Views.FarmingPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:AltDeck.Controls">
+  <!-- Multi-launch → Farming: everything that keeps alts in the game for hours, in one place. -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid Margin="32,26,32,32">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+      <StackPanel Margin="0,0,0,18">
+        <TextBlock Text="Farming" FontSize="28" FontWeight="Bold"/>
+        <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                   Text="Keep your alts in the game for hours: AltDeck brings them back when they get kicked, crash or freeze, keeps them from going idle, and stops everything when you want."/>
+      </StackPanel>
+
+      <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="24"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel>
+          <TextBlock Text="Keep clients in the game" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+                  <ctl:SettingRow Title="Auto-rejoin" Description="When a client shows Roblox's &quot;Disconnected&quot; or &quot;Connection Failed&quot; box (Error 277, 279, kicked, server shut down), or is stuck joining, AltDeck closes it and relaunches it, back into the same server first. Read from Roblox's own logs. If your internet or Roblox is down, it waits until it's back (that doesn't count as a try). Launches are spaced out and windows go back to their old spot. Turn it off for one account in its details.">
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRejoin}"/>
+                  </ctl:SettingRow>
+                  <ctl:SettingRow Title="Auto-restart after a crash"
+                                  Description="Relaunch a client that closes without AltDeck closing it, or whose window stops responding for 30 s. Uses the same give-up limit as auto-rejoin.">
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRestart}"/>
+                  </ctl:SettingRow>
+                  <ctl:SettingRow Title="Anti-AFK"
+                                  Description="So Roblox doesn't disconnect idle clients after 20 minutes, each client in a game gets a key press. Experimental.">
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AntiAfk}"/>
+                  </ctl:SettingRow>
+                  <ctl:SettingRow Title="Keep sign-ins apart"
+                                  Description="All Roblox clients share one sign-in store, and with 6 or more one of them can get signed out (teleports then fail with Error 769). Before each launch AltDeck empties that store so the new client sees no other account. Your own Roblox sign-in is backed up and put back about 90 s after the last launch.">
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.IsolateSignIns}"/>
+                  </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2">
+          <TextBlock Text="When it keeps failing" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+                  <ctl:SettingRow Title="Give up after"
+                                  Description="Rejoins of one account within this time. Each waits twice as long as the one before (at most a minute); past the limit AltDeck slows down or leaves it (below). Time spent waiting for the internet doesn't count.">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBox Text="{Binding Settings.GiveUpTries}" Width="56" FontFamily="Consolas"/>
+                      <TextBlock Text="tries in" Margin="8,0,8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                      <TextBox Text="{Binding Settings.GiveUpMinutes}" Width="56" FontFamily="Consolas"/>
+                      <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                    </StackPanel>
+                  </ctl:SettingRow>
+                  <ctl:SettingRow Title="Keep trying after that"
+                                  Description="Past the give-up limit, try once every 5 minutes until it works instead of stopping. Helps when Roblox keeps sending clients to a server that was shut down. Off: leave the account and tell you.">
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.KeepTrying}"/>
+                  </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Text="Session" FontSize="16" FontWeight="SemiBold" Margin="0,28,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+                  <ctl:SettingRow Title="Stop timer" Description="{Binding StopTimerDescription, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal">
+                      <Button Content="30m" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="30"/>
+                      <Button Content="1h" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="60"/>
+                      <Button Content="2h" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="120"/>
+                      <Button Content="4h" Padding="12,8" Margin="0" Command="{Binding StartStopTimerCommand}" CommandParameter="240"/>
+                      <Button Content="Cancel" Padding="12,8" Margin="8,0,0,0" Command="{Binding CancelStopTimerCommand}"
+                              Visibility="{Binding StopTimerActive, Converter={StaticResource BoolVis}}"/>
+                    </StackPanel>
+                  </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

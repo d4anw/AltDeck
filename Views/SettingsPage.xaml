@@ -106,16 +106,6 @@
                   <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Stop timer" Description="{Binding StopTimerDescription, Mode=OneWay}">
-                <StackPanel Orientation="Horizontal">
-                  <Button Content="30m" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="30"/>
-                  <Button Content="1h" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="60"/>
-                  <Button Content="2h" Padding="12,8" Command="{Binding StartStopTimerCommand}" CommandParameter="120"/>
-                  <Button Content="4h" Padding="12,8" Margin="0" Command="{Binding StartStopTimerCommand}" CommandParameter="240"/>
-                  <Button Content="Cancel" Padding="12,8" Margin="8,0,0,0" Command="{Binding CancelStopTimerCommand}"
-                          Visibility="{Binding StopTimerActive, Converter={StaticResource BoolVis}}"/>
-                </StackPanel>
-              </ctl:SettingRow>
             </StackPanel>
           </Border>
         </StackPanel>
@@ -157,36 +147,11 @@
                                IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='On top of each other', Mode=TwoWay}"/>
                 </StackPanel>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Performance settings" Description="FPS cap, graphics, CPU and memory settings are in the Performance tab.">
-                <Button Content="Open Performance" Margin="0" Command="{Binding GoPerformanceCommand}"/>
+              <ctl:SettingRow Title="FPS &amp; FastFlags" Description="FPS cap, graphics flags, CPU and memory settings have their own page.">
+                <Button Content="Open FPS &amp; FastFlags" Margin="0" Command="{Binding GoPerformanceCommand}"/>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Auto-rejoin" Description="When a client shows Roblox's &quot;Disconnected&quot; or &quot;Connection Failed&quot; box (Error 277, 279, kicked, server shut down), or is stuck joining, AltDeck closes it and relaunches it, back into the same server first. Read from Roblox's own logs. If your internet or Roblox is down, it waits until it's back (that doesn't count as a try). Launches are spaced out and windows go back to their old spot. Turn it off for one account in its details.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRejoin}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Keep sign-ins apart"
-                              Description="All Roblox clients share one sign-in store, and with 6 or more one of them can get signed out (teleports then fail with Error 769). Before each launch AltDeck empties that store so the new client sees no other account. Your own Roblox sign-in is backed up and put back about 90 s after the last launch.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.IsolateSignIns}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Auto-restart after a crash"
-                              Description="Relaunch a client that closes without AltDeck closing it, or whose window stops responding for 30 s. Uses the same give-up limit as auto-rejoin.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRestart}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Anti-AFK"
-                              Description="So Roblox doesn't disconnect idle clients after 20 minutes, each client in a game gets a key press. Experimental.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AntiAfk}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Give up after"
-                              Description="Rejoins of one account within this time. Each waits twice as long as the one before (at most a minute); past the limit AltDeck slows down or leaves it (below). Time spent waiting for the internet doesn't count.">
-                <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.GiveUpTries}" Width="56" FontFamily="Consolas"/>
-                  <TextBlock Text="tries in" Margin="8,0,8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                  <TextBox Text="{Binding Settings.GiveUpMinutes}" Width="56" FontFamily="Consolas"/>
-                  <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                </StackPanel>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Keep trying after that"
-                              Description="Past the give-up limit, try once every 5 minutes until it works instead of stopping. Helps when Roblox keeps sending clients to a server that was shut down. Off: leave the account and tell you.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.KeepTrying}"/>
+              <ctl:SettingRow Title="Farming" Description="Auto-rejoin, auto-restart, anti-AFK, give-up limits and the stop timer are in Multi-launch → Farming.">
+                <Button Content="Open Farming" Margin="0" Command="{Binding GoMultiTabCommand}" CommandParameter="Farming"/>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Close grace" Description="How long a client AltDeck closes gets to close by itself before it is ended.">
                 <StackPanel Orientation="Horizontal">

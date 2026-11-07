@@ -42,6 +42,8 @@
             </Border>
           </StackPanel>
         </RadioButton>
+        <RadioButton Style="{StaticResource Seg}" GroupName="multitab" Content="Farming"
+                     IsChecked="{Binding MultiTab, Converter={StaticResource Eq}, ConverterParameter=Farming, Mode=TwoWay}"/>
         <RadioButton Style="{StaticResource Seg}" GroupName="multitab" Content="Activity" Margin="0"
                      IsChecked="{Binding MultiTab, Converter={StaticResource Eq}, ConverterParameter=Activity, Mode=TwoWay}"/>
       </StackPanel>
@@ -51,6 +53,7 @@
       <views:HomePage Visibility="{Binding MultiTab, Converter={StaticResource PageVis}, ConverterParameter=Running}"/>
       <views:PlayPage Visibility="{Binding MultiTab, Converter={StaticResource PageVis}, ConverterParameter=Launch}"/>
       <views:AccountsPage Visibility="{Binding MultiTab, Converter={StaticResource PageVis}, ConverterParameter=Accounts}"/>
+      <views:FarmingPage Visibility="{Binding MultiTab, Converter={StaticResource PageVis}, ConverterParameter=Farming}"/>
       <views:ActivityPage Visibility="{Binding MultiTab, Converter={StaticResource PageVis}, ConverterParameter=Activity}"/>
     </Grid>
   </Grid>
