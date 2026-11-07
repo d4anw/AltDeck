@@ -108,6 +108,20 @@ public partial class MainWindow : Window
         HoldBtn.PreviewMouseLeftButtonUp += (_, _) => StopHold();
         HoldBtn.MouseLeave += (_, _) => StopHold();
 
+        // back / forward: the mouse's side buttons and Alt+← / Alt+→
+        PreviewMouseDown += (_, e) =>
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.XButton1) { _vm.GoBack(); e.Handled = true; }
+            else if (e.ChangedButton == System.Windows.Input.MouseButton.XButton2) { _vm.GoForward(); e.Handled = true; }
+        };
+        PreviewKeyDown += (_, e) =>
+        {
+            if (System.Windows.Input.Keyboard.Modifiers != System.Windows.Input.ModifierKeys.Alt) return;
+            var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+            if (key == System.Windows.Input.Key.Left) { _vm.GoBack(); e.Handled = true; }
+            else if (key == System.Windows.Input.Key.Right) { _vm.GoForward(); e.Handled = true; }
+        };
+
         Loaded += async (_, _) =>
         {
             _ = _vm.CheckForUpdatesAtStartAsync();   // asks right away if a new version is out

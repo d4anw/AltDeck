@@ -159,13 +159,13 @@ public partial class MainViewModel
     {
         if (tile == null || tile.UniverseId == 0) return;
         _lastOpened = tile;
-        if (Page != "Games") Page = "Games";
         OpenGame = null;
         Servers.Clear();
         _allServers = new();
         ServersInfo = "";
         SelectedMedia = "";
-        IsGameOpen = true;
+        IsGameOpen = true;                       // first, so "back" from here returns to where you came from
+        if (Page != "Games") Page = "Games";
         await GameLoad.RunAsync(async ct =>
         {
             var d = await RobloxGames.GetDetailsAsync(tile.UniverseId, ct);
@@ -258,28 +258,61 @@ public partial class MainViewModel
     {
         // Roblox lists servers by player count; "fewest" needs the other end of that list
         bool needAsc = value == "Fewest";
-        if (needAsc != _serversAsc && OpenGame != null) _ = LoadServersAsync();
+        if (needAsc != _serversAsc && OpenGame != null) _ = LoadServersAsync();   // cached for 2 minutes per direction
         else ApplyServerSort();
     }
 
     private bool _serversAsc;
 
     [RelayCommand]
-    private Task RefreshServers() => LoadServersAsync();
+    private Task RefreshServers() => LoadServersAsync(fresh: true);
 
-    private async Task LoadServersAsync()
+    private async Task LoadServersAsync(bool fresh = false)
     {
         if (OpenGame is not { } g) return;
         _serversAsc = ServerSort == "Fewest";
         Servers.Clear();
+        _allServers = new();
+        ServersInfo = "";
+
+        // the user's signed-in accounts share the work (each has its own allowance with Roblox); the current one first
+        var cookies = Accounts.Where(a => !string.IsNullOrEmpty(a.Cookie) && a.StatusKind != "signedout")
+                              .OrderByDescending(a => a == CurrentAccount).Select(a => a.Cookie).ToList();
+
         await ServersLoad.RunAsync(async ct =>
         {
-            var progress = new Progress<int>(n => ServersLoad.Message = $"Finding servers… {n}");
-            var list = await RobloxGames.GetServersAsync(g.PlaceId, _serversAsc, maxPages: 5, progress, ct);
-            await MarkFriendsAsync(list, g, ct);
-            _allServers = list;
-            ApplyServerSort();
-            return list.Count > 0;
+            for (int attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    var list = await RobloxGames.GetServersAsync(g.PlaceId, _serversAsc, maxPages: 1, cookies, page =>
+                    {
+                        if (ct.IsCancellationRequested) return;
+                        _allServers = page;
+                        ApplyServerSort();
+                        ServersLoad.State = LoadState.Ready;   // show the first page while the rest loads
+                    }, ct, fresh);
+                    _allServers = list;
+                    await MarkFriendsAsync(list, g, ct);
+                    ApplyServerSort();
+                    return list.Count > 0;
+                }
+                catch (RobloxGames.ServersLimitedException ex) when (attempt < 2)
+                {
+                    // Roblox says wait: count down here instead of showing an error, then try again by itself
+                    ServersLoad.State = LoadState.Loading;
+                    for (int left = ex.WaitSeconds; left > 0; left--)
+                    {
+                        ServersLoad.Message = $"Roblox only allows a few server lists per minute. Trying again in {left} s…";
+                        await Task.Delay(1000, ct);
+                    }
+                    ServersLoad.Message = "Finding servers…";
+                }
+                catch (RobloxGames.ServersLimitedException)
+                {
+                    throw new RobloxException("Roblox is still limiting server lists. Wait a minute, then press Try again.");
+                }
+            }
         }, "Finding servers…");
     }
 

@@ -311,8 +311,17 @@ public partial class MainViewModel
         RefreshLock();
         if (Settings.MultiInstance && !_launcher.IsActive)
         {
-            StatusMessage = "Multi-instance is off, so launching would close your other client. Use \"Close Roblox & enable multi-instance\" on the Play page first.";
-            return;
+            // Another Roblox (one AltDeck didn't start) holds Roblox's lock. Launching would close it anyway, so close it now
+            // and take the lock: this launch goes ahead, and the ones after it can run side by side.
+            StatusMessage = "Closing your other Roblox client…";
+            int closed = await Task.Run(() => Launcher.CloseAllRobloxClients());
+            RefreshLock();
+            if (!_launcher.IsActive)
+            {
+                StatusMessage = "Roblox is still holding its lock. In Task Manager, end RobloxPlayerBeta.exe, then press Play again.";
+                return;
+            }
+            Log(ActivityLog.Info, $"Closed {closed} Roblox process(es) to take the multi-instance lock before launching.");
         }
 
         if (!QueueRunning) LaunchQueue.Clear();   // the last run's finished rows

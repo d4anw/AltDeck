@@ -567,6 +567,16 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <!-- the line between menu items: a thin dark line instead of Windows' white one -->
+    <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Separator">
+            <Border Height="1" Margin="10,5" Background="{DynamicResource Line}"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <Style TargetType="MenuItem">
       <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
       <Setter Property="Padding" Value="14,8"/>
@@ -663,18 +673,20 @@
     <!-- A game tile (Home rows, Games page). Click opens the game page; the ▶ plays with the account top right;
          right-click for more. Works inside any page whose DataContext is the main view-model. -->
     <DataTemplate x:Key="GameTileTemplate">
-      <Grid x:Name="Root" Width="150" Margin="0,0,14,14">
-        <Button Padding="0" Cursor="Hand" HorizontalContentAlignment="Left" ToolTip="{Binding Name}"
+      <Grid x:Name="Root" Width="160" Margin="0,0,14,14">
+        <Button Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch" ToolTip="{Binding Name}"
                 Command="{Binding DataContext.OpenGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}"
                 Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
           <Button.Template>
             <ControlTemplate TargetType="Button">
-              <Border x:Name="b" Background="Transparent" CornerRadius="16" Padding="0,0,0,6">
+              <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
+                      CornerRadius="14">
                 <ContentPresenter/>
               </Border>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
+                  <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
                   <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
                 </Trigger>
               </ControlTemplate.Triggers>
@@ -698,19 +710,22 @@
             </ContextMenu>
           </Button.ContextMenu>
           <StackPanel>
-            <ctl:RemoteImage Url="{Binding IconUrl}" Width="150" Height="150" CornerRadius="14"/>
-            <TextBlock Text="{Binding Name}" Margin="6,8,6,2" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-            <StackPanel Orientation="Horizontal" Margin="6,0">
-              <TextBlock Text="&#xE8E1;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center"
-                         Foreground="{DynamicResource Muted}" Margin="0,0,4,0"
-                         Visibility="{Binding HasLikes, Converter={StaticResource BoolVis}}"/>
-              <TextBlock Text="{Binding LikeText}" FontSize="11" Foreground="{DynamicResource Muted}" Margin="0,0,10,0"/>
-              <TextBlock Text="{Binding PlayingText}" FontSize="11" Foreground="{DynamicResource Muted}"/>
+            <!-- 1 px inside the border, so the picture's corners sit exactly in the card's -->
+            <ctl:RemoteImage Url="{Binding IconUrl}" Height="158" CornerRadius="13" TopCornersOnly="True"/>
+            <StackPanel Margin="10,9,10,10">
+              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+              <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                <TextBlock Text="&#xE8E1;" FontFamily="{StaticResource Icons}" FontSize="10" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Muted}" Margin="0,0,4,0"
+                           Visibility="{Binding HasLikes, Converter={StaticResource BoolVis}}"/>
+                <TextBlock Text="{Binding LikeText}" FontSize="11" Foreground="{DynamicResource Muted}" Margin="0,0,10,0"/>
+                <TextBlock Text="{Binding PlayingText}" FontSize="11" Foreground="{DynamicResource Muted}" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
             </StackPanel>
           </StackPanel>
         </Button>
         <!-- quick play -->
-        <Button Width="40" Height="40" Margin="0,104,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
+        <Button Width="40" Height="40" Margin="0,110,10,0" HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
                 ToolTip="Play now with the account top right"
                 Command="{Binding DataContext.PlayGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}">

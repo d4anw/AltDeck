@@ -213,14 +213,12 @@
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="110"/>
                     <ColumnDefinition Width="200"/>
-                    <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="Ping" FontSize="12" Style="{StaticResource MutedText}"
                              ToolTip="Roblox's figure for the server: the average ping of the players in it. Servers near you usually show lower."/>
                   <TextBlock Grid.Column="1" Text="Players" FontSize="12" Style="{StaticResource MutedText}"/>
-                  <TextBlock Grid.Column="2" Text="FPS" FontSize="12" Style="{StaticResource MutedText}"/>
                 </Grid>
 
                 <ctl:StateView State="{Binding ServersLoad.State}" Message="{Binding ServersLoad.Message}" MinHeight="140"
@@ -233,7 +231,6 @@
                             <Grid.ColumnDefinitions>
                               <ColumnDefinition Width="110"/>
                               <ColumnDefinition Width="200"/>
-                              <ColumnDefinition Width="70"/>
                               <ColumnDefinition Width="*"/>
                               <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
@@ -256,9 +253,7 @@
                                            Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}" Margin="0,0,10,0"/>
                               <TextBlock Text="{Binding PlayersText}" FontFamily="Consolas"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="2" Text="{Binding FpsText}" FontFamily="Consolas" VerticalAlignment="Center"
-                                       Style="{StaticResource MutedText}"/>
-                            <Border Grid.Column="3" HorizontalAlignment="Left" Background="{DynamicResource Page}" CornerRadius="9" Padding="9,2"
+                            <Border Grid.Column="2" HorizontalAlignment="Left" Background="{DynamicResource Page}" CornerRadius="9" Padding="9,2"
                                     VerticalAlignment="Center" Visibility="{Binding HasFriends, Converter={StaticResource BoolVis}}"
                                     ToolTip="{Binding Friends}">
                               <StackPanel Orientation="Horizontal">
@@ -267,7 +262,7 @@
                                 <TextBlock Text="{Binding Friends}" FontSize="11" MaxWidth="180" TextTrimming="CharacterEllipsis"/>
                               </StackPanel>
                             </Border>
-                            <StackPanel Grid.Column="4" Orientation="Horizontal">
+                            <StackPanel Grid.Column="3" Orientation="Horizontal">
                               <Button Content="Alts…" Padding="12,6"
                                       Command="{Binding DataContext.JoinServerWithAltsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                       CommandParameter="{Binding}"/>

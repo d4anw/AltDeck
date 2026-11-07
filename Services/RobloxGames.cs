@@ -141,23 +141,47 @@ public static class RobloxGames
 
     // ------------------------------------------------------------------ servers
 
+    /// <summary>Roblox refused because of its rate limit; <see cref="WaitSeconds"/> until it allows the next list.</summary>
+    public sealed class ServersLimitedException : Exception
+    {
+        public int WaitSeconds { get; }
+        public ServersLimitedException(int wait) : base("Roblox is limiting server lists.") => WaitSeconds = wait;
+    }
+
+    // Roblox allows only a few server lists per minute (3 without a sign-in). Each signed-in account has its own
+    // allowance, so requests are spread over the user's accounts, and an account that hit the limit rests until reset.
+    static readonly Dictionary<string, DateTime> LimitedUntil = new();
+    static int _rotate;
+
+    // Lists are kept for 2 minutes, so changing the sort or reopening a game costs nothing.
+    static readonly Dictionary<(long, bool), (DateTime At, List<ServerEntry> List)> ServerCache = new();
+
     /// <summary>
-    /// Public servers with room, up to <paramref name="maxPages"/> pages of 100. Roblox sorts them by player count only;
-    /// the server finder sorts by ping itself. <paramref name="progress"/> gets the running count.
+    /// Public servers with room, up to <paramref name="maxPages"/> pages of 100. <paramref name="pageLoaded"/> gets the
+    /// list after each page, so the first 100 can show right away. <paramref name="cookies"/>: the user's signed-in accounts
+    /// (empty = anonymous only).
     /// </summary>
     public static async Task<List<ServerEntry>> GetServersAsync(long placeId, bool fewestFirst, int maxPages,
-                                                                IProgress<int>? progress, CancellationToken ct)
+        IReadOnlyList<string> cookies, Action<List<ServerEntry>>? pageLoaded, CancellationToken ct, bool fresh = false)
     {
+        lock (ServerCache)
+            if (!fresh && ServerCache.TryGetValue((placeId, fewestFirst), out var hit) && DateTime.Now - hit.At < TimeSpan.FromMinutes(2))
+            {
+                pageLoaded?.Invoke(hit.List);
+                return hit.List;
+            }
+
         var list = new List<ServerEntry>();
         string cursor = "";
         for (int page = 0; page < maxPages; page++)
         {
             var url = $"https://games.roblox.com/v1/games/{placeId}/servers/Public?sortOrder={(fewestFirst ? "Asc" : "Desc")}"
                     + "&excludeFullGames=true&limit=100" + (cursor.Length > 0 ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
-            JsonDocument doc;
-            try { doc = await RobloxHttp.GetJsonAsync(url, null, ct); }
-            catch (RobloxException) when (list.Count > 0) { break; }   // keep what we have if a later page is refused
-            using (doc)
+            string? json;
+            try { json = await FetchServerPageAsync(url, cookies, ct); }
+            catch (ServersLimitedException) when (list.Count > 0) { break; }   // keep what we have
+
+            using (var doc = JsonDocument.Parse(json))
             {
                 var root = doc.RootElement;
                 if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
@@ -176,11 +200,52 @@ public static class RobloxGames
                     }
                 cursor = Str(root, "nextPageCursor");
             }
-            progress?.Report(list.Count);
+            pageLoaded?.Invoke(list.ToList());
             if (cursor.Length == 0) break;
-            await Task.Delay(300, ct);   // gentle on Roblox's rate limit
         }
+        lock (ServerCache) ServerCache[(placeId, fewestFirst)] = (DateTime.Now, list);
         return list;
+    }
+
+    /// <summary>One page, trying each account that isn't resting, then without a sign-in. No waiting: if all are limited
+    /// it throws <see cref="ServersLimitedException"/> with the shortest wait.</summary>
+    static async Task<string> FetchServerPageAsync(string url, IReadOnlyList<string> cookies, CancellationToken ct)
+    {
+        var candidates = new List<string?>();
+        for (int i = 0; i < cookies.Count; i++) candidates.Add(cookies[(i + _rotate) % cookies.Count]);
+        candidates.Add(null);   // anonymous last
+        _rotate++;
+
+        int shortest = int.MaxValue;
+        foreach (var cookie in candidates)
+        {
+            var key = cookie == null ? "anon" : cookie.Length > 40 ? cookie[^40..] : cookie;
+            lock (LimitedUntil)
+                if (LimitedUntil.TryGetValue(key, out var until) && until > DateTime.Now)
+                {
+                    shortest = Math.Min(shortest, (int)Math.Ceiling((until - DateTime.Now).TotalSeconds));
+                    continue;
+                }
+
+            using var req = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+            if (cookie != null) req.Headers.TryAddWithoutValidation("Cookie", ".ROBLOSECURITY=" + cookie);
+            using var resp = await RobloxApi.Http.SendAsync(req, ct);
+            if ((int)resp.StatusCode == 429)
+            {
+                int wait = 60;
+                if (resp.Headers.TryGetValues("x-ratelimit-reset", out var r) && int.TryParse(r.First().Split(',')[0].Trim(), out var reset)) wait = reset;
+                else if (resp.Headers.RetryAfter?.Delta is TimeSpan d) wait = (int)Math.Ceiling(d.TotalSeconds);
+                wait = Math.Clamp(wait, 1, 60);
+                lock (LimitedUntil) LimitedUntil[key] = DateTime.Now.AddSeconds(wait);
+                shortest = Math.Min(shortest, wait);
+                continue;
+            }
+            if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized && cookie != null) continue;   // signed-out account: skip it
+            if (!resp.IsSuccessStatusCode)
+                throw new RobloxException($"Roblox couldn't list servers for this game (error {(int)resp.StatusCode}).", resp.StatusCode);
+            return await resp.Content.ReadAsStringAsync(ct);
+        }
+        throw new ServersLimitedException(shortest == int.MaxValue ? 30 : shortest);
     }
 
     // ------------------------------------------------------------------ helpers

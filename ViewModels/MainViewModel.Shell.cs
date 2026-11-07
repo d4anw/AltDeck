@@ -24,6 +24,7 @@ public partial class MainViewModel
 
     partial void OnPageChanged(string value)
     {
+        RecordNav();
         MaybeLoadHome();
         MaybeLoadGames();
     }
