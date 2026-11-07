@@ -50,6 +50,7 @@ public partial class AppSettings : ObservableObject
 
     [ObservableProperty] private string perfPreset = "Max alts";
     [ObservableProperty] private int fpsCap = 10;
+    [ObservableProperty] private bool unlimitedFps;   // write "no limit" to Roblox's FPS flag instead of a cap
     [ObservableProperty] private bool startTiny = true;
     [ObservableProperty] private bool minimizeOnLaunch = true;
     [ObservableProperty] private int backgroundCpuLimit = 25;   // % of the whole CPU per background client, 0 = no limit
@@ -80,6 +81,7 @@ public partial class AppSettings : ObservableObject
     }
 
     public ObservableCollection<Favourite> Favourites { get; set; } = new();
+    public ObservableCollection<FastFlag> CustomFlags { get; set; } = new();   // FPS & FastFlags page
     public ObservableCollection<LaunchPreset> Presets { get; set; } = new();
     public ObservableCollection<LayoutProfile> Layouts { get; set; } = new();
 }

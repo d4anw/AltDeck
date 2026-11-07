@@ -156,6 +156,7 @@ public partial class MainViewModel : ObservableObject
         SetupFeatures();
         SetupUpdates();
         SetupShell();
+        SetupFlags();
 
         _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); _store.Save(Settings); };
         _vaultTimer.Tick += (_, _) =>
@@ -354,6 +355,7 @@ public partial class MainViewModel : ObservableObject
     private void ApplyPreset(string preset)
     {
         _applyingPreset = true;
+        Settings.UnlimitedFps = false;   // every preset sets its own FPS cap
         switch (preset)
         {
             case "Max alts":

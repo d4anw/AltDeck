@@ -5,9 +5,9 @@
              FontSize="14">
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="32,18,32,32" MaxWidth="1000" HorizontalAlignment="Left">
-      <TextBlock Text="Performance" FontSize="28" FontWeight="Bold"/>
-      <TextBlock Margin="0,4,0,24" Style="{StaticResource MutedText}"
-                 Text="Pick how hard AltDeck works your PC. You see what changes before anything is applied."/>
+      <TextBlock Text="FPS &amp; FastFlags" FontSize="28" FontWeight="Bold"/>
+      <TextBlock Margin="0,4,0,24" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                 Text="FPS, graphics and your own FastFlags for every client AltDeck starts, one account or many. Your normal Roblox settings are put back afterwards."/>
 
       <!-- ===== presets ===== -->
       <Grid>
@@ -117,15 +117,21 @@
             </Grid>
           </Border>
 
+          <ctl:SettingRow Title="Unlimited FPS" DescriptionSize="13"
+                          Description="No frame-rate limit at all: clients draw as many frames as your PC can. Great for one main account, heavy with many alts. Turns the FPS cap below off.">
+            <ToggleButton Style="{StaticResource SwitchLarge}" IsChecked="{Binding Settings.UnlimitedFps}"/>
+          </ctl:SettingRow>
           <ctl:SettingRow Title="FPS cap" DescriptionSize="13"
                           Description="The most frames per second each client draws. Lower uses less of your PC.">
             <StackPanel Orientation="Horizontal">
               <Slider x:Name="FpsSlider" Style="{StaticResource PerfSlider}" Width="340"
+                      IsEnabled="{Binding Settings.UnlimitedFps, Converter={StaticResource Not}}"
                       Minimum="5" Maximum="240" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True"
                       Value="{Binding Settings.FpsCap, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"/>
               <TextBox x:Name="FpsBox" Width="80" Height="44" Padding="10,0" FontFamily="Consolas" FontSize="16" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg}" MaxLength="4" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
                        Text="{Binding Settings.FpsCap, Mode=OneWay}"
+                       IsEnabled="{Binding Settings.UnlimitedFps, Converter={StaticResource Not}}"
                        KeyDown="FpsBox_KeyDown" LostKeyboardFocus="FpsBox_LostKeyboardFocus"/>
               <TextBlock Text="FPS" Margin="10,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
             </StackPanel>
@@ -182,6 +188,67 @@
               </ctl:SettingRow>
             </StackPanel>
           </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- ===== your own FastFlags ===== -->
+      <Border Style="{StaticResource CardBox}" Margin="0,24,0,0" Padding="26,22">
+        <StackPanel>
+          <Grid>
+            <StackPanel>
+              <TextBlock Text="Your FastFlags" FontSize="16" FontWeight="SemiBold"/>
+              <TextBlock Text="{Binding CustomFlagsSummary}" FontSize="13" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <Button Content="Paste JSON" Command="{Binding PasteFlagsCommand}"
+                      ToolTip="Add the flags on your clipboard, like {&quot;FFlagSomething&quot;: true}"/>
+              <Button Content="Copy as JSON" Command="{Binding CopyFlagsCommand}"/>
+              <Button Content="Clear all" Command="{Binding ClearFlagsCommand}" ToolTip="Removes them (they're copied to the clipboard first)"/>
+              <Button Content="+ Add flag" Style="{StaticResource Primary}" Margin="0" Command="{Binding AddFlagCommand}"/>
+            </StackPanel>
+          </Grid>
+          <TextBlock FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap" Style="{StaticResource MutedText}"
+                     Text="Written to Roblox together with the settings above while each client starts, then put back. Yours win when both set the same flag. Roblox only listens to flags on its own allow-list, so some flags you find online do nothing anymore. Skipped under Bloxstrap and the like."/>
+
+          <!-- column titles -->
+          <Grid Margin="0,16,0,6" Visibility="{Binding Settings.CustomFlags.Count, Converter={StaticResource CountVis}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="64"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="12"/>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="44"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="On" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Grid.Column="1" Text="Flag" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Grid.Column="3" Text="Value" FontSize="12" Style="{StaticResource MutedText}"/>
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Settings.CustomFlags}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Margin="0,0,0,8">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="64"/>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="12"/>
+                      <ColumnDefinition Width="200"/>
+                      <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Enabled}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas"/>
+                    <TextBox Grid.Column="3" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas"/>
+                    <Button Grid.Column="4" Style="{StaticResource IconBtn}" Content="&#xE74D;" HorizontalAlignment="Right" Margin="0"
+                            ToolTip="Remove this flag"
+                            Command="{Binding DataContext.RemoveFlagCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"/>
+                  </Grid>
+                  <TextBlock Text="{Binding Problem}" Margin="64,4,0,0" FontSize="12" Foreground="{DynamicResource Red}"
+                             Visibility="{Binding Problem, Converter={StaticResource EmptyCollapsed}}"/>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
       </Border>
     </StackPanel>

@@ -64,11 +64,28 @@ public sealed class PerformanceService
 
     // ------------------------------------------------------------------ what applies
 
+    /// <summary>What "Unlimited FPS" writes as the frame-rate target: far above any screen.</summary>
+    public const int UnlimitedFpsValue = 9999;
+
     /// <summary>The flags the current settings ask for. Empty means "leave Roblox alone".</summary>
     public static Dictionary<string, string> BuildFlags(AppSettings s)
     {
+        var f = BuildBuiltInFlags(s);
+        // the user's own flags last, so they win over AltDeck's
+        foreach (var flag in s.CustomFlags)
+            if (flag.Enabled && flag.IsValid) f[flag.Name.Trim()] = flag.WrittenValue;
+        return f;
+    }
+
+    private static Dictionary<string, string> BuildBuiltInFlags(AppSettings s)
+    {
         var f = new Dictionary<string, string>();
-        if (s.FpsCap < AppSettings.FpsMax)
+        if (s.UnlimitedFps)
+        {
+            f["DFIntTaskSchedulerTargetFps"] = UnlimitedFpsValue.ToString(CultureInfo.InvariantCulture);
+            f["FFlagTaskSchedulerLimitTargetFpsTo2402"] = "false";
+        }
+        else if (s.FpsCap < AppSettings.FpsMax)
             f["DFIntTaskSchedulerTargetFps"] = s.FpsCap.ToString(CultureInfo.InvariantCulture);
 
         if (!s.LighterRendering) return f;
@@ -290,7 +307,7 @@ public sealed class PerformanceService
             l.Add(("GraphicsQualityLevel", "int", LowestLevel));
             l.Add(("SavedQualityLevel", "token", LowestLevel));
         }
-        if (s.FpsCap < AppSettings.FpsMax)
+        if (!s.UnlimitedFps && s.FpsCap < AppSettings.FpsMax)
             l.Add(("FramerateCap", "int", s.FpsCap.ToString(CultureInfo.InvariantCulture)));
         if (s.MuteOnStart)
             l.Add(("MasterVolume", "float", "0"));

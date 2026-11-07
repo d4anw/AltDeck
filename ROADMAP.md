@@ -16,17 +16,17 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 - [x] Shared loading, empty and error states for every page
 
 ## Phase 1: Home + Multi-launch + FPS → 0.5
-- [ ] 🏠 New Home: friends online (and what they're playing), continue playing, recommended games, your Robux
-- [ ] 🚜 Multi-launch page with everything AltDeck does today, in tabs:
-  - [ ] Running: client cards, live previews, CPU / RAM / GPU dials, Tile / Minimize / Layouts
-  - [ ] Launch: pick accounts and a game, presets, the launch queue
-  - [ ] Accounts: add, paste many cookies, import, Robux, groups
-  - [ ] Farming: auto-rejoin, auto-restart, anti-AFK, keep trying, stop timer
-  - [ ] Activity: the log
-- [ ] ⚡ FPS & FastFlags page
-  - [ ] Uncapped FPS ("Unlimited" next to the FPS cap)
-  - [ ] FastFlags editor: see, add, edit, remove, presets; shows which flags Roblox still respects
-  - [ ] Works for every launch (single or multi); normal Roblox is put back afterwards
+- [x] 🏠 New Home: friends online (and what they're playing), continue playing, recommended games, your Robux
+- [x] 🚜 Multi-launch page with everything AltDeck does today, in tabs:
+  - [x] Running: client cards, live previews, CPU / RAM / GPU dials, Tile / Minimize / Layouts
+  - [x] Launch: pick accounts and a game, presets, the launch queue
+  - [x] Accounts: add, paste many cookies, import, Robux, groups
+  - [x] Farming: auto-rejoin, auto-restart, anti-AFK, keep trying, stop timer
+  - [x] Activity: the log
+- [x] ⚡ FPS & FastFlags page
+  - [x] Uncapped FPS ("Unlimited" next to the FPS cap)
+  - [x] FastFlags editor: see, add, edit, remove, presets; shows which flags Roblox still respects
+  - [x] Works for every launch (single or multi); normal Roblox is put back afterwards
 
 ## Phase 2: 🎮 Games → 0.6
 - [ ] Charts: Top Trending, Popular, Top Earning, Up-and-Coming… (icon, name, players online, like %)
