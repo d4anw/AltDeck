@@ -73,8 +73,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <Button Width="104" Margin="0,0,10,0" Padding="6,10" Cursor="Hand"
-                          Command="{Binding DataContext.JoinFriendCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          CommandParameter="{Binding}" MouseRightButtonUp="Friend_RightClick">
+                          Click="Friend_Click" MouseRightButtonUp="Friend_RightClick">
                     <Button.ToolTip>
                       <TextBlock>
                         <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" (@"/><Run Text="{Binding Name, Mode=OneWay}"/><Run Text=")"/>
@@ -97,6 +96,13 @@
                         <Border Width="16" Height="16" CornerRadius="8" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                 BorderThickness="3" BorderBrush="{DynamicResource Page}"
                                 Background="{Binding StatusKind, Converter={StaticResource StatusBrush}}"/>
+                        <!-- favourite friend -->
+                        <Border Width="20" Height="20" CornerRadius="10" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                Margin="-4,-4,0,0" Background="{DynamicResource Accent}"
+                                Visibility="{Binding IsFavourite, Converter={StaticResource BoolVis}}" ToolTip="Favourite friend">
+                          <TextBlock Text="&#xE735;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource AccentFg}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
                       </Grid>
                       <TextBlock Text="{Binding Label}" Margin="0,8,0,0" HorizontalAlignment="Center" FontWeight="SemiBold"
                                  TextTrimming="CharacterEllipsis" MaxWidth="92"/>

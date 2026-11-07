@@ -83,7 +83,8 @@ public partial class AppSettings : ObservableObject
     public ObservableCollection<Favourite> Favourites { get; set; } = new();
     public ObservableCollection<FastFlag> CustomFlags { get; set; } = new();   // FPS & FastFlags page
     public List<SavedGame> FavouriteGames { get; set; } = new();                // Games page: starred games
-    public List<SavedGame> RecentGames { get; set; } = new();                   // Games page: newest first, at most 30
+    public List<SavedGame> RecentGames { get; set; } = new();
+    public List<long> FavouriteFriends { get; set; } = new();                    // Roblox user IDs: shown first, with a star                   // Games page: newest first, at most 30
     public ObservableCollection<LaunchPreset> Presets { get; set; } = new();
     public ObservableCollection<LayoutProfile> Layouts { get; set; } = new();
 }

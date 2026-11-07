@@ -53,7 +53,8 @@ public partial class MainViewModel
         {
             var list = await RobloxHome.GetOnlineFriendsAsync(a.Cookie, a.UserId, ct);
             if (ct.IsCancellationRequested || a != CurrentAccount) return false;
-            foreach (var f in list) OnlineFriends.Add(f);
+            foreach (var f in list) f.IsFavourite = Settings.FavouriteFriends.Contains(f.UserId);
+            foreach (var f in FavouritesFirst(list)) OnlineFriends.Add(f);
             FriendsTitle = list.Count > 0 ? $"Friends online · {list.Count}" : "Friends online";
             return list.Count > 0;
         }, "Finding friends…");
@@ -124,4 +125,28 @@ public partial class MainViewModel
         string.IsNullOrEmpty(f.JobId)
             ? $"https://www.roblox.com/games/{f.PlaceId}"
             : $"https://www.roblox.com/games/{f.PlaceId}?gameInstanceId={f.JobId}";
+
+    // ------------------------------------------------------------------ favourite friends
+
+    /// <summary>Favourites first; the rest keep their order (in a game, Studio, online).</summary>
+    private static List<FriendTile> FavouritesFirst(IEnumerable<FriendTile> list) =>
+        list.Select((f, i) => (f, i)).OrderBy(x => x.f.IsFavourite ? 0 : 1).ThenBy(x => x.i).Select(x => x.f).ToList();
+
+    [RelayCommand]
+    private void ToggleFavouriteFriend(FriendTile? f)
+    {
+        if (f == null) return;
+        f.IsFavourite = !f.IsFavourite;
+        if (f.IsFavourite) { if (!Settings.FavouriteFriends.Contains(f.UserId)) Settings.FavouriteFriends.Add(f.UserId); }
+        else Settings.FavouriteFriends.Remove(f.UserId);
+        QueueSettingsSave();
+
+        var sorted = FavouritesFirst(OnlineFriends);
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            int at = OnlineFriends.IndexOf(sorted[i]);
+            if (at != i) OnlineFriends.Move(at, i);
+        }
+        StatusMessage = f.IsFavourite ? $"{f.Label} is a favourite friend now." : $"{f.Label} is no longer a favourite.";
+    }
 }

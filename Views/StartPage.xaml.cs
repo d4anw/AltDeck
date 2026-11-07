@@ -33,18 +33,27 @@ public partial class StartPage : UserControl
 
     // ---- right-click menus
 
+    // A friend: a click (or right-click) opens their menu. Joining is one choice, never a click by accident.
+    private void Friend_Click(object sender, RoutedEventArgs e) => ShowFriendMenu(sender as FrameworkElement);
+
     private void Friend_RightClick(object sender, MouseButtonEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is not FriendTile f) return;
+        ShowFriendMenu(sender as FrameworkElement);
+        e.Handled = true;
+    }
+
+    private void ShowFriendMenu(FrameworkElement? target)
+    {
+        if (target?.DataContext is not FriendTile f) return;
         var items = new List<(string, Action)>();
         if (f.CanJoin)
         {
-            items.Add(($"Join with {VM.CurrentAccount?.Label ?? "this account"}", () => VM.JoinFriendCommand.Execute(f)));
+            items.Add(($"Join {f.Label} with {VM.CurrentAccount?.Label ?? "this account"}", () => VM.JoinFriendCommand.Execute(f)));
             items.Add(("Join with several alts…", () => VM.JoinFriendWithAltsCommand.Execute(f)));
         }
+        items.Add((f.IsFavourite ? "Remove from favourites" : "★ Add to favourites", () => VM.ToggleFavouriteFriendCommand.Execute(f)));
         items.Add(("Open profile on roblox.com", () => OpenUrl($"https://www.roblox.com/users/{f.UserId}/profile")));
-        MenuHelper.Show((FrameworkElement)sender, items.ToArray());
-        e.Handled = true;
+        MenuHelper.Show(target, items.ToArray());
     }
 
     private static void OpenUrl(string url)

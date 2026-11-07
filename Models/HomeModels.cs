@@ -15,6 +15,7 @@ public partial class FriendTile : ObservableObject
     public string? JobId { get; init; }
 
     [ObservableProperty] private string headshotUrl = "";
+    [ObservableProperty] private bool isFavourite;
 
     public string Label => string.IsNullOrWhiteSpace(DisplayName) ? Name : DisplayName;
     public string Initials => string.IsNullOrWhiteSpace(Label) ? "?" : Label.Trim()[..Math.Min(2, Label.Trim().Length)].ToUpperInvariant();
