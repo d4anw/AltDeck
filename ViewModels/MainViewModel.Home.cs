@@ -136,17 +136,27 @@ public partial class MainViewModel
     private void ToggleFavouriteFriend(FriendTile? f)
     {
         if (f == null) return;
-        f.IsFavourite = !f.IsFavourite;
-        if (f.IsFavourite) { if (!Settings.FavouriteFriends.Contains(f.UserId)) Settings.FavouriteFriends.Add(f.UserId); }
+        bool fav = !f.IsFavourite;
+        if (fav) { if (!Settings.FavouriteFriends.Contains(f.UserId)) Settings.FavouriteFriends.Add(f.UserId); }
         else Settings.FavouriteFriends.Remove(f.UserId);
         QueueSettingsSave();
 
-        var sorted = FavouritesFirst(OnlineFriends);
+        // the same friend can be a tile on Home and on Friends
+        f.IsFavourite = fav;
+        foreach (var t in OnlineFriends.Concat(AllFriends).Where(t => t.UserId == f.UserId)) t.IsFavourite = fav;
+        Resort(OnlineFriends);
+        Resort(AllFriends);
+        if (OpenProfile?.UserId == f.UserId) OnPropertyChanged(nameof(ProfileIsFavourite));
+        StatusMessage = fav ? $"{f.Label} is a favourite friend now." : $"{f.Label} is no longer a favourite.";
+    }
+
+    private static void Resort(ObservableCollection<FriendTile> list)
+    {
+        var sorted = FavouritesFirst(list);
         for (int i = 0; i < sorted.Count; i++)
         {
-            int at = OnlineFriends.IndexOf(sorted[i]);
-            if (at != i) OnlineFriends.Move(at, i);
+            int at = list.IndexOf(sorted[i]);
+            if (at != i) list.Move(at, i);
         }
-        StatusMessage = f.IsFavourite ? $"{f.Label} is a favourite friend now." : $"{f.Label} is no longer a favourite.";
     }
 }

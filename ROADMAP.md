@@ -37,10 +37,10 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 - [x] Favourites and recently played
 
 ## Phase 3: 👥 Friends → 0.7
-- [ ] Friend list: online / in game / offline, and which game
-- [ ] Join a friend, with one or more alts
-- [ ] Friend requests: accept, decline, send
-- [ ] Player search and profiles
+- [x] Friend list: online / in game / offline, and which game
+- [x] Join a friend, with one or more alts
+- [x] Friend requests: accept, decline, send
+- [x] Player search and profiles
 
 ## Phase 4: 🧍 Avatar editor → 0.8
 - [ ] Avatar picture and what it's wearing

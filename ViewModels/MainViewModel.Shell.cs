@@ -27,6 +27,7 @@ public partial class MainViewModel
         RecordNav();
         MaybeLoadHome();
         MaybeLoadGames();
+        MaybeLoadFriends();
     }
 
     [RelayCommand] private void GoPage(string? page) => Page = string.IsNullOrEmpty(page) ? "Home" : page;
@@ -50,6 +51,9 @@ public partial class MainViewModel
         if (Settings.CurrentAccountId != id) Settings.CurrentAccountId = id;
         CurrentAccountChanged?.Invoke(value);
         MaybeLoadHome();
+        if (IsProfileOpen) CloseProfile();   // a profile is seen through one account; don't mix
+        MaybeLoadFriends();
+        _ = RefreshRequestCountAsync();
     }
 
     [RelayCommand]

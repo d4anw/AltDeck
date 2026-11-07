@@ -8,7 +8,7 @@ namespace AltDeck.ViewModels;
 /// </summary>
 public partial class MainViewModel
 {
-    private sealed record NavState(string Page, string MultiTab, GameTile? Game);
+    private sealed record NavState(string Page, string MultiTab, GameTile? Game, long Profile = 0);
 
     private readonly Stack<NavState> _back = new();
     private readonly Stack<NavState> _forward = new();
@@ -19,7 +19,8 @@ public partial class MainViewModel
     private void RecordNav()
     {
         if (_restoring) return;
-        var now = new NavState(Page, MultiTab, IsGameOpen && Page == "Games" ? _lastOpened : null);
+        var now = new NavState(Page, MultiTab, IsGameOpen && Page == "Games" ? _lastOpened : null,
+                               IsProfileOpen && Page == "Friends" ? _lastProfileId : 0);
         if (_here == now) return;
         if (_here != null)
         {
@@ -32,6 +33,7 @@ public partial class MainViewModel
 
     partial void OnMultiTabChanged(string value) { if (Page == "Multi") RecordNav(); }
     partial void OnIsGameOpenChanged(bool value) => RecordNav();
+    partial void OnIsProfileOpenChanged(bool value) => RecordNav();
 
     public void GoBack()
     {
@@ -59,6 +61,11 @@ public partial class MainViewModel
                 if (!IsGameOpen || _lastOpened != s.Game) _ = OpenGameAsync(s.Game);
             }
             else if (IsGameOpen && s.Page == "Games") CloseGame();
+            if (s.Profile > 0)
+            {
+                if (!IsProfileOpen || _lastProfileId != s.Profile) _ = OpenProfileAsync(s.Profile);
+            }
+            else if (IsProfileOpen && s.Page == "Friends") CloseProfile();
         }
         finally
         {

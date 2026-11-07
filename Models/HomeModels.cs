@@ -19,13 +19,15 @@ public partial class FriendTile : ObservableObject
 
     public string Label => string.IsNullOrWhiteSpace(DisplayName) ? Name : DisplayName;
     public string Initials => string.IsNullOrWhiteSpace(Label) ? "?" : Label.Trim()[..Math.Min(2, Label.Trim().Length)].ToUpperInvariant();
-    public string StatusKind => PresenceType switch { 2 => "ingame", 3 => "studio", _ => "online" };
+    public string StatusKind => PresenceType switch { 0 => "offline", 2 => "ingame", 3 => "studio", _ => "online" };
     public string StatusText => PresenceType switch
     {
+        0 => "Offline",
         2 => string.IsNullOrWhiteSpace(Location) ? "In a game" : Location,
         3 => "In Studio",
         _ => "Online"
     };
+    public bool IsOnline => PresenceType is >= 1 and <= 3;
     /// <summary>Their game is visible to this account, so we can follow them in.</summary>
     public bool CanJoin => PresenceType == 2 && PlaceId > 0;
 }
