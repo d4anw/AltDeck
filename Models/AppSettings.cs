@@ -66,6 +66,18 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool notifyDeals;
     [ObservableProperty] private int notifyDealPercent = 30;
     [ObservableProperty] private bool notifyDealsAffordable;
+
+    // Trades → Trade ads: one Rolimons ad, posted again every few minutes while it's on (off until started)
+    [ObservableProperty] private bool tradeAdOn;
+    [ObservableProperty] private int tradeAdMinutes = 15;
+    /// <summary>The Rolimons verification cookie, encrypted for this Windows user (see RolimonsAds.Protect).</summary>
+    [ObservableProperty] private string roliVerification = "";
+    public string TradeAdAccountId { get; set; } = "";
+    public List<long> TradeAdOffer { get; set; } = new();
+    public List<long> TradeAdRequest { get; set; } = new();
+    public List<string> TradeAdTags { get; set; } = new();
+    public DateTime TradeAdLastPosted { get; set; } = DateTime.MinValue;
+    public int TradeAdPosts { get; set; }
     [ObservableProperty] private bool lowestGraphics = true;
     [ObservableProperty] private bool lighterRendering = true;
     [ObservableProperty] private string msaa = "x1";

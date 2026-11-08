@@ -42,6 +42,7 @@ public partial class MainViewModel
             case "Limiteds": if (_limitedsAll.Count == 0) BuildLimiteds(); break;
             case "Inventory": if (AccountWorths.Count == 0) _ = LoadWorthsAsync(); break;
             case "Trades": MaybeLoadTradeList(); break;
+            case "Ads": LoadTradeAdTab(); break;
         }
     }
 

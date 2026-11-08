@@ -82,6 +82,7 @@ public partial class MainViewModel
         Accounts.CollectionChanged += OnAccountsChangedForShell;
         RecordNav();   // the first page is a step too, so back from the next page returns to it
         SetupNotifications();
+        SetupTradeAds();
     }
 
     private Account? DefaultAccount() =>
