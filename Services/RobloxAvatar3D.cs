@@ -12,6 +12,12 @@ namespace AltDeck.Services;
 /// Roblox link it came from (to notice when a newer one exists).</summary>
 public sealed record Avatar3D(Model3DGroup Model, Point3D Center, double Size, string SourceUrl);
 
+/// <summary>Some of the model's textures couldn't be downloaded (yet): showing it would give a grey avatar.</summary>
+public sealed class MissingTexturesException : Exception
+{
+    public MissingTexturesException(int missing, int total) : base($"{missing} of {total} textures didn't download") { }
+}
+
 /// <summary>
 /// Roblox's 3D avatar (thumbnails.roblox.com/v1/users/avatar-3d, needs a sign-in): a small JSON with the hashes of an
 /// OBJ model, its MTL materials and PNG textures on Roblox's picture servers. This downloads and builds a WPF model.
@@ -31,11 +37,11 @@ public static class RobloxAvatar3D
     public static async Task<Avatar3D?> LoadAsync(string cookie, long userId, string? previous, CancellationToken ct)
     {
         string url = "";
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 40; i++)   // ~16 s
         {
             url = await GetMetaUrlAsync(cookie, userId, ct);
             if (url.Length > 0 && url != previous) break;
-            await Task.Delay(750, ct);
+            await Task.Delay(400, ct);
         }
         if (url.Length == 0) return null;
         return await BuildAsync(url, ct);
@@ -58,6 +64,7 @@ public static class RobloxAvatar3D
         var materials = ParseMtl(mtlText);
         var textureNames = materials.Values.Select(m => m.Texture).Where(t => t != null).Distinct().ToList();
         var textures = new Dictionary<string, BitmapImage>();
+        int failed = 0;
         await Task.WhenAll(textureNames.Select(async name =>
         {
             try
@@ -68,8 +75,9 @@ public static class RobloxAvatar3D
                 img.Freeze();
                 lock (textures) textures[name!] = img;
             }
-            catch { }   // a missing texture just leaves that part in its plain colour
+            catch { Interlocked.Increment(ref failed); }
         }));
+        if (failed > 0) throw new MissingTexturesException(failed, textureNames.Count);
 
         return await Task.Run(() => BuildModel(objText, materials, textures, metaUrl), ct);
     }
@@ -190,13 +198,33 @@ public static class RobloxAvatar3D
     static Task<string> GetTextAsync(string hash, CancellationToken ct) => GetAsync(hash, ct, (c, u) => c.GetStringAsync(u, ct));
     static Task<byte[]> GetBytesAsync(string hash, CancellationToken ct) => GetAsync(hash, ct, (c, u) => c.GetByteArrayAsync(u, ct));
 
-    /// <summary>A file by its hash: tN.rbxcdn.com (N worked out from the hash, the classic way), else tr.rbxcdn.com.</summary>
+    /// <summary>
+    /// A file by its hash. Roblox's picture servers: tN.rbxcdn.com (N worked out from the hash, the classic way) and
+    /// tr.rbxcdn.com. Right after a change a file can take a moment to appear, so each is tried a few times.
+    /// </summary>
     static async Task<T> GetAsync<T>(string hash, CancellationToken ct, Func<HttpClient, string, Task<T>> get)
     {
-        if (hash.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return await get(RobloxApi.Http, hash);
-        int i = 31;
-        foreach (var c in hash) i ^= c;
-        try { return await get(RobloxApi.Http, $"https://t{i % 8}.rbxcdn.com/{hash}"); }
-        catch (HttpRequestException) { return await get(RobloxApi.Http, $"https://tr.rbxcdn.com/{hash}"); }
+        var urls = new List<string>();
+        if (hash.StartsWith("http", StringComparison.OrdinalIgnoreCase)) urls.Add(hash);
+        else
+        {
+            int i = 31;
+            foreach (var c in hash) i ^= c;
+            urls.Add($"https://t{i % 8}.rbxcdn.com/{hash}");
+            urls.Add($"https://tr.rbxcdn.com/{hash}");
+        }
+
+        Exception? last = null;
+        for (int attempt = 0; attempt < 4; attempt++)
+        {
+            foreach (var url in urls)
+            {
+                try { return await get(RobloxApi.Http, url); }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+                catch (Exception ex) { last = ex; }
+            }
+            await Task.Delay(400 * (attempt + 1), ct);
+        }
+        throw last ?? new HttpRequestException("download failed");
     }
 }

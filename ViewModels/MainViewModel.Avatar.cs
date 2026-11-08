@@ -141,18 +141,36 @@ public partial class MainViewModel
     private async Task Load3DAsync(Account a, string? previous, int generation)
     {
         if (string.IsNullOrEmpty(a.Cookie)) return;
-        try
+        for (int attempt = 0; attempt < 3; attempt++)
         {
-            var model = await RobloxAvatar3D.LoadAsync(a.Cookie, a.UserId, previous, CancellationToken.None);
-            if (generation != _previewGeneration || a != CurrentAccount) return;
-            if (model != null) { Avatar3DModel = model; Preview3DNote = ""; }
-            else if (Avatar3DModel == null) Preview3DNote = "3D isn't ready yet; showing the picture.";
-        }
-        catch (Exception ex)
-        {
-            if (generation != _previewGeneration) return;
-            if (Avatar3DModel == null) Preview3DNote = "3D view unavailable; showing the picture.";
-            Log(ActivityLog.Error, "3D avatar: " + ex.Message);
+            try
+            {
+                var model = await RobloxAvatar3D.LoadAsync(a.Cookie, a.UserId, previous, CancellationToken.None);
+                if (generation != _previewGeneration || a != CurrentAccount) return;
+                if (model != null) { Avatar3DModel = model; Preview3DNote = ""; }
+                else if (Avatar3DModel == null) Preview3DNote = "3D isn't ready yet; showing the picture.";
+                return;
+            }
+            catch (MissingTexturesException ex)
+            {
+                // never show a grey model: keep the last good one (or the picture) and try again in a moment
+                if (generation != _previewGeneration) return;
+                if (attempt == 2)
+                {
+                    if (Avatar3DModel == null) Preview3DNote = "3D textures didn't load; showing the picture.";
+                    Log(ActivityLog.Error, "3D avatar: " + ex.Message);
+                    return;
+                }
+                previous = null;   // the same model is fine, its textures just weren't there yet
+                await Task.Delay(1500);
+            }
+            catch (Exception ex)
+            {
+                if (generation != _previewGeneration) return;
+                if (Avatar3DModel == null) Preview3DNote = "3D view unavailable; showing the picture.";
+                Log(ActivityLog.Error, "3D avatar: " + ex.Message);
+                return;
+            }
         }
     }
 
@@ -166,7 +184,7 @@ public partial class MainViewModel
         PreviewUpdating = true;
         try
         {
-            await RobloxAvatar.RedrawAsync(a.Cookie);
+            _ = RobloxAvatar.RedrawAsync(a.Cookie);   // a nudge; Roblox redraws after a change anyway, so don't wait for it
             var pic = RobloxAvatar.WaitForNewPictureAsync(a.UserId, AvatarPicture, CancellationToken.None);
             var model = Load3DAsync(a, Avatar3DModel?.SourceUrl, generation);
             var url = await pic;
