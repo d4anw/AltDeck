@@ -72,9 +72,9 @@ public static class RobloxFriends
 {
     // ------------------------------------------------------------------ the friend list
 
-    /// <summary>All the account's friends with presence and names (pictures: <see cref="FillHeadshotsAsync"/>, per page).
-    /// Order: in a game, Studio, online, offline.</summary>
-    public static async Task<List<FriendTile>> GetAllFriendsAsync(string cookie, long userId, CancellationToken ct)
+    /// <summary>The account's friends with their names, status not filled in yet (<see cref="FillPresenceAsync"/>).
+    /// Fast: one request for the list, names mostly from memory.</summary>
+    public static async Task<List<FriendTile>> GetFriendListAsync(string cookie, long userId, CancellationToken ct)
     {
         using var friendsDoc = await RobloxHttp.GetJsonAsync($"https://friends.roblox.com/v1/users/{userId}/friends", cookie, ct);
         var ids = new List<long>();
@@ -83,38 +83,65 @@ public static class RobloxFriends
                 if (Long(f, "id") is > 0 and var id) ids.Add(id);
         if (ids.Count == 0) return new();
 
-        // presence and names at the same time, every chunk in parallel
-        var presence = new System.Collections.Concurrent.ConcurrentDictionary<long, (int Type, string Loc, long Place, string? Job)>();
-        var presenceTasks = ids.Chunk(50).Select(async chunk =>
+        var names = await GetNamesAsync(ids, ct);
+        return ids.Select(id =>
+        {
+            names.TryGetValue(id, out var n);
+            return new FriendTile { UserId = id, Name = n.Name ?? "", DisplayName = n.Display ?? "" };
+        })
+        .OrderBy(f => f.Label, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+    }
+
+    /// <summary>Fills in who's online and where (Roblox's presence service: 60 requests a minute, 50 friends per request).</summary>
+    public static async Task FillPresenceAsync(string cookie, IReadOnlyList<FriendTile> tiles, CancellationToken ct)
+    {
+        var byId = tiles.GroupBy(t => t.UserId).ToDictionary(g => g.Key, g => g.ToList());
+        await Task.WhenAll(byId.Keys.Chunk(50).Select(async chunk =>
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://presence.roblox.com/v1/presence/users", cookie, new { userIds = chunk }, ct);
+            var results = new List<(long Id, int Type, string Loc, long Place, string? Job)>();
             foreach (var p in doc.RootElement.GetProperty("userPresences").EnumerateArray())
             {
                 int type = p.TryGetProperty("userPresenceType", out var t) && t.ValueKind == JsonValueKind.Number ? t.GetInt32() : 0;
                 if (type > 3) type = 0;   // 4 = invisible: shows as offline
-                presence[Long(p, "userId")] = (type, Str(p, "lastLocation"),
-                    Long(p, "rootPlaceId") is > 0 and var root ? root : Long(p, "placeId"),
-                    Str(p, "gameId") is { Length: > 0 } g ? g : null);
+                var loc = Str(p, "lastLocation");
+                results.Add((Long(p, "userId"), type, loc == "Website" ? "" : loc,
+                             Long(p, "rootPlaceId") is > 0 and var root ? root : Long(p, "placeId"),
+                             Str(p, "gameId") is { Length: > 0 } g ? g : null));
             }
-        }).ToList();
-        var namesTask = GetNamesAsync(ids, ct);
-        await Task.WhenAll(presenceTasks);
-        var names = await namesTask;
-        var tiles = ids.Select(id =>
-        {
-            presence.TryGetValue(id, out var pr);
-            names.TryGetValue(id, out var n);
-            return new FriendTile
+            // tiles are on screen: change them on the UI thread
+            await OnUi(() =>
             {
-                UserId = id, Name = n.Name ?? "", DisplayName = n.Display ?? "",
-                PresenceType = pr.Type, Location = pr.Loc == "Website" ? "" : pr.Loc ?? "", PlaceId = pr.Place, JobId = pr.Job
-            };
-        })
-        .OrderBy(f => f.PresenceType switch { 2 => 0, 3 => 1, 1 => 2, _ => 3 })
-        .ThenBy(f => f.Label, StringComparer.OrdinalIgnoreCase)
-        .ToList();
-        return tiles;
+                foreach (var r in results)
+                    if (byId.TryGetValue(r.Id, out var list))
+                        foreach (var tile in list)
+                        {
+                            tile.Location = r.Loc; tile.PlaceId = r.Place; tile.JobId = r.Job;
+                            tile.PresenceType = r.Type;
+                        }
+            });
+        }));
+        // anyone Roblox didn't mention counts as offline
+        await OnUi(() =>
+        {
+            foreach (var t in tiles) if (t.PresenceType < 0) t.PresenceType = 0;
+        });
     }
+
+    // tiles may be on screen: change them on the UI thread (directly when there is no window, e.g. in tests)
+    static Task OnUi(Action a)
+    {
+        var d = System.Windows.Application.Current?.Dispatcher;
+        if (d == null || d.CheckAccess()) { a(); return Task.CompletedTask; }
+        return d.InvokeAsync(a).Task;
+    }
+
+    /// <summary>Order for lists: in a game, Studio, online, offline, then by name.</summary>
+    public static List<FriendTile> ByPresence(IEnumerable<FriendTile> list) =>
+        list.OrderBy(f => f.PresenceType switch { 2 => 0, 3 => 1, 1 => 2, _ => 3 })
+            .ThenBy(f => f.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     /// <summary>Pictures for the friends on screen (the rest stay initials until shown).</summary>
     public static async Task FillHeadshotsAsync(IEnumerable<FriendTile> tiles, CancellationToken ct)

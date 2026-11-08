@@ -2,26 +2,29 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AltDeck.Models;
 
-/// <summary>A friend of the current account who is online (Home).</summary>
+/// <summary>A friend of the current account (Home, Friends). Status can fill in after the tile is on screen.</summary>
 public partial class FriendTile : ObservableObject
 {
     public long UserId { get; init; }
     public string Name { get; init; } = "";
     public string DisplayName { get; init; } = "";
-    /// <summary>1 online, 2 in game, 3 in Studio.</summary>
-    public int PresenceType { get; init; }
-    public string Location { get; init; } = "";
-    public long PlaceId { get; init; }
-    public string? JobId { get; init; }
+
+    /// <summary>-1 not known yet, 0 offline, 1 online, 2 in game, 3 in Studio.</summary>
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(StatusKind), nameof(StatusText), nameof(IsOnline), nameof(CanJoin))]
+    private int presenceType = -1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(StatusText))] private string location = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(CanJoin))] private long placeId;
+    [ObservableProperty] private string? jobId;
 
     [ObservableProperty] private string headshotUrl = "";
     [ObservableProperty] private bool isFavourite;
 
     public string Label => string.IsNullOrWhiteSpace(DisplayName) ? Name : DisplayName;
     public string Initials => string.IsNullOrWhiteSpace(Label) ? "?" : Label.Trim()[..Math.Min(2, Label.Trim().Length)].ToUpperInvariant();
-    public string StatusKind => PresenceType switch { 0 => "offline", 2 => "ingame", 3 => "studio", _ => "online" };
+    public string StatusKind => PresenceType switch { -1 or 0 => "offline", 2 => "ingame", 3 => "studio", _ => "online" };
     public string StatusText => PresenceType switch
     {
+        -1 => "…",
         0 => "Offline",
         2 => string.IsNullOrWhiteSpace(Location) ? "In a game" : Location,
         3 => "In Studio",

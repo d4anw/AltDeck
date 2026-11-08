@@ -322,9 +322,7 @@ public partial class MainViewModel
         List<FriendTile> friends;
         try
         {
-            friends = _homeLoadedFor == a && OnlineFriends.Count > 0
-                ? OnlineFriends.ToList()
-                : await RobloxHome.GetOnlineFriendsAsync(a.Cookie, a.UserId, ct);
+            friends = await GetFriendsAsync(a);   // the shared list: usually already loaded by Home or Friends
         }
         catch { return; }   // the list still works without friend badges
         foreach (var grp in friends.Where(f => f.JobId != null && f.PlaceId == g.PlaceId).GroupBy(f => f.JobId!))

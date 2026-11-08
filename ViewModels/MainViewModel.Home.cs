@@ -31,9 +31,9 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
-    private Task RefreshHome() => LoadHomeAsync();
+    private Task RefreshHome() => LoadHomeAsync(force: true);
 
-    private async Task LoadHomeAsync()
+    private async Task LoadHomeAsync(bool force = false)
     {
         var a = CurrentAccount;
         _homeLoadedFor = a;
@@ -51,12 +51,13 @@ public partial class MainViewModel
 
         var friends = FriendsLoad.RunAsync(async ct =>
         {
-            var list = await RobloxHome.GetOnlineFriendsAsync(a.Cookie, a.UserId, ct);
+            var all = await GetFriendsAsync(a, force: force);   // shared with the Friends page and the server finder
             if (ct.IsCancellationRequested || a != CurrentAccount) return false;
-            foreach (var f in list) f.IsFavourite = Settings.FavouriteFriends.Contains(f.UserId);
-            foreach (var f in FavouritesFirst(list)) OnlineFriends.Add(f);
-            FriendsTitle = list.Count > 0 ? $"Friends online · {list.Count}" : "Friends online";
-            return list.Count > 0;
+            var online = FavouritesFirst(RobloxFriends.ByPresence(all.Where(f => f.IsOnline)));
+            foreach (var f in online) OnlineFriends.Add(f);
+            FriendsTitle = online.Count > 0 ? $"Friends online · {online.Count}" : "Friends online";
+            _ = RobloxFriends.FillHeadshotsAsync(online, CancellationToken.None);
+            return online.Count > 0;
         }, "Finding friends…");
 
         var games = GamesLoad.RunAsync(async ct =>

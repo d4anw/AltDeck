@@ -69,9 +69,9 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
-    private Task RefreshFriends() => LoadFriendsPageAsync();
+    private Task RefreshFriends() => LoadFriendsPageAsync(force: true);
 
-    private async Task LoadFriendsPageAsync()
+    private async Task LoadFriendsPageAsync(bool force = false)
     {
         var a = CurrentAccount;
         _friendsLoadedFor = a;
@@ -88,20 +88,27 @@ public partial class MainViewModel
             return;
         }
 
+        _friendsShown = FriendsPageSize;
         var friends = AllFriendsLoad.RunAsync(async ct =>
         {
-            var list = await RobloxFriends.GetAllFriendsAsync(a.Cookie, a.UserId, ct);
+            // names first: the list shows right away, the status dots fill in when Roblox answers
+            var list = await GetFriendsAsync(a, names =>
+            {
+                if (a != CurrentAccount || names.Count == 0) return;
+                _friendsAll = FavouritesFirst(RobloxFriends.ByPresence(names));
+                ShowFriendsPage();
+                FriendsSummary = $"{names.Count} friend{(names.Count == 1 ? "" : "s")} · checking who's online…";
+                AllFriendsLoad.State = LoadState.Ready;
+            }, force);
             if (ct.IsCancellationRequested || a != CurrentAccount) return false;
-            foreach (var f in list) f.IsFavourite = Settings.FavouriteFriends.Contains(f.UserId);
-            _friendsAll = FavouritesFirst(list);
-            _friendsShown = FriendsPageSize;
+            _friendsAll = FavouritesFirst(RobloxFriends.ByPresence(list));
             ShowFriendsPage();
             int online = list.Count(f => f.IsOnline), inGame = list.Count(f => f.PresenceType == 2);
             FriendsSummary = $"{list.Count} friend{(list.Count == 1 ? "" : "s")} · {online} online" + (inGame > 0 ? $" · {inGame} in a game" : "");
             return list.Count > 0;
         }, "Loading friends…");
 
-        var requests = LoadRequestsAsync(a);
+        var requests = LoadRequestsAsync(a, force);
         await Task.WhenAll(friends, requests);
         if (AllFriendsLoad.State == LoadState.Error) Log(ActivityLog.Error, "Friends: " + AllFriendsLoad.Message);
     }
@@ -116,15 +123,51 @@ public partial class MainViewModel
     private int requestCount;
     public bool HasRequests => RequestCount > 0;
 
-    private Task LoadRequestsAsync(Account a) => RequestsLoad.RunAsync(async ct =>
+    // the last requests list per account: shown at once next time, while a fresh copy loads quietly
+    private readonly Dictionary<string, (DateTime At, List<FriendRequest> List)> _requestsStore = new();
+
+    private async Task LoadRequestsAsync(Account a, bool force = false)
     {
-        var list = await RobloxFriends.GetRequestsAsync(a.Cookie, ct);
-        if (ct.IsCancellationRequested || a != CurrentAccount) return false;
+        if (!force && _requestsStore.TryGetValue(a.Id, out var known))
+        {
+            ShowRequests(known.List);
+            RequestsLoad.State = known.List.Count > 0 ? LoadState.Ready : LoadState.Empty;
+            if (DateTime.Now - known.At < TimeSpan.FromSeconds(30)) return;
+            try
+            {
+                var fresh = await RobloxFriends.GetRequestsAsync(a.Cookie, CancellationToken.None);
+                _requestsStore[a.Id] = (DateTime.Now, fresh);
+                if (a != CurrentAccount) return;
+                ShowRequests(fresh);
+                RequestsLoad.State = fresh.Count > 0 ? LoadState.Ready : LoadState.Empty;
+            }
+            catch { }   // keep showing the remembered list
+            return;
+        }
+
+        await RequestsLoad.RunAsync(async ct =>
+        {
+            var list = await RobloxFriends.GetRequestsAsync(a.Cookie, ct);
+            _requestsStore[a.Id] = (DateTime.Now, list);
+            if (ct.IsCancellationRequested || a != CurrentAccount) return false;
+            ShowRequests(list);
+            return list.Count > 0;
+        }, "Loading requests…");
+    }
+
+    private void ShowRequests(List<FriendRequest> list)
+    {
         Requests.Clear();
         foreach (var r in list) Requests.Add(r);
         RequestCount = list.Count;
-        return list.Count > 0;
-    }, "Loading requests…");
+    }
+
+    /// <summary>Keeps the remembered list in step after Accept / Decline.</summary>
+    private void ForgetRequest(Account a, long userId)
+    {
+        if (_requestsStore.TryGetValue(a.Id, out var known))
+            _requestsStore[a.Id] = (known.At, known.List.Where(r => r.UserId != userId).ToList());
+    }
 
     /// <summary>Just the number, for the sidebar badge (on start and when switching accounts).</summary>
     private async Task RefreshRequestCountAsync()
@@ -145,6 +188,8 @@ public partial class MainViewModel
         try
         {
             await RobloxFriends.AcceptAsync(a.Cookie, r.UserId);
+            ForgetRequest(a, r.UserId);
+            ForgetFriends(a);
             Requests.Remove(r);
             RequestCount = Requests.Count;
             StatusMessage = $"{a.Label} and {r.Label} are friends now.";
@@ -161,6 +206,7 @@ public partial class MainViewModel
         try
         {
             await RobloxFriends.DeclineAsync(a.Cookie, r.UserId);
+            ForgetRequest(a, r.UserId);
             Requests.Remove(r);
             RequestCount = Requests.Count;
             StatusMessage = $"Declined {r.Label}'s friend request.";
@@ -282,6 +328,8 @@ public partial class MainViewModel
                     break;
                 case "RequestReceived":
                     await RobloxFriends.AcceptAsync(a.Cookie, p.UserId);
+                    ForgetRequest(a, p.UserId);
+                    ForgetFriends(a);
                     p.Friendship = "Friends";
                     var r = Requests.FirstOrDefault(x => x.UserId == p.UserId);
                     if (r != null) Requests.Remove(r);
@@ -304,6 +352,7 @@ public partial class MainViewModel
         try
         {
             await RobloxFriends.UnfriendAsync(a.Cookie, userId);
+            ForgetFriends(a);
             _friendsAll.RemoveAll(x => x.UserId == userId);
             var f = AllFriends.FirstOrDefault(x => x.UserId == userId);
             if (f != null) AllFriends.Remove(f);
