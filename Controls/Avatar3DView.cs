@@ -18,6 +18,14 @@ public class Avatar3DView : Border
 
     public Avatar3D? Avatar { get => (Avatar3D?)GetValue(AvatarProperty); set => SetValue(AvatarProperty, value); }
 
+    /// <summary>Hold the slow turn (e.g. while an accessory is being adjusted, so it stays put while you move it).</summary>
+    public static readonly DependencyProperty PausedProperty = DependencyProperty.Register(
+        nameof(Paused), typeof(bool), typeof(Avatar3DView), new PropertyMetadata(false));
+    public bool Paused { get => (bool)GetValue(PausedProperty); set => SetValue(PausedProperty, value); }
+
+    private readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
+    private TimeSpan _lastFrame;
+
     private readonly Viewport3D _view = new() { ClipToBounds = true, IsHitTestVisible = false };
     private readonly PerspectiveCamera _camera = new() { FieldOfView = 30, UpDirection = new Vector3D(0, 1, 0) };
     private readonly ModelVisual3D _holder = new();
@@ -65,10 +73,14 @@ public class Avatar3DView : Border
             e.Handled = true;   // zoom the model, don't scroll the page
         };
 
-        // a slow turn until the person drags it themselves
+        // a slow turn until the person drags it themselves: by time (15° a second), not per frame, so it keeps the
+        // same speed however often the screen redraws (dragging a slider makes it redraw more)
         CompositionTarget.Rendering += (_, _) =>
         {
-            if (!_touched && IsVisible && Avatar != null) _spin.Angle += 0.25;
+            var now = _clock.Elapsed;
+            double seconds = Math.Min(0.1, (now - _lastFrame).TotalSeconds);   // after a pause, don't jump
+            _lastFrame = now;
+            if (!_touched && !Paused && IsVisible && Avatar != null) _spin.Angle += 15 * seconds;
         };
     }
 

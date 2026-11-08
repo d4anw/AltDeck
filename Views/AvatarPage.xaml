@@ -92,7 +92,7 @@
               <Grid>
                 <ctl:RemoteImage Url="{Binding AvatarPicture}" CornerRadius="19" Background="Transparent" Stretch="Uniform" Margin="10"
                                  Visibility="{Binding Showing3D, Converter={StaticResource BoolVisInv}}"/>
-                <ctl:Avatar3DView Avatar="{Binding Avatar3DShown}" Margin="4"
+                <ctl:Avatar3DView Avatar="{Binding Avatar3DShown}" Paused="{Binding IsAdjusting}" Margin="4"
                                   Visibility="{Binding Showing3D, Converter={StaticResource BoolVis}}"/>
 
                 <!-- 3D / picture switch -->
