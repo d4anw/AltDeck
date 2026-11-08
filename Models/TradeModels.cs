@@ -104,10 +104,12 @@ public partial class DealTile : ObservableObject
     [ObservableProperty] private string thumbUrl = "";
     [ObservableProperty] private string agoText = "";
 
+    /// <summary>Measure the deal against RAP even when the item has a value.</summary>
+    public bool ByRap { get; init; }
     public bool HasValue => Value > 0;
-    /// <summary>What the price is compared with.</summary>
-    public long Worth => HasValue ? Value : Rap;
-    public string Basis => HasValue ? "value" : "RAP";
+    /// <summary>What the price is compared with: RAP, or the value (RAP when it has none).</summary>
+    public long Worth => !ByRap && HasValue ? Value : Rap;
+    public string Basis => !ByRap && HasValue ? "value" : "RAP";
     /// <summary>0.35 = 35 % below what it's worth; negative = above.</summary>
     public double Discount => Worth > 0 ? 1 - (double)Price / Worth : 0;
     public string DiscountText => Discount >= 0 ? $"-{Discount:P0}" : $"+{-Discount:P0}";

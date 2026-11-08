@@ -77,6 +77,9 @@ public partial class MainViewModel
     [ObservableProperty] private bool dealsHideProjected = true;
     [ObservableProperty] private bool dealsAffordable;
     [ObservableProperty] private bool dealsValueOnly;
+    /// <summary>"Value" (value, or RAP when there's none) or "RAP": what a deal is measured against.</summary>
+    [ObservableProperty] private string dealBasis = "Value";
+    partial void OnDealBasisChanged(string value) => FilterDeals();
     [ObservableProperty] private string dealsStatus = "Watching the market…";
     private DateTime _dealsCheckedAt;
     private int _dealErrors;
@@ -143,6 +146,7 @@ public partial class MainViewModel
             // a scan only knows the price is this low now, not when it was listed: keep the older time if the price only went up
             At = scanned && old != null && price >= old.Price ? old.At : at,
             Listed = !scanned || (old?.Listed == true && price >= old.Price),
+            ByRap = DealBasis == "RAP",
             ThumbUrl = old?.ThumbUrl ?? ""
         };
         _allDeals[id] = d;
@@ -192,7 +196,7 @@ public partial class MainViewModel
     private bool PassesDeal(DealTile d)
     {
         int min = DealThreshold?.Value ?? 20;
-        if (DealsHideProjected && d.Projected && !d.HasValue) return false;   // a pushed-up RAP makes fake "deals"
+        if (DealsHideProjected && d.Projected && d.Basis == "RAP") return false;   // a pushed-up RAP makes fake "deals"
         if (DealsValueOnly && !d.HasValue) return false;
         if (DealsAffordable && CurrentAccount?.Robux is long r && d.Price > r) return false;
         return min == 0 || d.Discount * 100 >= min;
@@ -204,11 +208,11 @@ public partial class MainViewModel
         foreach (var (id, d) in _allDeals.ToList())
         {
             var v = LimitedValues.Get(id);
-            if (v == null || (v.Rap == d.Rap && v.Value == d.Value && v.Projected == d.Projected)) continue;
+            if (v == null || (v.Rap == d.Rap && v.Value == d.Value && v.Projected == d.Projected && d.ByRap == (DealBasis == "RAP"))) continue;
             _allDeals[id] = new DealTile
             {
                 AssetId = id, Name = d.Name, Price = d.Price, Rap = v.Rap, Value = v.Value, Demand = v.Demand,
-                Projected = v.Projected, At = d.At, Listed = d.Listed, ThumbUrl = d.ThumbUrl
+                Projected = v.Projected, At = d.At, Listed = d.Listed, ThumbUrl = d.ThumbUrl, ByRap = DealBasis == "RAP"
             };
         }
         foreach (var d in _allDeals.Values) d.Tick();

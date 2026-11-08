@@ -135,18 +135,26 @@
         <!-- ================= DEALS ================= -->
         <StackPanel Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Deals}">
           <Grid Margin="0,0,0,6">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
               <ComboBox Width="190" ItemsSource="{Binding DealThresholds}" SelectedItem="{Binding DealThreshold}" DisplayMemberPath="Name"
                         ToolTip="How far below its value (or RAP) a listing must be"/>
               <ComboBox Width="170" Margin="10,0,0,0" ItemsSource="{Binding DealSorts}" SelectedItem="{Binding DealSort}" DisplayMemberPath="Name"
                         ToolTip="Sort"/>
+              <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center"
+                          ToolTip="What a deal is measured against. Value uses RAP for items without a value.">
+                <TextBlock Text="Deal on" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,8,0"/>
+                <RadioButton Style="{StaticResource Seg}" Content="Value" GroupName="dealbasis"
+                             IsChecked="{Binding DealBasis, Converter={StaticResource Eq}, ConverterParameter=Value, Mode=TwoWay}"/>
+                <RadioButton Style="{StaticResource Seg}" Content="RAP" GroupName="dealbasis" Margin="0"
+                             IsChecked="{Binding DealBasis, Converter={StaticResource Eq}, ConverterParameter=RAP, Mode=TwoWay}"/>
+              </StackPanel>
               <CheckBox Content="Hide projected" IsChecked="{Binding DealsHideProjected}" Margin="16,0,0,0" VerticalAlignment="Center"
                         ToolTip="Projected items have a pushed-up RAP, so they look cheaper than they are"/>
               <CheckBox Content="Items with a value only" IsChecked="{Binding DealsValueOnly}" Margin="16,0,0,0" VerticalAlignment="Center"/>
               <CheckBox IsChecked="{Binding DealsAffordable}" Margin="16,0,0,0" VerticalAlignment="Center">
                 <TextBlock><Run Text="What"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue='I'}"/> <Run Text="can afford"/></TextBlock>
               </CheckBox>
-            </StackPanel>
+            </WrapPanel>
           </Grid>
           <TextBlock Text="{Binding DealsStatus}" FontSize="12" Style="{StaticResource MutedText}" Margin="2,6,0,4"/>
           <TextBlock FontSize="12" Style="{StaticResource MutedText}" Margin="2,0,0,14" TextWrapping="Wrap"
