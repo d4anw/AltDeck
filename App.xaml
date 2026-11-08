@@ -180,7 +180,7 @@
           <ControlTemplate TargetType="Button">
             <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="1" CornerRadius="11" Padding="{TemplateBinding Padding}">
-              <ContentPresenter VerticalAlignment="Center"/>
+              <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></Trigger>

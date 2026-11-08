@@ -56,30 +56,35 @@ public partial class MainViewModel
         var a = CurrentAccount;
         _avatarLoadedFor = a;
         _avatarLoadedAt = DateTime.Now;
+        _previewGeneration++;
         AvatarLook = null;
         AvatarPicture = "";
+        Avatar3DModel = null;
+        Preview3DNote = "";
         WornItems.Clear();
         WardrobeItems.Clear();
+        _wardrobeAll = new();
         Outfits.Clear();
         _outfitsLoadedFor = null;
         if (a == null || a.UserId == 0) { AvatarLoad.State = LoadState.Empty; return; }
 
+        // the wardrobe and outfits don't need the look first: start them now, side by side
+        if (AvatarTab == "Outfits") _ = LoadOutfitsAsync(); else _ = LoadWardrobeAsync();
+        _ = Load3DAsync(a, null, _previewGeneration);
+
         await AvatarLoad.RunAsync(async ct =>
         {
-            if (_rules == null) { _rules = await RobloxAvatar.GetRulesAsync(ct); NotifyRules(); }
-            var look = await RobloxAvatar.GetAvatarAsync(a.UserId, ct);
+            var rules = _rules == null ? RobloxAvatar.GetRulesAsync(ct) : Task.FromResult(_rules);
+            var lookTask = RobloxAvatar.GetAvatarAsync(a.UserId, ct);
+            var picTask = RobloxAvatar.GetPictureAsync(a.UserId, false, ct);
+            if (_rules == null) { _rules = await rules; NotifyRules(); }
+            var look = await lookTask;
             if (a != CurrentAccount) return false;
             AvatarLook = look;
             ShowLook(look);
-            AvatarPicture = await RobloxAvatar.GetPictureAsync(a.UserId, false, ct);
+            AvatarPicture = await picTask;
             return true;
         }, "Loading avatar…");
-
-        if (AvatarLook != null)
-        {
-            if (AvatarTab == "Outfits") _ = LoadOutfitsAsync();
-            else _ = LoadWardrobeAsync();
-        }
     }
 
     /// <summary>Puts a look on screen: worn items (with pictures), body colours and scales.</summary>
@@ -90,7 +95,7 @@ public partial class MainViewModel
             WornItems.Add(new WardrobeItem { AssetId = w.Id, Name = w.Name, TypeId = w.TypeId, IsWorn = true });
         _ = FillItemPicturesAsync(WornItems.ToList());
         var worn = look.Assets.Select(w => w.Id).ToHashSet();
-        foreach (var i in WardrobeItems) i.IsWorn = worn.Contains(i.AssetId);
+        foreach (var i in _wardrobeAll) i.IsWorn = worn.Contains(i.AssetId);   // all loaded items, also ones filtered out
 
         BodyParts.Clear();
         foreach (var (key, name) in PartNames)
@@ -119,15 +124,61 @@ public partial class MainViewModel
         catch { }
     }
 
-    /// <summary>After a change: tell Roblox to draw the new look, then show the new picture when it's ready.</summary>
-    private async Task RefreshPictureAsync(Account a)
+    // ---- the preview: a picture, or a 3D model you can turn
+
+    [ObservableProperty] private Avatar3D? avatar3DModel;
+    /// <summary>Show the turnable 3D model (when it loaded) instead of the picture.</summary>
+    [ObservableProperty] private bool show3D = true;
+    [ObservableProperty] private string preview3DNote = "";
+    /// <summary>The look changed and Roblox is drawing the new one.</summary>
+    [ObservableProperty] private bool previewUpdating;
+    private int _previewGeneration;
+
+    public bool Showing3D => Show3D && Avatar3DModel != null;
+    partial void OnAvatar3DModelChanged(Avatar3D? value) => OnPropertyChanged(nameof(Showing3D));
+    partial void OnShow3DChanged(bool value) => OnPropertyChanged(nameof(Showing3D));
+
+    private async Task Load3DAsync(Account a, string? previous, int generation)
     {
-        await RobloxAvatar.RedrawAsync(a.Cookie);
-        await Task.Delay(1500);
-        if (a != CurrentAccount) return;
-        var url = await RobloxAvatar.GetPictureAsync(a.UserId, true, CancellationToken.None);
-        if (a == CurrentAccount && url.Length > 0) AvatarPicture = url;
+        if (string.IsNullOrEmpty(a.Cookie)) return;
+        try
+        {
+            var model = await RobloxAvatar3D.LoadAsync(a.Cookie, a.UserId, previous, CancellationToken.None);
+            if (generation != _previewGeneration || a != CurrentAccount) return;
+            if (model != null) { Avatar3DModel = model; Preview3DNote = ""; }
+            else if (Avatar3DModel == null) Preview3DNote = "3D isn't ready yet; showing the picture.";
+        }
+        catch (Exception ex)
+        {
+            if (generation != _previewGeneration) return;
+            if (Avatar3DModel == null) Preview3DNote = "3D view unavailable; showing the picture.";
+            Log(ActivityLog.Error, "3D avatar: " + ex.Message);
+        }
     }
+
+    /// <summary>
+    /// After a change: Roblox keeps serving the old picture / model until the new one is drawn, so wait for ones that
+    /// differ from what's on screen. A newer change makes an older wait stop (generation).
+    /// </summary>
+    private async Task RefreshPreviewAsync(Account a)
+    {
+        int generation = ++_previewGeneration;
+        PreviewUpdating = true;
+        try
+        {
+            await RobloxAvatar.RedrawAsync(a.Cookie);
+            var pic = RobloxAvatar.WaitForNewPictureAsync(a.UserId, AvatarPicture, CancellationToken.None);
+            var model = Load3DAsync(a, Avatar3DModel?.SourceUrl, generation);
+            var url = await pic;
+            if (generation == _previewGeneration && a == CurrentAccount && url.Length > 0) AvatarPicture = url;
+            await model;
+        }
+        catch { }
+        finally { if (generation == _previewGeneration) PreviewUpdating = false; }
+    }
+
+    [RelayCommand]
+    private void TogglePreview3D() => Show3D = !Show3D;
 
     /// <summary>Runs one change as the account top right, with the busy indicator and a readable message on failure.</summary>
     private async Task<bool> ChangeAvatarAsync(Func<Account, Task> change, string? done = null)
@@ -139,7 +190,7 @@ public partial class MainViewModel
         {
             await change(a);
             if (done != null) StatusMessage = done;
-            _ = RefreshPictureAsync(a);
+            _ = RefreshPreviewAsync(a);
             return true;
         }
         catch (Exception ex)
@@ -221,17 +272,23 @@ public partial class MainViewModel
         _ = FillItemPicturesAsync(WardrobeItems.ToList());
     }
 
+    // Clicks change the look on screen at once; the save to Roblox waits 0.5 s for more clicks, then sends them together.
+    private readonly System.Windows.Threading.DispatcherTimer _wearSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly SemaphoreSlim _wearSaveGate = new(1);
+    private List<WornAsset>? _lastSavedAssets;
+    private bool _wearTimerHooked;
+
     /// <summary>Click on an item: put it on, or take it off if it's worn. Respects Roblox's limits (3 hats, 1 hair…).</summary>
     [RelayCommand]
-    private async Task ToggleWearAsync(WardrobeItem? item)
+    private void ToggleWear(WardrobeItem? item)
     {
-        if (item == null || AvatarLook is not { } look || AvatarBusy) return;
+        if (item == null || AvatarLook is not { } look || CurrentAccount is not { } a) return;
+        _lastSavedAssets ??= look.Assets.ToList();   // what Roblox has, to go back to if it refuses
         var list = look.Assets.ToList();
-        string done;
         if (list.Any(w => w.Id == item.AssetId))
         {
             list.RemoveAll(w => w.Id == item.AssetId);
-            done = $"Took off {item.Name}.";
+            StatusMessage = $"Took off {item.Name}.";
         }
         else
         {
@@ -239,23 +296,49 @@ public partial class MainViewModel
             var same = list.Where(w => w.TypeId == item.TypeId).ToList();
             while (same.Count >= max) { list.Remove(same[0]); same.RemoveAt(0); }   // the oldest of that kind makes room
             list.Add(new WornAsset { Id = item.AssetId, Name = item.Name, TypeId = item.TypeId });
-            done = $"Put on {item.Name}.";
+            StatusMessage = $"Put on {item.Name}.";
         }
+        look.Assets = list;
+        ShowLook(look);          // instant: ticks, "Wearing" row
+        PreviewUpdating = true;
 
-        item.IsBusy = true;
-        List<long> refused = new();
-        bool ok = await ChangeAvatarAsync(async a => refused = await RobloxAvatar.SetWearingAsync(a.Cookie, list), done);
-        item.IsBusy = false;
-        if (!ok) return;
-        look.Assets = list.Where(w => !refused.Contains(w.Id)).ToList();
-        ShowLook(look);
-        if (refused.Count > 0) StatusMessage = refused.Contains(item.AssetId)
-            ? $"Roblox didn't allow {item.Name} on this avatar."
-            : "Done, but Roblox took off something that didn't fit with it.";
+        if (!_wearTimerHooked) { _wearSaveTimer.Tick += async (_, _) => { _wearSaveTimer.Stop(); await SaveWearingAsync(); }; _wearTimerHooked = true; }
+        _wearSaveTimer.Stop();
+        _wearSaveTimer.Start();
+    }
+
+    private async Task SaveWearingAsync()
+    {
+        if (AvatarLook is not { } look || CurrentAccount is not { } a) return;
+        await _wearSaveGate.WaitAsync();
+        try
+        {
+            var wanted = look.Assets.ToList();
+            var refused = await RobloxAvatar.SetWearingAsync(a.Cookie, wanted);
+            if (a != CurrentAccount) return;
+            if (refused.Count > 0)
+            {
+                look.Assets = look.Assets.Where(w => !refused.Contains(w.Id)).ToList();
+                ShowLook(look);
+                var names = wanted.Where(w => refused.Contains(w.Id)).Select(w => w.Name).ToList();
+                StatusMessage = names.Count == 1 ? $"Roblox didn't allow {names[0]} with this look." : $"Roblox didn't allow {names.Count} of those items.";
+            }
+            _lastSavedAssets = null;
+            _ = RefreshPreviewAsync(a);
+        }
+        catch (Exception ex)
+        {
+            // put back what Roblox actually has
+            if (_lastSavedAssets != null) { look.Assets = _lastSavedAssets; ShowLook(look); }
+            _lastSavedAssets = null;
+            PreviewUpdating = false;
+            StatusMessage = "Couldn't change the avatar: " + ex.Message;
+        }
+        finally { _wearSaveGate.Release(); }
     }
 
     [RelayCommand]
-    private Task TakeOffAsync(WardrobeItem? item) => item == null ? Task.CompletedTask : ToggleWearAsync(item);
+    private void TakeOff(WardrobeItem? item) => ToggleWear(item);
 
     // ================================================================== body: type, colours, scales
 

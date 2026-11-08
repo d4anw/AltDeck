@@ -112,6 +112,27 @@ public static class RobloxAvatar
         return list;
     }
 
+    /// <summary>
+    /// After a change: Roblox keeps handing out the last finished picture until the new one is drawn, so wait (up to ~15 s)
+    /// for a picture different from <paramref name="old"/>. Returns the newest one found.
+    /// </summary>
+    public static async Task<string> WaitForNewPictureAsync(long userId, string? old, CancellationToken ct)
+    {
+        string latest = old ?? "";
+        for (int i = 0; i < 20; i++)
+        {
+            await Task.Delay(i == 0 ? 600 : 750, ct);
+            Thumbnails.Forget("Avatar", userId);
+            var pics = await Thumbnails.GetAsync("Avatar", new[] { userId }, "420x420", ct);
+            if (pics.TryGetValue(userId, out var url))
+            {
+                latest = url;
+                if (url != old) return url;
+            }
+        }
+        return latest;
+    }
+
     /// <summary>The avatar's full-body picture. After a change Roblox needs a moment to draw it, so this waits for the new one.</summary>
     public static async Task<string> GetPictureAsync(long userId, bool fresh, CancellationToken ct)
     {
