@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Media;
-using AltDeck.Models;
+using RoDeck.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 public partial class ClientInfo : ObservableObject
 {
@@ -14,7 +14,7 @@ public partial class ClientInfo : ObservableObject
     public LaunchTarget? Target { get; init; }
     public bool StoppedByUser { get; set; }
     /// <summary>Started from Multi-launch (farming): auto-rejoin / auto-restart may bring it back. Clients started from
-    /// Home or Games (AltDeck used as a normal launcher) are left alone when they close or freeze.</summary>
+    /// Home or Games (RoDeck used as a normal launcher) are left alone when they close or freeze.</summary>
     public bool Farm { get; init; }
     /// <summary>Ended by auto-restart because it was "Not responding" (so it isn't counted as a drop as well).</summary>
     public bool EndedAsFrozen { get; set; }
@@ -24,7 +24,7 @@ public partial class ClientInfo : ObservableObject
     public DateTime? StartedAtUtc { get; set; }
     /// <summary>The server (job ID) it last joined, read from its Roblox log. Used to rejoin the same server first.</summary>
     public string? JoinedJobId { get; set; }
-    /// <summary>Roblox's error code when AltDeck closed it for a disconnect (0 = none / never joined).</summary>
+    /// <summary>Roblox's error code when RoDeck closed it for a disconnect (0 = none / never joined).</summary>
     public int DisconnectCode { get; set; }
     /// <summary>Where its window last was while not minimized, so a relaunched client can go back to the same spot.</summary>
     public (int X, int Y, int W, int H)? LastRect { get; set; }

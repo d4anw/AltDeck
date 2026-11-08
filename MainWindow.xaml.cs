@@ -3,10 +3,10 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using AltDeck.Services;
-using AltDeck.ViewModels;
+using RoDeck.Services;
+using RoDeck.ViewModels;
 
-namespace AltDeck;
+namespace RoDeck;
 
 public partial class MainWindow : Window
 {
@@ -42,7 +42,7 @@ public partial class MainWindow : Window
         _tray.StopAllRequested += () =>
         {
             _vm.StopAllCommand.Execute(null);
-            _tray.Balloon("AltDeck", _vm.StatusMessage);
+            _tray.Balloon("RoDeck", _vm.StatusMessage);
         };
         _tray.QuitRequested += () => { _reallyExit = true; Close(); };
         _vm.UpdateAvailable += (u, notes, manual) => Dispatcher.InvokeAsync(() => AskToUpdate(u, notes, manual));
@@ -52,11 +52,11 @@ public partial class MainWindow : Window
             if (IsVisible) w.Owner = this; else w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             w.Show();
         });
-        _vm.Notify += msg => { if (!IsVisible) _tray.Balloon("AltDeck", msg); };
+        _vm.Notify += msg => { if (!IsVisible) _tray.Balloon("RoDeck", msg); };
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.RunningCount))
-                _tray.SetTooltip(_vm.RunningCount == 0 ? "AltDeck" : $"AltDeck · {_vm.RunningCount} running");
+                _tray.SetTooltip(_vm.RunningCount == 0 ? "RoDeck" : $"RoDeck · {_vm.RunningCount} running");
         };
         Application.Current.SessionEnding += (_, _) => _reallyExit = true;   // never block a Windows shutdown or sign-out
 
@@ -82,7 +82,7 @@ public partial class MainWindow : Window
             if (!_trayTipShown)
             {
                 _trayTipShown = true;
-                _tray.Balloon("AltDeck is still running", "Clients and auto-rejoin keep working. Click the tray icon to open it, right-click to quit.");
+                _tray.Balloon("RoDeck is still running", "Clients and auto-rejoin keep working. Click the tray icon to open it, right-click to quit.");
             }
         };
 
@@ -137,7 +137,7 @@ public partial class MainWindow : Window
         finally { _updateOpen = false; }
     }
 
-    /// <summary>Shows the window (from the tray, minimized or behind other apps). Used when AltDeck is started a second time.</summary>
+    /// <summary>Shows the window (from the tray, minimized or behind other apps). Used when RoDeck is started a second time.</summary>
     public void BringToFront()
     {
         ShowFromTray();
@@ -161,7 +161,7 @@ public partial class MainWindow : Window
     private void OnPanicHotkey()
     {
         _vm.StopAllCommand.Execute(null);
-        if (!IsVisible) _tray.Balloon("AltDeck", _vm.StatusMessage);
+        if (!IsVisible) _tray.Balloon("RoDeck", _vm.StatusMessage);
     }
 
     /// <summary>Registers every preset's hotkey again (ids follow the presets' order) and shows each one's status.</summary>

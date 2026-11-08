@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>A friend of the current account (Home, Friends). Status can fill in after the tile is on screen.</summary>
 public partial class FriendTile : ObservableObject

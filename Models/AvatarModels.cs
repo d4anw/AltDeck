@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>One item an avatar wears. <see cref="Meta"/> is Roblox's extra info for layered clothing (order etc.), passed back as is.</summary>
 public sealed class WornAsset

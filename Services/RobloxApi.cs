@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 public static class RobloxApi
 {
@@ -16,7 +16,7 @@ public static class RobloxApi
     {
         var client = new HttpClient(new HttpClientHandler { UseCookies = false });
         var v = typeof(RobloxApi).Assembly.GetName().Version;
-        client.DefaultRequestHeaders.UserAgent.ParseAdd($"Mozilla/5.0 AltDeck/{v?.Major ?? 0}.{v?.Minor ?? 0}.{v?.Build ?? 0}");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd($"Mozilla/5.0 RoDeck/{v?.Major ?? 0}.{v?.Minor ?? 0}.{v?.Build ?? 0}");
         client.Timeout = TimeSpan.FromSeconds(30);
         return client;
     }

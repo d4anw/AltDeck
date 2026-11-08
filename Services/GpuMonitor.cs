@@ -2,7 +2,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>GPU use of one process: engine load in percent and dedicated video memory in MB.</summary>
 public readonly record struct GpuSample(double Percent, double MemoryMb);

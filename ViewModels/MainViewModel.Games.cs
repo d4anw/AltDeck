@@ -1,12 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using AltDeck.Controls;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Controls;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>Games page: charts, search, favourites, recently played, the game page and its server finder.</summary>
 public partial class MainViewModel
@@ -95,7 +95,7 @@ public partial class MainViewModel
         GamesTitle = which == "favourites" ? "My favourites" : "Recently played";
         GamesInfo = which == "favourites"
             ? (list.Count == 0 ? "Star a game on its page to keep it here." : "Games you starred. Saved on this PC.")
-            : (list.Count == 0 ? "Games you launch from AltDeck show up here." : "The games you launched from AltDeck, newest first.");
+            : (list.Count == 0 ? "Games you launch from RoDeck show up here." : "The games you launched from RoDeck, newest first.");
         _ = ShowTilesAsync(list.Select(s => s.Tile).ToList(), fillDetails: true);
     }
 

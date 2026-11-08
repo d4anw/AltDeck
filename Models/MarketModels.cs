@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>An avatar item or bundle in the Marketplace.</summary>
 public partial class MarketItem : ObservableObject

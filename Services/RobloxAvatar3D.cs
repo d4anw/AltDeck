@@ -6,7 +6,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>A 3D avatar ready to show: the model (frozen, usable on any thread), its centre and size, and the
 /// Roblox link it came from (to notice when a newer one exists).</summary>

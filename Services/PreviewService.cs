@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media.Imaging;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Keeps the live picture on each client card fresh. The capture runs on a background thread and only the finished

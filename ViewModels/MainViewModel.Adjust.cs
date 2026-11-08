@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>
 /// Accessory adjustment (Roblox calls it refinement): move, turn and resize a worn hat / face / neck / shoulder / front /

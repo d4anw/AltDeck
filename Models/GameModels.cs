@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>One public server in the server finder.</summary>
 public partial class ServerEntry : ObservableObject

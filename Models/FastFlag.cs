@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>One FastFlag the user added on the FPS &amp; FastFlags page. Saved in settings.json.</summary>
 public partial class FastFlag : ObservableObject

@@ -4,7 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>
 /// Smooth mouse-wheel scrolling for the whole window.

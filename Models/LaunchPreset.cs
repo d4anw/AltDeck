@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>A saved "who plays where": a set of accounts plus a target, launched with one click or a hotkey.</summary>
 public partial class LaunchPreset : ObservableObject

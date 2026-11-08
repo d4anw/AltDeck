@@ -1,7 +1,7 @@
 using System.Text.Json;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>An incoming friend request.</summary>
 public sealed class FriendRequest

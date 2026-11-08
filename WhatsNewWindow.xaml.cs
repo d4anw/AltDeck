@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows;
-using AltDeck.Services;
+using RoDeck.Services;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>Shown once after an update: that version's GitHub release notes, as plain text.</summary>
 public partial class WhatsNewWindow : Window

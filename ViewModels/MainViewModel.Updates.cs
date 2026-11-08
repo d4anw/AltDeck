@@ -2,14 +2,14 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
-using AltDeck.Services;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>
-/// Updates: when AltDeck opens it checks GitHub, and if a newer version is out the window asks whether to update
+/// Updates: when RoDeck opens it checks GitHub, and if a newer version is out the window asks whether to update
 /// (with a download progress bar, then a restart into the new version). "Not now" asks again next start;
 /// "Don't notify me about updates again" switches the start-up check off. Settings → About can always check by hand.
 /// </summary>
@@ -20,12 +20,12 @@ public partial class MainViewModel
     private readonly TaskCompletionSource _startCheckDone = new();    // the start-up update check has finished
 
     private const string UpdateBaseText =
-        "When a new version of AltDeck is out, asks when AltDeck opens whether to update. Off: check by hand under About.";
+        "When a new version of RoDeck is out, asks when RoDeck opens whether to update. Off: check by hand under About.";
     [ObservableProperty] private string updateStatus = "";
     public string UpdateDescription => string.IsNullOrEmpty(UpdateStatus) ? UpdateBaseText : UpdateBaseText + "\n" + UpdateStatus;
     partial void OnUpdateStatusChanged(string value) => OnPropertyChanged(nameof(UpdateDescription));
 
-    public string AboutTitle => "AltDeck " + AppVersion;
+    public string AboutTitle => "RoDeck " + AppVersion;
 
     /// <summary>A newer version is out: the window asks whether to update. Args: the update, its release notes
     /// (null if GitHub didn't give them) and whether the person pressed "Check for updates".</summary>
@@ -49,7 +49,7 @@ public partial class MainViewModel
             if (updated) _ = ShowWhatsNewAsync();
         }
 
-        if (!Updater.CanUpdate) UpdateStatus = "This copy isn't the AltDeck.exe from GitHub Releases, so it doesn't update itself.";
+        if (!Updater.CanUpdate) UpdateStatus = "This copy isn't the RoDeck.exe from GitHub Releases, so it doesn't update itself.";
     }
 
     /// <summary>Called by the window once it's shown.</summary>
@@ -63,7 +63,7 @@ public partial class MainViewModel
     public void UpdateAccepted(UpdateInfo u)
     {
         Settings.LastSeenVersion = $"{u.Version.Major}.{u.Version.Minor}.{Math.Max(u.Version.Build, 0)}";
-        Log(ActivityLog.Info, $"Updating to AltDeck {Settings.LastSeenVersion}.");
+        Log(ActivityLog.Info, $"Updating to RoDeck {Settings.LastSeenVersion}.");
     }
 
     /// <summary>The "Don't notify me about updates again" box.</summary>
@@ -104,7 +104,7 @@ public partial class MainViewModel
             "<details><summary>Activity log</summary>" + nl + nl + "```" + nl +
             (copied ? "(press Ctrl+V here; check it for account names first)" : "(open the Activity page, press Copy and paste it here)") +
             nl + "```" + nl + "</details>" + nl + nl +
-            "---" + nl + $"AltDeck {AppVersion} · {RuntimeInformation.OSDescription.Trim()} · {RuntimeInformation.OSArchitecture}";
+            "---" + nl + $"RoDeck {AppVersion} · {RuntimeInformation.OSDescription.Trim()} · {RuntimeInformation.OSArchitecture}";
         var url = $"https://github.com/{Updater.Repo}/issues/new?labels=bug&body={Uri.EscapeDataString(body)}";
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
         catch { StatusMessage = "Couldn't open your browser."; return; }
@@ -123,7 +123,7 @@ public partial class MainViewModel
         if (!manual && !Settings.AutoUpdate) return;
         if (!Updater.CanUpdate)
         {
-            if (manual) StatusMessage = "Only the AltDeck.exe from GitHub Releases updates itself.";
+            if (manual) StatusMessage = "Only the RoDeck.exe from GitHub Releases updates itself.";
             return;
         }
         _updateBusy = true;
@@ -140,7 +140,7 @@ public partial class MainViewModel
 
             string? notes = null;
             try { notes = await Updater.GetReleaseNotesAsync(u.Version); } catch { }
-            UpdateStatus = $"AltDeck {u.Version} is available.";
+            UpdateStatus = $"RoDeck {u.Version} is available.";
             _updateOffered = true;
             UpdateAvailable?.Invoke(u, notes, manual);
         }
@@ -160,7 +160,7 @@ public partial class MainViewModel
         try
         {
             Updater.Install();
-            Log(ActivityLog.Info, $"Installed AltDeck {u.Version}.");
+            Log(ActivityLog.Info, $"Installed RoDeck {u.Version}.");
         }
         catch (Exception ex)
         {

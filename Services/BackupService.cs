@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>What goes into a backup file: the accounts (with their sign-ins) plus favourites, presets and layouts.</summary>
 public sealed class BackupData
@@ -18,7 +18,7 @@ public sealed class BackupData
 }
 
 /// <summary>
-/// Encrypted, portable backup (.altdeck). Unlike vault.dat it is NOT tied to this Windows user, only to the password
+/// Encrypted, portable backup (.rodeck). Unlike vault.dat it is NOT tied to this Windows user, only to the password
 /// chosen when exporting, so it can be imported on another PC or after a reinstall.
 /// Layout: "ADB1" | iterations (4, little endian) | salt (16) | nonce (12) | tag (16) | AES-256-GCM ciphertext of the JSON.
 /// </summary>
@@ -28,8 +28,10 @@ public static class BackupService
     const int SaltSize = 16, NonceSize = 12, TagSize = 16, KeySize = 32, Iterations = 600_000;
     const int HeaderSize = 4 + 4 + SaltSize + NonceSize + TagSize;
 
-    public const string Extension = ".altdeck";
-    public const string FileFilter = "AltDeck backup (*.altdeck)|*.altdeck";
+    public const string Extension = ".rodeck";
+    public const string FileFilter = "RoDeck backup (*.rodeck)|*.rodeck";
+    /// <summary>For opening: backups made before the rename end in .altdeck (same format).</summary>
+    public const string OpenFilter = "RoDeck backup (*.rodeck, *.altdeck)|*.rodeck;*.altdeck";
 
     public static void Export(string path, string password, BackupData data)
     {
@@ -72,7 +74,7 @@ public static class BackupService
 
         if (file.Length < HeaderSize || !file.AsSpan(0, 4).SequenceEqual(Magic))
         {
-            error = "That isn't an AltDeck backup file.";
+            error = "That isn't an RoDeck backup file.";
             return null;
         }
         var iterations = BitConverter.ToInt32(file, 4);

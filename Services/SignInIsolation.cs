@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Every Roblox client on this PC shares one sign-in store: %LocalAppData%\Roblox\LocalStorage\RobloxCookies.dat
@@ -12,7 +12,7 @@ namespace AltDeck.Services;
 ///
 /// So right before each launch the store is emptied: the new client starts with nothing of the other accounts.
 /// Running clients keep their sign-in in memory, so they aren't affected. The user's own Roblox sign-in
-/// (the normal Roblox app) is backed up first and put back ~90 s after the last launch, when AltDeck closes,
+/// (the normal Roblox app) is backed up first and put back ~90 s after the last launch, when RoDeck closes,
 /// and at the next start after a crash.
 /// </summary>
 public static class SignInIsolation
@@ -114,7 +114,7 @@ public static class SignInIsolation
         edit(o);
         try
         {
-            var tmp = AppStorage + ".altdeck.tmp";
+            var tmp = AppStorage + ".rodeck.tmp";
             File.WriteAllText(tmp, o.ToJsonString(new JsonSerializerOptions { WriteIndented = false }));
             File.Move(tmp, AppStorage, overwrite: true);
         }

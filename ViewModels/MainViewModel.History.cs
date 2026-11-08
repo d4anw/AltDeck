@@ -1,8 +1,8 @@
 using System.Windows.Threading;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>
 /// Back / forward like a browser, on every page: the mouse's side buttons and Alt+← / Alt+→.

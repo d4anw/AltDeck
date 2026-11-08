@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>One account waiting in (or done with) the launch queue.</summary>
 public partial class QueueItem : ObservableObject
@@ -54,7 +54,9 @@ public partial class MainViewModel
             PresetHotkeysChanged?.Invoke();
         };
         _lastSweep = DateTime.Now;
-        Log(ActivityLog.Info, $"AltDeck {AppVersion} started with {Accounts.Count} account{(Accounts.Count == 1 ? "" : "s")}.");
+        Log(ActivityLog.Info, $"RoDeck {AppVersion} started with {Accounts.Count} account{(Accounts.Count == 1 ? "" : "s")}.");
+        if (DataMigration.Moved)
+            Log(ActivityLog.Info, "AltDeck is now RoDeck: your accounts and settings were copied over from the AltDeck folder.");
     }
 
     private string DescribeTarget(LaunchTarget t)
@@ -119,7 +121,7 @@ public partial class MainViewModel
             DefaultExt = BackupService.Extension,
             AddExtension = true,
             OverwritePrompt = true,
-            FileName = $"AltDeck-backup-{DateTime.Now:yyyy-MM-dd}{BackupService.Extension}"
+            FileName = $"RoDeck-backup-{DateTime.Now:yyyy-MM-dd}{BackupService.Extension}"
         };
         if (dlg.ShowDialog(owner) != true) return;
 
@@ -151,7 +153,7 @@ public partial class MainViewModel
     private async Task ImportBackupAsync()
     {
         var owner = Application.Current.MainWindow;
-        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = BackupService.FileFilter, CheckFileExists = true };
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = BackupService.OpenFilter, CheckFileExists = true };
         if (dlg.ShowDialog(owner) != true) return;
         var path = dlg.FileName;
 
@@ -295,7 +297,7 @@ public partial class MainViewModel
     }
 
     /// <summary>Puts accounts in the launch queue for this target and starts the queue if it isn't running.</summary>
-    /// <param name="launcher">Started from Home / Games (AltDeck as a normal launcher): stay on the page, don't farm
+    /// <param name="launcher">Started from Home / Games (RoDeck as a normal launcher): stay on the page, don't farm
     /// (no auto-rejoin / auto-restart), and if the account is already in a game, close that game first.</param>
     private async Task LaunchAccountsAsync(List<Account> accounts, string targetText, string? via = null, bool launcher = false)
     {
@@ -316,7 +318,7 @@ public partial class MainViewModel
         RefreshLock();
         if (Settings.MultiInstance && !_launcher.IsActive)
         {
-            // Another Roblox (one AltDeck didn't start) holds Roblox's lock. Launching would close it anyway, so close it now
+            // Another Roblox (one RoDeck didn't start) holds Roblox's lock. Launching would close it anyway, so close it now
             // and take the lock: this launch goes ahead, and the ones after it can run side by side.
             StatusMessage = "Closing your other Roblox client…";
             int closed = await Task.Run(() => Launcher.CloseAllRobloxClients());
@@ -536,7 +538,7 @@ public partial class MainViewModel
         var existing = Settings.Presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
         if (existing != null)
         {
-            if (MessageBox.Show($"A preset called {existing.Name} exists. Replace it?", "AltDeck", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+            if (MessageBox.Show($"A preset called {existing.Name} exists. Replace it?", "RoDeck", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                 return;
             existing.Target = TargetText.Trim();
             existing.AccountIds = picked.Select(a => a.Id).ToList();
@@ -607,7 +609,7 @@ public partial class MainViewModel
 
     public void DeletePreset(LaunchPreset p)
     {
-        if (MessageBox.Show($"Delete the preset {p.Name}?", "AltDeck", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show($"Delete the preset {p.Name}?", "RoDeck", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
         Settings.Presets.Remove(p);
         QueueSettingsSave();
     }

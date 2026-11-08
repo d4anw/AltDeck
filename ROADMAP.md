@@ -1,4 +1,4 @@
-# AltDeck roadmap
+# RoDeck roadmap
 
 From multi-account launcher to a full Roblox app: your alts, games, avatar, friends, marketplace and trades in one place.
 Work happens on the `next` branch; `main` only gets a phase once it's finished, tested and released.
@@ -17,7 +17,7 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 
 ## Phase 1: Home + Multi-launch + FPS → 0.5
 - [x] 🏠 New Home: friends online (and what they're playing), continue playing, recommended games, your Robux
-- [x] 🚜 Multi-launch page with everything AltDeck does today, in tabs:
+- [x] 🚜 Multi-launch page with everything RoDeck does today, in tabs:
   - [x] Running: client cards, live previews, CPU / RAM / GPU dials, Tile / Minimize / Layouts
   - [x] Launch: pick accounts and a game, presets, the launch queue
   - [x] Accounts: add, paste many cookies, import, Robux, groups
@@ -65,9 +65,10 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 - [x] Send, accept, decline and counter trades, always with a confirm screen (trading needs Premium)
 
 ## Phase 7: Polish → 1.0
+- [x] New name: AltDeck is now RoDeck (accounts and settings move over by themselves, old installs still update)
 - [ ] Notifications: friend online, trade received, friend request
 - [ ] Screenshots and README rework for the new app
-- [ ] 1.0: AltDeck replaces the Roblox app
+- [ ] 1.0: RoDeck replaces the Roblox app
 
 ## Every phase
 - [ ] Check the Roblox web services it needs still work, before building

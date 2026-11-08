@@ -6,18 +6,18 @@
     <UseWindowsForms>true</UseWindowsForms>   <!-- only for the tray icon (NotifyIcon) -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <RootNamespace>AltDeck</RootNamespace>
-    <ApplicationIcon>AltDeck.ico</ApplicationIcon>
+    <RootNamespace>RoDeck</RootNamespace>
+    <ApplicationIcon>RoDeck.ico</ApplicationIcon>
     <LangVersion>latest</LangVersion>
     <!-- shown in Settings > About and in the exe's Properties > Details. Change it here only. -->
     <Version>0.4.4</Version>
-    <Product>AltDeck</Product>
-    <AssemblyTitle>AltDeck</AssemblyTitle>
-    <Description>Multi-account Roblox launcher</Description>
+    <Product>RoDeck</Product>
+    <AssemblyTitle>RoDeck</AssemblyTitle>
+    <Description>All-in-one Roblox app (formerly AltDeck)</Description>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
-    <Resource Include="AltDeck.ico" />
+    <Resource Include="RoDeck.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />

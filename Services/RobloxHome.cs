@@ -1,7 +1,7 @@
 using System.Text.Json;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>Data for the Home page: online friends, and Roblox's own "Continue" and recommended game rows.</summary>
 public static class RobloxHome
@@ -19,7 +19,7 @@ public static class RobloxHome
                 if (f.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.Number) ids.Add(id.GetInt64());
         if (ids.Count == 0) return new();
 
-        // 2. who's online and where (same presence service AltDeck already uses for your own accounts)
+        // 2. who's online and where (same presence service RoDeck already uses for your own accounts)
         var online = new System.Collections.Concurrent.ConcurrentBag<(long Id, int Type, string Loc, long Place, string? Job)>();
         await Task.WhenAll(ids.Chunk(50).Select(async chunk =>
         {

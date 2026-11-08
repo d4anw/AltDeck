@@ -1,10 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using AltDeck.Models;
-using AltDeck.ViewModels;
+using RoDeck.Models;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 /// <summary>Friends: the friend list, requests, player search and profiles.</summary>
 public partial class FriendsPage : UserControl

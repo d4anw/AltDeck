@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace AltDeck;
+namespace RoDeck;
 
 public partial class PromptDialog : Window
 {

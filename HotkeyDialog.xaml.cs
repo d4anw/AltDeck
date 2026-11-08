@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Input;
-using AltDeck.Services;
+using RoDeck.Services;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>Records a key combination (the box listens to the keys you press, so typos can't happen).</summary>
 public partial class HotkeyDialog : Window

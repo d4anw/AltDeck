@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>Start-up animation: the logo squares pop in, the name slides up, a line fills. About 1.5 seconds.</summary>
 public partial class SplashWindow : Window

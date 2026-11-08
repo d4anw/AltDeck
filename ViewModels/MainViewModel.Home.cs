@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
-using AltDeck.Controls;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Controls;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>Home: online friends, Continue and Recommended games for the account top right.</summary>
 public partial class MainViewModel

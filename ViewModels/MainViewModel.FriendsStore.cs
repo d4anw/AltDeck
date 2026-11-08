@@ -1,7 +1,7 @@
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>
 /// One friends list per account, shared by Home, the Friends page and the server finder, so Roblox is asked once

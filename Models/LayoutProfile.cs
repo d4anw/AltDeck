@@ -1,4 +1,4 @@
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>Where one account's client window sits (screen pixels).</summary>
 public class WindowSlot

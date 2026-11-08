@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 /// <summary>Search field: icon, hint text, ✕ to clear, Enter runs <see cref="SubmitCommand"/>.</summary>
 public partial class SearchBox : UserControl

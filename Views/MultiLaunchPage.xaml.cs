@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using AltDeck.ViewModels;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 /// <summary>Multi-launch: Running, Launch, Accounts, Farming and Activity tabs, and "Hold to stop all".</summary>
 public partial class MultiLaunchPage : UserControl

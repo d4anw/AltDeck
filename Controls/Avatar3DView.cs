@@ -3,9 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using AltDeck.Services;
+using RoDeck.Services;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 /// <summary>
 /// Shows an <see cref="Avatar3D"/> you can turn: drag left / right to spin it (see the back), drag up / down to tilt a little,

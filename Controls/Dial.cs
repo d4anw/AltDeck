@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 /// <summary>Circular gauge with a centred label, drawn directly (no XAML).</summary>
 public class Dial : FrameworkElement

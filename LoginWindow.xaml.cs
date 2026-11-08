@@ -1,13 +1,13 @@
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>Isolated browser profile: sign in once, we capture the session cookie, then the profile is deleted.</summary>
 public partial class LoginWindow : Window
 {
     public string? Cookie { get; private set; }
-    private readonly string _dataDir = Path.Combine(Path.GetTempPath(), "altdeck-login-" + Guid.NewGuid().ToString("N"));
+    private readonly string _dataDir = Path.Combine(Path.GetTempPath(), "rodeck-login-" + Guid.NewGuid().ToString("N"));
     private bool _done;
     private bool _closed;
 
@@ -20,7 +20,7 @@ public partial class LoginWindow : Window
             catch (Exception ex)
             {
                 MessageBox.Show("Couldn't start the login browser (is the WebView2 Runtime installed?)\n\n" + ex.Message,
-                                "AltDeck");
+                                "RoDeck");
                 Close();
             }
         };

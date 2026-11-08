@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Where to play. A newer "roblox.com/share?code=...&amp;type=Server" link has no place ID yet:

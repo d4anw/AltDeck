@@ -1,4 +1,4 @@
-<Window x:Class="AltDeck.CookieDialog"
+<Window x:Class="RoDeck.CookieDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Add accounts with cookies" Width="560" Height="360" MinHeight="300" ResizeMode="CanResizeWithGrip"

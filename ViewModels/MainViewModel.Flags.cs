@@ -3,12 +3,12 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
-using AltDeck.Models;
+using RoDeck.Models;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
-/// <summary>FPS &amp; FastFlags page: the user's own FastFlags (written with AltDeck's own during each launch).</summary>
+/// <summary>FPS &amp; FastFlags page: the user's own FastFlags (written with RoDeck's own during each launch).</summary>
 public partial class MainViewModel
 {
     public string CustomFlagsSummary

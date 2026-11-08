@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
-using AltDeck.Services;
-using AltDeck.ViewModels;
+using RoDeck.Services;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 public partial class HomePage : UserControl
 {

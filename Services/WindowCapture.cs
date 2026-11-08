@@ -4,7 +4,7 @@ using System.Windows.Media.Imaging;
 using Drawing = System.Drawing;
 using Imaging = System.Drawing.Imaging;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>Takes a picture of another program's window, so the Home cards can show what each client is doing.</summary>
 internal static class WindowCapture

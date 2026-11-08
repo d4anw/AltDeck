@@ -1,16 +1,17 @@
 <div align="center">
 
-<img src="AltDeck.ico" alt="AltDeck logo" width="96">
+<img src="RoDeck.ico" alt="RoDeck logo" width="96">
 
-# AltDeck
+# RoDeck
 
 ### All your Roblox accounts in one launcher, signed in and ready to play.
 
 A local-only multi-account launcher for Windows 10 and 11.<br>
-Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
+Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.<br>
+<sub>Formerly <b>AltDeck</b>. Not affiliated with or endorsed by Roblox Corporation.</sub>
 
-[![Latest release](https://img.shields.io/github/v/release/d4anw/AltDeck?style=for-the-badge&color=ff7a1a&labelColor=111111&label=release&cacheSeconds=300)](https://github.com/d4anw/AltDeck/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/d4anw/AltDeck/total?style=for-the-badge&color=2b2b2b&labelColor=111111&cacheSeconds=300)](https://github.com/d4anw/AltDeck/releases)
+[![Latest release](https://img.shields.io/github/v/release/d4anw/RoDeck?style=for-the-badge&color=ff7a1a&labelColor=111111&label=release&cacheSeconds=300)](https://github.com/d4anw/RoDeck/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/d4anw/RoDeck/total?style=for-the-badge&color=2b2b2b&labelColor=111111&cacheSeconds=300)](https://github.com/d4anw/RoDeck/releases)
 [![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=for-the-badge&logo=windows&labelColor=111111)](#-install)
 
 ![.NET 8](https://img.shields.io/badge/.NET-8-512bd4?style=flat-square&logo=dotnet&logoColor=white)
@@ -20,7 +21,7 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 
 <br>
 
-[**⬇ Download**](https://github.com/d4anw/AltDeck/releases/latest) &nbsp;·&nbsp;
+[**⬇ Download**](https://github.com/d4anw/RoDeck/releases/latest) &nbsp;·&nbsp;
 [Quick start](#-quick-start) &nbsp;·&nbsp;
 [Privacy](#-safety-and-privacy) &nbsp;·&nbsp;
 [Changelog](#-changelog) &nbsp;·&nbsp;
@@ -34,7 +35,7 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 
 | For everyone | For developers |
 |---|---|
-| [What is AltDeck?](#-what-is-altdeck) | [Build from source](#-build-from-source) |
+| [What is RoDeck?](#-what-is-rodeck) | [Build from source](#-build-from-source) |
 | [Features](#-features) | [Project layout](#-project-layout) |
 | [Install](#-install) | [Changelog](#-changelog) |
 | [Quick start](#-quick-start) | [License](#️-license) |
@@ -43,17 +44,17 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.
 
 <br>
 
-## 💡 What is AltDeck?
+## 💡 What is RoDeck?
 
 Playing on more than one Roblox account normally means signing out, signing back in, finding the game again,
-and only having one Roblox window open at a time. AltDeck takes care of that.
+and only having one Roblox window open at a time. RoDeck takes care of that.
 
 - **Add each account once**: sign in through a browser window, paste many cookies at once, or import an `AccountData.json` file.
 - **Launch one account or many** into any game, private server or share link.
 - **Run several Roblox clients side by side**, with live previews and CPU / memory / GPU dials.
-- **Get kicked or crash? AltDeck rejoins for you**, back into the same server when it can.
+- **Get kicked or crash? RoDeck rejoins for you**, back into the same server when it can.
 
-Everything runs on your PC. There's no AltDeck account, no AltDeck server and no tracking.
+Everything runs on your PC. There's no RoDeck account, no RoDeck server and no tracking.
 
 <br>
 
@@ -65,7 +66,7 @@ Everything runs on your PC. There's no AltDeck account, no AltDeck server and no
 
 ### 🔐 Encrypted vault
 Sign-ins are encrypted with **Windows DPAPI**, or with your own **master password**
-(PBKDF2-SHA256, 600,000 rounds + AES-256-GCM). Portable password-locked `.altdeck` backups.
+(PBKDF2-SHA256, 600,000 rounds + AES-256-GCM). Portable password-locked `.rodeck` backups.
 
 </td>
 <td width="50%" valign="top">
@@ -120,7 +121,7 @@ start muted, start tiny and a CPU limit for background clients.
 
 ### 🎨 Your look
 Black theme with orange accents by default. Change the accent colour, density and background
-image. Your Discord profile shows "Playing AltDeck" automatically.
+image. Your Discord profile shows "Playing RoDeck" automatically.
 
 </td>
 </tr>
@@ -128,7 +129,7 @@ image. Your Discord profile shows "Playing AltDeck" automatically.
 <td valign="top">
 
 ### ⬆️ Updates itself
-When a new version is out, AltDeck asks as soon as it opens and shows what's new.
+When a new version is out, RoDeck asks as soon as it opens and shows what's new.
 One click downloads it with a progress bar and restarts into the new version.
 
 </td>
@@ -148,7 +149,7 @@ Activity log to paste in. After every update, "What's new" shows what changed.
 
 | Area | What you get |
 |---|---|
-| 🔐 **Vault** | `vault.dat` in `%AppData%\AltDeck`, encrypted with Windows DPAPI for your user. Optional master password (asked once at every start, can't be recovered). Export / import an `.altdeck` backup locked with a password you choose; it works on another PC. Import only adds. |
+| 🔐 **Vault** | `vault.dat` in `%AppData%\RoDeck`, encrypted with Windows DPAPI for your user. Optional master password (asked once at every start, can't be recovered). Export / import an `.rodeck` backup locked with a password you choose; it works on another PC. Import only adds. |
 | 👥 **Accounts** | Sign in through an isolated browser window (the profile is deleted after the session cookie is captured), or paste cookies: one or many at once, one per line. Search, status and group filters, favourites, live presence. A periodic sign-in check (every 30 min by default) tells you when one expired. |
 | 📥 **Import** | Import a list of accounts from an `AccountData.json` file (or a `.txt` with one cookie per line). Names, notes and groups in the file fill in what's empty; accounts you already have are refreshed, not doubled; passwords in the file are ignored. Encrypted files can't be read: save them unencrypted first. |
 | 💰 **Robux & Premium** | Each account's Robux balance and Premium status in the list and its details, plus the total Robux across all your accounts. Refreshed with every sign-in check. |
@@ -157,12 +158,12 @@ Activity log to paste in. After every update, "What's new" shows what changed.
 | 🔁 **Recovery** | Auto-rejoin reads each client's Roblox log to catch disconnects; the first rejoin goes back to the same server. Auto-restart for crashes and windows "Not responding" for 30 s. Give-up limit, or keep trying every 5 minutes. Sign-ins are kept apart so clients don't sign each other out. |
 | 🖥️ **Home** | Live previews refreshed every second (a minimized window keeps its last picture). GPU load and video memory from Windows' own counters. Windows menu: Tile windows, Minimize all, save / restore layouts. |
 | 🎚️ **Performance** | FPS cap, MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
-| ⬆️ **Updates** | When AltDeck opens it checks GitHub Releases. If a new version is out it asks whether to update, shows what's new, downloads with a progress bar, checks the file against GitHub's SHA-256 and restarts into it. "Not now" asks again next start; "Don't notify me about updates again" stops asking. Check by hand anytime under Settings → About. |
+| ⬆️ **Updates** | When RoDeck opens it checks GitHub Releases. If a new version is out it asks whether to update, shows what's new, downloads with a progress bar, checks the file against GitHub's SHA-256 and restarts into it. "Not now" asks again next start; "Don't notify me about updates again" stops asking. Check by hand anytime under Settings → About. |
 | ⏲️ **Automation** | Panic hotkey to stop every client, a stop timer (30m / 1h / 2h / 4h), hold-to-stop-all button, close to tray. |
-| 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy. Also written to `%AppData%\AltDeck\logs`, kept for 14 days. |
-| 🐞 **Report a bug** | One button (Activity page, or Settings → About) opens a GitHub issue with your AltDeck and Windows versions filled in, and copies your Activity log so you can paste it in after checking it for names. |
-| 🆕 **What's new** | After an update, AltDeck shows that version's release notes once. |
-| 💬 **Discord** | "Playing AltDeck" on your Discord profile with how many alts are running. Works out of the box with the Discord desktop app open; switch it off in Settings. |
+| 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy. Also written to `%AppData%\RoDeck\logs`, kept for 14 days. |
+| 🐞 **Report a bug** | One button (Activity page, or Settings → About) opens a GitHub issue with your RoDeck and Windows versions filled in, and copies your Activity log so you can paste it in after checking it for names. |
+| 🆕 **What's new** | After an update, RoDeck shows that version's release notes once. |
+| 💬 **Discord** | "Playing RoDeck" on your Discord profile with how many alts are running. Works out of the box with the Discord desktop app open; switch it off in Settings. |
 
 </details>
 
@@ -170,10 +171,10 @@ Activity log to paste in. After every update, "What's new" shows what changed.
 
 ## 📥 Install
 
-1. Download **`AltDeck.exe`** from the [latest release](https://github.com/d4anw/AltDeck/releases/latest).
+1. Download **`RoDeck.exe`** from the [latest release](https://github.com/d4anw/RoDeck/releases/latest).
 2. Run it. It's one file, needs no install and doesn't need .NET.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the exe isn't code-signed: click **More info → Run anyway**.
-4. That's it. When a new version comes out, AltDeck **asks you to update** the next time you open it.
+4. That's it. When a new version comes out, RoDeck **asks you to update** the next time you open it.
 
 > [!NOTE]
 > "Sign in with a browser" needs the **Microsoft Edge WebView2 Runtime**. It's already on Windows 11.
@@ -182,29 +183,29 @@ Activity log to paste in. After every update, "What's new" shows what changed.
 
 ## 🏁 Quick start
 
-1. **Close all Roblox windows**, then open AltDeck.
+1. **Close all Roblox windows**, then open RoDeck.
 2. Go to **Accounts → Add account** and sign in through the browser window. Have lots of accounts? Paste many cookies at once (one per line) or import an `AccountData.json` file.
 3. Go to **Play**, tick the accounts you want and paste a game link or place ID.
 4. Press **Launch**. If the second client closes the first one, press **Close Roblox & enable multi-instance** on the Play page.
 
 > [!TIP]
-> Keep the Discord desktop app open and your profile shows **Playing AltDeck** with how many alts are running.
+> Keep the Discord desktop app open and your profile shows **Playing RoDeck** with how many alts are running.
 > If it doesn't show, turn on **Share your detected activity** in Discord (Settings → Activity Privacy).
 
 <br>
 
 ## 🔒 Safety and privacy
 
-- **Your data stays on your PC.** Accounts, settings and logs live in `%AppData%\AltDeck`, never in the exe or in this repo.
+- **Your data stays on your PC.** Accounts, settings and logs live in `%AppData%\RoDeck`, never in the exe or in this repo.
 - **Sign-ins are encrypted** with Windows DPAPI, or your master password if you set one.
 - **Nothing is sent anywhere except Roblox**, plus your running-alt count to the Discord app on your PC (switch it off in Settings).
 - **Updates come only from this repo's GitHub Releases** and are checked against GitHub's SHA-256 before they're installed.
 - **Report a bug only opens GitHub when you click it.** Nothing is sent by itself, and you check the log before pasting it.
-- **No telemetry**, no accounts, no AltDeck server.
+- **No telemetry**, no accounts, no RoDeck server.
 - **Nothing is injected into Roblox.** Window sizing uses a hook that watches from outside, and graphics settings use Roblox's own FastFlags file, which is put back after launch.
 
 > [!WARNING]
-> Never share your `vault.dat`, an `.altdeck` backup or a `.ROBLOSECURITY` cookie. Anyone who has them can sign in as you.
+> Never share your `vault.dat`, an `.rodeck` backup or a `.ROBLOSECURITY` cookie. Anyone who has them can sign in as you.
 
 <br>
 
@@ -214,9 +215,9 @@ Activity log to paste in. After every update, "What's new" shows what changed.
 |---|---|
 | The second account closes the first | The Play page shows whether multi-instance is ON. If it's OFF, press **Close Roblox & enable multi-instance**. |
 | The login window is blank | Install the Microsoft Edge WebView2 Runtime. |
-| "Windows protected your PC" | AltDeck isn't code-signed yet, so SmartScreen warns about it. Click **More info → Run anyway**. |
-| Import says the file is encrypted | AltDeck can only read files saved without encryption. Turn encryption off in the program that saved the file, let it save again, then import that file. |
-| Forgot the master password | It can't be recovered. Close AltDeck, delete `vault.dat` in `%AppData%\AltDeck` and add your accounts again (or import a backup). |
+| "Windows protected your PC" | RoDeck isn't code-signed yet, so SmartScreen warns about it. Click **More info → Run anyway**. |
+| Import says the file is encrypted | RoDeck can only read files saved without encryption. Turn encryption off in the program that saved the file, let it save again, then import that file. |
+| Forgot the master password | It can't be recovered. Close RoDeck, delete `vault.dat` in `%AppData%\RoDeck` and add your accounts again (or import a backup). |
 | Something else went wrong | Errors show in a message box and on the **Activity** page. Press **Report a bug** there to tell us (needs a free GitHub account). |
 
 <br>
@@ -227,26 +228,26 @@ Needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 | To | Do |
 |---|---|
-| Run it | Double-click `Run AltDeck.bat`, or run `dotnet run` in this folder |
-| Make a shareable exe | Double-click `Build AltDeck.exe.bat`. It makes `publish\AltDeck.exe` (one file, ~60–70 MB, runs on any 64-bit Windows 10/11 PC without .NET) |
+| Run it | Double-click `Run RoDeck.bat`, or run `dotnet run` in this folder |
+| Make a shareable exe | Double-click `Build RoDeck.exe.bat`. It makes `publish\RoDeck.exe` (one file, ~60–70 MB, runs on any 64-bit Windows 10/11 PC without .NET) |
 
-The version shown in the app, the exe's details and backups all come from `<Version>` in `AltDeck.csproj`.
+The version shown in the app, the exe's details and backups all come from `<Version>` in `RoDeck.csproj`.
 
-**Releasing an update:** raise `<Version>`, build the exe, and publish a GitHub release tagged `v<version>` with the file attached as exactly `AltDeck.exe`. Everyone's AltDeck offers it the next time they open it.
+**Releasing an update:** raise `<Version>`, build the exe, and publish a GitHub release tagged `v<version>` with the file attached as exactly `RoDeck.exe`, **and the same file a second time as `AltDeck.exe`** (installs from before the rename look for that name). Everyone's RoDeck offers it the next time they open it.
 
 <br>
 
 ## 📁 Project layout
 
 ```
-AltDeck/
+RoDeck/
 ├─ Views/            Home, Play, Accounts, Performance, Activity and Settings pages
 ├─ ViewModels/       MainViewModel (app state and commands)
 ├─ Services/         Vault, Launcher, RobloxApi, Updater, auto-rejoin, monitors, tray, hotkeys, Discord …
 ├─ Models/           Account, settings, presets, layouts
 ├─ Controls/         Dials, avatars, setting rows
 ├─ *.xaml            Main window, splash, login, update window, What's new and dialogs
-└─ AltDeck.csproj    .NET 8 WPF project (version lives here)
+└─ RoDeck.csproj    .NET 8 WPF project (version lives here)
 ```
 
 <br>
@@ -257,7 +258,7 @@ AltDeck/
 <summary><b>0.4.4</b></summary>
 <br>
 
-- **New update window:** when a new version is out, AltDeck asks as soon as it opens, shows what's new, downloads with a progress bar and restarts into the new version by itself.
+- **New update window:** when a new version is out, RoDeck asks as soon as it opens, shows what's new, downloads with a progress bar and restarts into the new version by itself.
 - **Not now** asks again next time; tick **Don't notify me about updates again** to stop the question (Settings → General → Ask about updates). You can always check by hand under Settings → About.
 - "What's new" no longer pops up at the same time as an update.
 
@@ -270,7 +271,7 @@ AltDeck/
 - **Add many accounts at once:** paste as many cookies as you like, one per line.
 - **Import accounts from a file:** `AccountData.json`, or a `.txt` with one cookie per line.
 - **Robux & Premium** for every account, and your total Robux on the Accounts page.
-- **What's new:** after an update, AltDeck shows what changed.
+- **What's new:** after an update, RoDeck shows what changed.
 - **Report a bug** button on the Activity page and in Settings → About.
 
 </details>
@@ -279,15 +280,15 @@ AltDeck/
 <summary><b>0.4.2</b></summary>
 <br>
 
-- **Auto-update:** AltDeck downloads new releases from GitHub by itself and installs them on restart (Settings → General, and "Check for updates" under About).
-- Discord status works out of the box: AltDeck has its own built-in Discord app, so there's no Application ID to fill in.
+- **Auto-update:** RoDeck downloads new releases from GitHub by itself and installs them on restart (Settings → General, and "Check for updates" under About).
+- Discord status works out of the box: RoDeck has its own built-in Discord app, so there's no Application ID to fill in.
 - Auto-rejoin also catches Roblox's "Disconnected" box (Error 277 and the like) by reading each client's log in `%LocalAppData%\Roblox\logs`. Teleports (285) are ignored; Error 273 is logged but not rejoined. A client that hasn't joined after 3 minutes counts as a failed join.
 - The first rejoin goes back to the same server; later tries go to any server. Private servers keep their own link. After a shutdown (275), a 279 or a client that never got in, the first rejoin picks a different server.
 - If your internet or Roblox is down, rejoins wait and start once it's back, without using up a try.
 - Rejoins launch one at a time, at least 5 s apart, and the new window goes where the old one was.
 - "Connection Failed (Error 279)" is caught too, and a join that hasn't been accepted after 90 s counts as failed.
 - **Keep sign-ins apart** (on by default): the shared Roblox sign-in store is emptied right before each launch, so clients no longer sign each other out. Your own Roblox sign-in is backed up and put back afterwards.
-- **Keep trying** (on by default): past the give-up limit, AltDeck tries every 5 minutes until it works.
+- **Keep trying** (on by default): past the give-up limit, RoDeck tries every 5 minutes until it works.
 - A client that loses its sign-in is relaunched right away with a fresh one.
 - Client windows can be smaller than Roblox's 800×600 minimum (smallest 200×150). Tile windows lets you pick the screen.
 
@@ -297,12 +298,12 @@ AltDeck/
 <summary><b>0.4.1</b></summary>
 <br>
 
-- Only one AltDeck runs at a time; starting it again brings the running one to the front.
+- Only one RoDeck runs at a time; starting it again brings the running one to the front.
 - Dark title bars on dialogs, the login window and the server browser in the dark theme.
 - Account details: one Play button that turns into "Already playing".
 - Home: Tile windows, Minimize all and layouts are in one Windows menu.
 - Clearer launch errors ("signed out", "Roblox is limiting sign-ins").
-- `Build AltDeck.exe.bat` makes a single shareable exe. Per-account stats removed.
+- `Build RoDeck.exe.bat` makes a single shareable exe. Per-account stats removed.
 
 </details>
 
@@ -315,7 +316,7 @@ AltDeck/
 - Periodic sign-in check with a badge for expired accounts.
 - Activity page and daily log files.
 - Window layouts: save and restore where each account's window is.
-- Encrypted `.altdeck` backups.
+- Encrypted `.rodeck` backups.
 
 </details>
 
@@ -332,11 +333,15 @@ AltDeck/
 
 ## ⚖️ License
 
-AltDeck is open source under the [MIT License](LICENSE).
+RoDeck is open source under the [MIT License](LICENSE).
 
 <br>
 
 ## 📜 Disclaimer
 
-AltDeck is a fan-made tool and is not affiliated with, endorsed by or connected to Roblox Corporation.
+RoDeck is a fan-made tool and is not affiliated with, endorsed by or connected to Roblox Corporation.
 Use it only with accounts you own, and follow Roblox's Terms of Use.
+
+---
+
+<sub>RoDeck is an independent, open-source project. It is not affiliated with, endorsed by or sponsored by Roblox Corporation. "Roblox" is a trademark of Roblox Corporation.</sub>

@@ -1,7 +1,7 @@
 using System.Text.Json;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>One chart row on the Games page (Top Trending, Up-and-Coming…).</summary>
 public sealed record GameSort(string Id, string Name, string Info, List<GameTile> Games);

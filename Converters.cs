@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>True when the bound value equals ConverterParameter. Two-way, so it also drives radio buttons.</summary>
 public class EqualsConverter : IValueConverter

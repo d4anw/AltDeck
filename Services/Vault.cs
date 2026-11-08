@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>Thrown when the vault is protected by a master password that has not been entered yet.</summary>
 public sealed class VaultLockedException : Exception
@@ -12,7 +12,7 @@ public sealed class VaultLockedException : Exception
 }
 
 /// <summary>
-/// The whole account list (cookies included) in %AppData%\AltDeck\vault.dat. Two formats:
+/// The whole account list (cookies included) in %AppData%\RoDeck\vault.dat. Two formats:
 ///  - default: encrypted with Windows DPAPI (current user), like before;
 ///  - master password: "ADV2" header, then PBKDF2-SHA256 salt, AES-256-GCM nonce, tag and ciphertext.
 /// The key is derived once when the password is entered and kept in memory; every save uses a fresh nonce.
@@ -22,8 +22,9 @@ public sealed class Vault
     public static Vault Shared { get; } = new();
 
     static readonly string Dir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AltDeck");
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RoDeck");
     static readonly string FilePath = Path.Combine(Dir, "vault.dat");
+    // keeps the old name on purpose: vaults saved by AltDeck (RoDeck's old name) were encrypted with it
     static readonly byte[] Entropy = Encoding.UTF8.GetBytes("AltDeck.vault.v1");
 
     static readonly byte[] Magic = Encoding.ASCII.GetBytes("ADV2");

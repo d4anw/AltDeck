@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>A Roblox web request that didn't work, with a message that can be shown as is.</summary>
 public sealed class RobloxException : Exception
@@ -110,7 +110,7 @@ public static class RobloxHttp
     {
         var text = await SendAsync(method, url, cookie, body, ct);
         try { return JsonDocument.Parse(string.IsNullOrWhiteSpace(text) ? "{}" : text); }
-        catch (JsonException ex) { throw new RobloxException("Roblox sent something AltDeck didn't understand.", null, ex); }
+        catch (JsonException ex) { throw new RobloxException("Roblox sent something RoDeck didn't understand.", null, ex); }
     }
 
     /// <summary>Sends the request and returns the reply text, or throws a <see cref="RobloxException"/>.</summary>

@@ -1,4 +1,4 @@
-<Window x:Class="AltDeck.UpdateWindow"
+<Window x:Class="RoDeck.UpdateWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Update available" Width="520" Height="500" MinHeight="340" ResizeMode="CanResizeWithGrip"

@@ -4,10 +4,10 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Xml;
 using System.Xml.Linq;
-using AltDeck.Models;
+using RoDeck.Models;
 using Microsoft.Win32;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>The user's own copy of one ClientAppSettings.json, so it can be put back.</summary>
 public sealed class FlagBackup
@@ -16,12 +16,12 @@ public sealed class FlagBackup
     public string? Original { get; set; }
 }
 
-/// <summary>What AltDeck changed in the user's own Roblox files, so it can be put back exactly.</summary>
+/// <summary>What RoDeck changed in the user's own Roblox files, so it can be put back exactly.</summary>
 public sealed class PerfRestoreState
 {
     public Dictionary<string, FlagBackup> Flags { get; set; } = new();          // version folder -> backup
     public Dictionary<string, string?> OwnOriginals { get; set; } = new();      // Roblox setting name -> value before (null = absent)
-    public Dictionary<string, string> OwnSet { get; set; } = new();             // Roblox setting name -> value AltDeck set
+    public Dictionary<string, string> OwnSet { get; set; } = new();             // Roblox setting name -> value RoDeck set
 }
 
 /// <summary>
@@ -71,7 +71,7 @@ public sealed class PerformanceService
     public static Dictionary<string, string> BuildFlags(AppSettings s)
     {
         var f = BuildBuiltInFlags(s);
-        // the user's own flags last, so they win over AltDeck's
+        // the user's own flags last, so they win over RoDeck's
         foreach (var flag in s.CustomFlags)
             if (flag.Enabled && flag.IsValid) f[flag.Name.Trim()] = flag.WrittenValue;
         return f;
@@ -235,7 +235,7 @@ public sealed class PerformanceService
         lock (_gate) RestoreLocked();
     }
 
-    /// <summary>If AltDeck was closed or crashed while it had changed Roblox's files, put them back.</summary>
+    /// <summary>If RoDeck was closed or crashed while it had changed Roblox's files, put them back.</summary>
     public void RecoverFromCrash()
     {
         try
@@ -268,7 +268,7 @@ public sealed class PerformanceService
         // ---- FastFlags (ClientAppSettings.json)
         if (flags.Count > 0 && custom != null)
         {
-            notice = $"{custom} keeps its own flags, so AltDeck skipped the graphics flags.";
+            notice = $"{custom} keeps its own flags, so RoDeck skipped the graphics flags.";
             flags.Clear();
         }
         if (flags.Count > 0 && dirs.Count == 0)
@@ -408,8 +408,8 @@ public sealed class PerformanceService
         doc.Save(w);
     }
 
-    // Roblox saves the settings it is running with when it exits, so a low-profile client can write AltDeck's values into
-    // the user's own file after they were put back. To tell those apart from the user's real values, AltDeck remembers
+    // Roblox saves the settings it is running with when it exits, so a low-profile client can write RoDeck's values into
+    // the user's own file after they were put back. To tell those apart from the user's real values, RoDeck remembers
     // which values it has written, and the real value it found the first time (null = the user had none).
     private sealed class OwnMemory
     {
@@ -442,7 +442,7 @@ public sealed class PerformanceService
             || (name == "FramerateCap" && value is "10" or "30"));
 
     /// <summary>
-    /// For "Full quality" launches: if Roblox's own settings still hold values AltDeck wrote for a light profile
+    /// For "Full quality" launches: if Roblox's own settings still hold values RoDeck wrote for a light profile
     /// (saved back by an earlier client), put the user's real value back, or remove the entry so Roblox uses its default.
     /// </summary>
     private void HealOwnSettingsLocked(AppSettings s)
@@ -522,7 +522,7 @@ public sealed class PerformanceService
             foreach (var kv in st.OwnSet)
             {
                 var e = Entry(props, kv.Key);
-                // Only put it back if it still holds what AltDeck set (the user may have changed it since).
+                // Only put it back if it still holds what RoDeck set (the user may have changed it since).
                 if (e == null || e.Value != kv.Value) continue;
                 var original = st.OwnOriginals.TryGetValue(kv.Key, out var o) ? o : null;
                 if (original == null) e.Remove(); else e.Value = original;
@@ -555,7 +555,7 @@ public sealed class PerformanceService
 
         foreach (var c in live)
         {
-            // Clients AltDeck didn't start, and "Full quality" accounts, are left exactly as they are.
+            // Clients RoDeck didn't start, and "Full quality" accounts, are left exactly as they are.
             bool exempt = c.Owner == null || c.Owner.FullQuality;
 
             if (!exempt) TuneWindow(c, s);
@@ -663,7 +663,7 @@ public sealed class PerformanceService
         _capNow[pid] = wanted;
     }
 
-    /// <summary>Lifts every CPU limit (used when AltDeck closes, because the limit would otherwise stay on the client).</summary>
+    /// <summary>Lifts every CPU limit (used when RoDeck closes, because the limit would otherwise stay on the client).</summary>
     public void ReleaseAll()
     {
         foreach (var job in _jobs.Values)

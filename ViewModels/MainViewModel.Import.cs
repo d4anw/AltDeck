@@ -2,10 +2,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>One account to add: its cookie, plus details an account file may carry.</summary>
 public sealed record ImportItem(string Cookie, string? Alias = null, string? Notes = null, string? Group = null);
@@ -76,7 +76,7 @@ public partial class MainViewModel
     }
 
     const string Encrypted =
-        "This file is encrypted, so AltDeck can't read it. Turn off encryption in the program that saved it, let it save the file again, then import that.";
+        "This file is encrypted, so RoDeck can't read it. Turn off encryption in the program that saved it, let it save the file again, then import that.";
 
     static bool LooksBinary(string s) => s.Take(200).Count(ch => char.IsControl(ch) && ch is not ('\n' or '\r' or '\t')) > 5;
 
@@ -132,7 +132,7 @@ public partial class MainViewModel
                 else
                 {
                     if (isNew) added++; else updated++;
-                    // details from a file only fill what's empty, so nothing you set in AltDeck is overwritten
+                    // details from a file only fill what's empty, so nothing you set in RoDeck is overwritten
                     if (string.IsNullOrWhiteSpace(acc.Alias) && !string.IsNullOrWhiteSpace(item.Alias)) acc.Alias = item.Alias;
                     if (string.IsNullOrWhiteSpace(acc.Notes) && !string.IsNullOrWhiteSpace(item.Notes)) acc.Notes = item.Notes;
                     if (string.IsNullOrWhiteSpace(acc.Groups) && !string.IsNullOrWhiteSpace(item.Group)

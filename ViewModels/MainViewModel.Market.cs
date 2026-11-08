@@ -1,12 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using AltDeck.Controls;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Controls;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>
 /// Marketplace: browse and search avatar items, an item page with Try on, one-click free items, and buying with Robux

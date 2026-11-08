@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Reads the log each Roblox client writes to %LocalAppData%\Roblox\logs and reports when a client that is still
@@ -42,7 +42,7 @@ public sealed class RobloxLogWatcher
 
     /// <summary>How long a disconnect has to stand (no new join, process still open) before it counts.</summary>
     static readonly TimeSpan Confirm = TimeSpan.FromSeconds(5);
-    /// <summary>A client AltDeck started that still hasn't joined a server after this long is treated as a failed join.</summary>
+    /// <summary>A client RoDeck started that still hasn't joined a server after this long is treated as a failed join.</summary>
     static readonly TimeSpan NeverJoined = TimeSpan.FromMinutes(3);
     /// <summary>
     /// A join (or teleport) the server hasn't accepted after this long is stuck, whatever box Roblox shows.
@@ -172,7 +172,7 @@ public sealed class RobloxLogWatcher
             long len = 0;
             try { len = new FileInfo(best).Length; } catch { }
             _claimed.Add(best);
-            // a fresh client's log is small; only skip ahead in a big one (e.g. AltDeck matched it late)
+            // a fresh client's log is small; only skip ahead in a big one (e.g. RoDeck matched it late)
             _byPid[c.Pid] = new Tracked { Path = best, Pos = len > 4_000_000 ? len - 256_000 : 0 };
         }
     }

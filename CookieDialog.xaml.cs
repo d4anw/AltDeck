@@ -1,7 +1,7 @@
 using System.Windows;
-using AltDeck.ViewModels;
+using RoDeck.ViewModels;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>Paste one cookie or many (one per line, or any text with cookies in it).</summary>
 public partial class CookieDialog : Window

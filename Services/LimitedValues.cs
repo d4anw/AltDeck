@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Limited values from Rolimons (the public values list most traders use): RAP, value, demand, trend and flags for
@@ -14,7 +14,7 @@ public static class LimitedValues
     static readonly ConcurrentDictionary<long, LimitedInfo> Items = new();
     static DateTime _loadedAt = DateTime.MinValue;
     static readonly SemaphoreSlim Gate = new(1);
-    static string CacheFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AltDeck", "cache", "values.json");
+    static string CacheFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoDeck", "cache", "values.json");
 
     public static int Count => Items.Count;
     public static DateTime LoadedAt => _loadedAt;

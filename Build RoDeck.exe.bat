@@ -1,8 +1,8 @@
 @echo off
-rem Builds one AltDeck.exe that runs on any 64-bit Windows 10/11 PC, no .NET install needed.
+rem Builds one RoDeck.exe that runs on any 64-bit Windows 10/11 PC, no .NET install needed.
 rem The result is in the "publish" folder next to this file.
 cd /d "%~dp0"
-echo Building AltDeck.exe ...
+echo Building RoDeck.exe ...
 dotnet publish -c Release -r win-x64 --self-contained true -o publish ^
   -p:PublishSingleFile=true ^
   -p:IncludeNativeLibrariesForSelfExtract=true ^
@@ -15,6 +15,6 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-echo Done: %~dp0publish\AltDeck.exe
+echo Done: %~dp0publish\RoDeck.exe
 explorer "%~dp0publish"
 pause

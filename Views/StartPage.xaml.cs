@@ -1,10 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using AltDeck.Models;
-using AltDeck.ViewModels;
+using RoDeck.Models;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 /// <summary>Home: who you are, friends online, Continue and Recommended games, shortcuts.</summary>
 public partial class StartPage : UserControl

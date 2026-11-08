@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 public class Favourite
 {
@@ -20,7 +20,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool autoUpdate = true;
     [ObservableProperty] private string lastSeenVersion = "";
     [ObservableProperty] private string currentAccountId = "";   // the account Home, Games, Avatar, Friends… show (top right)   // to show "What's new" once after an update
-    [ObservableProperty] private string discordAppId = "";   // not used any more (AltDeck has its own built-in app); kept so older settings.json files load as before
+    [ObservableProperty] private string discordAppId = "";   // not used any more (RoDeck has its own built-in app); kept so older settings.json files load as before
     [ObservableProperty] private bool closeToTray;
     [ObservableProperty] private bool skipSplash;
     [ObservableProperty] private bool detailedView = true;
@@ -55,7 +55,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool minimizeOnLaunch = true;
     [ObservableProperty] private int backgroundCpuLimit = 25;   // % of the whole CPU per background client, 0 = no limit
     [ObservableProperty] private bool muteOnStart;
-    /// <summary>Marketplace: the most Robux one purchase may cost (0 = no limit). Above it, AltDeck won't buy.</summary>
+    /// <summary>Marketplace: the most Robux one purchase may cost (0 = no limit). Above it, RoDeck won't buy.</summary>
     [ObservableProperty] private long marketSpendLimit;
     [ObservableProperty] private bool lowestGraphics = true;
     [ObservableProperty] private bool lighterRendering = true;

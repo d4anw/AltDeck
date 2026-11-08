@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>Roblox's avatar rules: what can be worn and how much, scale limits and the body colour palette.</summary>
 public sealed class AvatarRules

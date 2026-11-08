@@ -2,16 +2,16 @@ using System.IO.Pipes;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
-/// Shows "Playing AltDeck" and how many alts run on the user's Discord profile (Discord "Rich Presence").
+/// Shows "Playing RoDeck" and how many alts run on the user's Discord profile (Discord "Rich Presence").
 /// Talks to the Discord desktop app over its local pipe (discord-ipc-0..9). Nothing leaves the PC except through Discord itself.
 /// All pipe work runs on a background thread; Update() only decides whether something needs sending.
 /// </summary>
 public sealed class DiscordPresence
 {
-    /// <summary>AltDeck's own Discord application (public ID, not a secret). Its name "AltDeck" and the "altdeck_logo"
+    /// <summary>RoDeck's own Discord application (public ID, not a secret). Its name "RoDeck" and the "altdeck_logo"
     /// art asset are what Discord shows, so nobody has to make their own app.</summary>
     public const string AppId = "1566917960700797029";
 
@@ -50,7 +50,7 @@ public sealed class DiscordPresence
         Run(() => SendAsync(appId, key, running));
     }
 
-    /// <summary>Removes the presence and closes the pipe (when AltDeck closes). Waits at most a moment.</summary>
+    /// <summary>Removes the presence and closes the pipe (when RoDeck closes). Waits at most a moment.</summary>
     public void Close()
     {
         try { Task.Run(Clear).Wait(1500); } catch { }
@@ -82,7 +82,7 @@ public sealed class DiscordPresence
                 ["timestamps"] = new JsonObject { ["start"] = _startUnix },
                 // the big picture on the card: an art asset named "altdeck_logo" uploaded to the Discord app
                 // (Rich Presence > Art Assets). If it doesn't exist, Discord just shows its "?" placeholder.
-                ["assets"] = new JsonObject { ["large_image"] = "altdeck_logo", ["large_text"] = "AltDeck" }
+                ["assets"] = new JsonObject { ["large_image"] = "altdeck_logo", ["large_text"] = "RoDeck" }
             };
             await CommandAsync(activity);
 
@@ -129,7 +129,7 @@ public sealed class DiscordPresence
 
                 var (op, json) = await ReadFrameAsync(pipe);
                 if (op == 2 || json.Contains("\"ERROR\"", StringComparison.Ordinal))
-                    throw new InvalidOperationException("Discord didn't accept AltDeck's application. Try again later.");
+                    throw new InvalidOperationException("Discord didn't accept RoDeck's application. Try again later.");
 
                 _pipe = pipe;
                 _connectedId = appId;

@@ -1,7 +1,7 @@
-<UserControl x:Class="AltDeck.Views.AvatarPage"
+<UserControl x:Class="RoDeck.Views.AvatarPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ctl="clr-namespace:AltDeck.Controls">
+             xmlns:ctl="clr-namespace:RoDeck.Controls">
   <UserControl.Resources>
     <!-- a chip that lights up when selected (wardrobe categories, body parts) -->
     <Style x:Key="PickChip" TargetType="Button" BasedOn="{StaticResource Chip}">

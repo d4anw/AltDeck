@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 /// <summary>A settings line: title + description on the left, the control (Content) on the right.</summary>
 public class SettingRow : ContentControl

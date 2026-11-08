@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>Resale numbers for one limited from Roblox: RAP, how often it sold, copies, and the RAP history.</summary>
 public sealed record ResaleData(long Rap, long Sales, long Stock, long Remaining, List<(DateTime Day, long Price)> History);

@@ -5,16 +5,16 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    /// <summary>From &lt;Version&gt; in AltDeck.csproj, so the app, the exe and backups always agree.</summary>
+    /// <summary>From &lt;Version&gt; in RoDeck.csproj, so the app, the exe and backups always agree.</summary>
     public static readonly string AppVersion =
         (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(
             typeof(MainViewModel).Assembly)?.InformationalVersion ?? "0.0.0").Split('+')[0];
@@ -86,7 +86,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string stopTimerText = "";
 
     private const string StopTimerBaseText =
-        "Closes every Roblox client after the time you pick. AltDeck and your PC stay on. The timer is forgotten when AltDeck closes.";
+        "Closes every Roblox client after the time you pick. RoDeck and your PC stay on. The timer is forgotten when RoDeck closes.";
     public string StopTimerDescription => string.IsNullOrEmpty(StopTimerText) ? StopTimerBaseText : StopTimerBaseText + "\n" + StopTimerText;
     partial void OnStopTimerTextChanged(string value) => OnPropertyChanged(nameof(StopTimerDescription));
 
@@ -97,7 +97,7 @@ public partial class MainViewModel : ObservableObject
     partial void OnPanicHotkeyStatusChanged(string value) => OnPropertyChanged(nameof(PanicHotkeyDescription));
 
     private const string DiscordBaseText =
-        "Your Discord profile shows “Playing AltDeck” and how many alts run. Just keep the Discord desktop app open.";
+        "Your Discord profile shows “Playing RoDeck” and how many alts run. Just keep the Discord desktop app open.";
     [ObservableProperty] private string discordStatus = "";
     public string DiscordDescription => string.IsNullOrEmpty(DiscordStatus) ? DiscordBaseText : DiscordBaseText + "\n" + DiscordStatus;
     partial void OnDiscordStatusChanged(string value) => OnPropertyChanged(nameof(DiscordDescription));
@@ -117,7 +117,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool canLaunch;
 
     public string BringBackNote => Settings.AutoRejoin || Settings.AutoRestart
-        ? "If this client drops, AltDeck relaunches it into the same game."
+        ? "If this client drops, RoDeck relaunches it into the same game."
         : "Auto-rejoin and auto-restart are off in Settings, so nothing brings it back yet.";
 
     public bool AllVisibleSelected
@@ -137,7 +137,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         Settings = _store.Load();
-        _perf.RecoverFromCrash();   // put Roblox's own settings back if AltDeck was closed while they were changed
+        _perf.RecoverFromCrash();   // put Roblox's own settings back if RoDeck was closed while they were changed
         SignInIsolation.Restore();  // same for the user's own Roblox sign-in
         ThemeManager.Apply(Settings.Theme, Settings.Accent);
 
@@ -198,7 +198,7 @@ public partial class MainViewModel : ObservableObject
         try { _perf.ReleaseAll(); } catch { }
         try { _discord.Close(); } catch { }
         InstallUpdateOnExit();
-        Log(ActivityLog.Info, "AltDeck closed.");
+        Log(ActivityLog.Info, "RoDeck closed.");
     }
 
     // ------------------------------------------------------------------ plumbing
@@ -424,7 +424,7 @@ public partial class MainViewModel : ObservableObject
         bool ok = _launcher.EnableMultiInstance();
         LockBadge = ok ? "Multi-instance: ON" : "Multi-instance: OFF";
         LockStatus = ok
-            ? "Multi-instance is ACTIVE. AltDeck is holding Roblox's lock, so each account can run its own client."
+            ? "Multi-instance is ACTIVE. RoDeck is holding Roblox's lock, so each account can run its own client."
             : "Multi-instance is OFF: a Roblox process (possibly a hidden background one that starts with Windows) already holds the lock, so launching another account would close the first. Use the button below to fix it.";
     }
 
@@ -639,7 +639,7 @@ public partial class MainViewModel : ObservableObject
     private void RemoveAccount(Account? a)
     {
         if (a == null) return;
-        var ok = MessageBox.Show($"Remove {a.Label} and delete its saved sign-in from this PC?", "AltDeck",
+        var ok = MessageBox.Show($"Remove {a.Label} and delete its saved sign-in from this PC?", "RoDeck",
                                  MessageBoxButton.YesNo) == MessageBoxResult.Yes;
         if (!ok) return;
         Accounts.Remove(a);
@@ -862,8 +862,8 @@ public partial class MainViewModel : ObservableObject
     private async Task FreeLockAsync()
     {
         var answer = MessageBox.Show(
-            "This closes every running Roblox client so AltDeck can take the lock. Continue?",
-            "AltDeck", MessageBoxButton.YesNo);
+            "This closes every running Roblox client so RoDeck can take the lock. Continue?",
+            "RoDeck", MessageBoxButton.YesNo);
         if (answer != MessageBoxResult.Yes) return;
 
         var n = await Task.Run(() => Launcher.CloseAllRobloxClients());
@@ -1029,9 +1029,9 @@ public partial class MainViewModel : ObservableObject
         try
         {
             if (c.Owner != null && !c.EndedAsFrozen && !c.EndedAsDisconnected)   // those were already logged, with the reason
-                Log(ActivityLog.Drop, $"{c.Name}'s client closed without AltDeck closing it (after {c.Uptime}).");
+                Log(ActivityLog.Drop, $"{c.Name}'s client closed without RoDeck closing it (after {c.Uptime}).");
 
-            // Auto-rejoin and auto-restart both bring back a client whose process ended without AltDeck closing it.
+            // Auto-rejoin and auto-restart both bring back a client whose process ended without RoDeck closing it.
             if (!(Settings.AutoRejoin || Settings.AutoRestart) || !c.Farm || c.Owner == null || !c.Owner.BringBack || c.Target == null) return;
 
             int generation = _rejoinGeneration;
@@ -1214,7 +1214,7 @@ public partial class MainViewModel : ObservableObject
     private void SetMasterPassword()
     {
         var typed = PasswordDialog.Ask(Application.Current.MainWindow, "Set master password",
-            "AltDeck will ask for this password each time it starts.\n\nThere is no way to recover it: if you forget it, the saved sign-ins are lost and you have to add your accounts again.",
+            "RoDeck will ask for this password each time it starts.\n\nThere is no way to recover it: if you forget it, the saved sign-ins are lost and you have to add your accounts again.",
             new[] { "New password", "Repeat password" },
             v => ValidateNewPassword(v[0], v[1]));
         if (typed == null) return;
@@ -1306,12 +1306,12 @@ public partial class MainViewModel : ObservableObject
                      ?? Accounts.FirstOrDefault(a => a.StatusKind != "signedout");
         if (viewer == null)
         {
-            StatusMessage = "Add or sign in an account first. AltDeck uses it to see where they are.";
+            StatusMessage = "Add or sign in an account first. RoDeck uses it to see where they are.";
             return;
         }
 
         var input = PromptDialog.Ask(Application.Current.MainWindow, "Join someone",
-            $"Roblox username (or profile link) of the player to join. AltDeck looks where they are using {viewer.Label}, " +
+            $"Roblox username (or profile link) of the player to join. RoDeck looks where they are using {viewer.Label}, " +
             "so that account must be allowed to see it: a friend, or the player lets anyone join.");
         if (input == null) return;
 

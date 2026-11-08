@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Global hotkeys (they work while another app has focus), registered on the main window.
@@ -52,7 +52,7 @@ public sealed class HotkeyService : IDisposable
         if (_hwnd == IntPtr.Zero) return (false, "Not ready yet.");
 
         if (!RegisterHotKey(_hwnd, id, mods | ModNoRepeat, vk))
-            return (false, $"{normalized} is already used (by another app, or another AltDeck hotkey). Pick a different one.");
+            return (false, $"{normalized} is already used (by another app, or another RoDeck hotkey). Pick a different one.");
         _registered.Add(id);
         return (true, $"Active: {normalized}");
     }

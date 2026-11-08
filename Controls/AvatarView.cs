@@ -4,7 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 /// <summary>Round avatar: shows initials until the image URL has loaded.</summary>
 public class AvatarView : Grid
@@ -43,7 +43,7 @@ public class AvatarView : Grid
     private async void UpdateImage()
     {
         int v = ++_version;
-        var bmp = await AltDeck.Services.ImageCache.GetAsync(Url);
+        var bmp = await RoDeck.Services.ImageCache.GetAsync(Url);
         if (v != _version) return;
         _img.Fill = bmp != null ? new ImageBrush(bmp) { Stretch = Stretch.UniformToFill } : null;
     }

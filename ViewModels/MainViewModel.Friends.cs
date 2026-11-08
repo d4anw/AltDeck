@@ -2,13 +2,13 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows.Data;
-using AltDeck.Controls;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Controls;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>Friends page: the friend list, friend requests, player search and profiles, as the account top right.</summary>
 public partial class MainViewModel

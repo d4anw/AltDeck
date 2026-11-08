@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 
-namespace AltDeck;
+namespace RoDeck;
 
 public static class ThemeManager
 {

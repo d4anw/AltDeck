@@ -1,4 +1,4 @@
-<UserControl x:Class="AltDeck.Views.ActivityPage"
+<UserControl x:Class="RoDeck.Views.ActivityPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Grid Margin="32,26,32,32">
@@ -11,7 +11,7 @@
     <StackPanel>
       <TextBlock Text="Activity" FontSize="28" FontWeight="Bold"/>
       <TextBlock Margin="0,4,0,18" Style="{StaticResource MutedText}" TextWrapping="Wrap"
-                 Text="Everything AltDeck did: launches, drops, rejoins, give-ups, frozen restarts and sign-in problems. Also saved to a file each day (kept 14 days) — copy it when you report a bug."/>
+                 Text="Everything RoDeck did: launches, drops, rejoins, give-ups, frozen restarts and sign-in problems. Also saved to a file each day (kept 14 days) — copy it when you report a bug."/>
     </StackPanel>
 
     <Grid Grid.Row="1" Margin="0,0,0,12">

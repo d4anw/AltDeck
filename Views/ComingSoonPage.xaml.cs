@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 /// <summary>Placeholder for a roadmap page: icon, title, the version it arrives in, and what it will do.</summary>
 public partial class ComingSoonPage : UserControl

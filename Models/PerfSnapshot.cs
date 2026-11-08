@@ -1,4 +1,4 @@
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>The user's own saved performance preset: every fine-tune value, stored in settings.json.</summary>
 public class PerfSnapshot

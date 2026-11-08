@@ -1,7 +1,7 @@
-<UserControl x:Class="AltDeck.Views.FarmingPage"
+<UserControl x:Class="RoDeck.Views.FarmingPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ctl="clr-namespace:AltDeck.Controls">
+             xmlns:ctl="clr-namespace:RoDeck.Controls">
   <!-- Multi-launch → Farming: everything that keeps alts in the game for hours, in one place. -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid Margin="32,26,32,32">
@@ -12,7 +12,7 @@
       <StackPanel Margin="0,0,0,18">
         <TextBlock Text="Farming" FontSize="28" FontWeight="Bold"/>
         <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap"
-                   Text="Keep your alts in the game for hours: AltDeck brings them back when they get kicked, crash or freeze, keeps them from going idle, and stops everything when you want. This only applies to clients started from Multi-launch; a game you start from Home or Games closes normally."/>
+                   Text="Keep your alts in the game for hours: RoDeck brings them back when they get kicked, crash or freeze, keeps them from going idle, and stops everything when you want. This only applies to clients started from Multi-launch; a game you start from Home or Games closes normally."/>
       </StackPanel>
 
       <Grid Grid.Row="1">
@@ -26,11 +26,11 @@
           <TextBlock Text="Keep clients in the game" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
           <Border Style="{StaticResource CardBox}" Padding="24,4">
             <StackPanel>
-                  <ctl:SettingRow Title="Auto-rejoin" Description="When a client shows Roblox's &quot;Disconnected&quot; or &quot;Connection Failed&quot; box (Error 277, 279, kicked, server shut down), or is stuck joining, AltDeck closes it and relaunches it, back into the same server first. Read from Roblox's own logs. If your internet or Roblox is down, it waits until it's back (that doesn't count as a try). Launches are spaced out and windows go back to their old spot. Turn it off for one account in its details.">
+                  <ctl:SettingRow Title="Auto-rejoin" Description="When a client shows Roblox's &quot;Disconnected&quot; or &quot;Connection Failed&quot; box (Error 277, 279, kicked, server shut down), or is stuck joining, RoDeck closes it and relaunches it, back into the same server first. Read from Roblox's own logs. If your internet or Roblox is down, it waits until it's back (that doesn't count as a try). Launches are spaced out and windows go back to their old spot. Turn it off for one account in its details.">
                     <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRejoin}"/>
                   </ctl:SettingRow>
                   <ctl:SettingRow Title="Auto-restart after a crash"
-                                  Description="Relaunch a client that closes without AltDeck closing it, or whose window stops responding for 30 s. Uses the same give-up limit as auto-rejoin.">
+                                  Description="Relaunch a client that closes without RoDeck closing it, or whose window stops responding for 30 s. Uses the same give-up limit as auto-rejoin.">
                     <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoRestart}"/>
                   </ctl:SettingRow>
                   <ctl:SettingRow Title="Anti-AFK"
@@ -38,7 +38,7 @@
                     <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AntiAfk}"/>
                   </ctl:SettingRow>
                   <ctl:SettingRow Title="Keep sign-ins apart"
-                                  Description="All Roblox clients share one sign-in store, and with 6 or more one of them can get signed out (teleports then fail with Error 769). Before each launch AltDeck empties that store so the new client sees no other account. Your own Roblox sign-in is backed up and put back about 90 s after the last launch.">
+                                  Description="All Roblox clients share one sign-in store, and with 6 or more one of them can get signed out (teleports then fail with Error 769). Before each launch RoDeck empties that store so the new client sees no other account. Your own Roblox sign-in is backed up and put back about 90 s after the last launch.">
                     <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.IsolateSignIns}"/>
                   </ctl:SettingRow>
             </StackPanel>
@@ -50,7 +50,7 @@
           <Border Style="{StaticResource CardBox}" Padding="24,4">
             <StackPanel>
                   <ctl:SettingRow Title="Give up after"
-                                  Description="Rejoins of one account within this time. Each waits twice as long as the one before (at most a minute); past the limit AltDeck slows down or leaves it (below). Time spent waiting for the internet doesn't count.">
+                                  Description="Rejoins of one account within this time. Each waits twice as long as the one before (at most a minute); past the limit RoDeck slows down or leaves it (below). Time spent waiting for the internet doesn't count.">
                     <StackPanel Orientation="Horizontal">
                       <TextBox Text="{Binding Settings.GiveUpTries}" Width="56" FontFamily="Consolas"/>
                       <TextBlock Text="tries in" Margin="8,0,8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>

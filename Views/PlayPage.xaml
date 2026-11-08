@@ -1,7 +1,7 @@
-<UserControl x:Class="AltDeck.Views.PlayPage"
+<UserControl x:Class="RoDeck.Views.PlayPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ctl="clr-namespace:AltDeck.Controls">
+             xmlns:ctl="clr-namespace:RoDeck.Controls">
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="32,26,32,32" MaxWidth="1000" HorizontalAlignment="Left">
       <TextBlock Text="Play" FontSize="28" FontWeight="Bold"/>
@@ -167,7 +167,7 @@
               <TextBlock Text="{Binding LaunchButtonText, Mode=OneWay}"/>
             </StackPanel>
           </Button>
-          <TextBlock Text="AltDeck starts Roblox and joins the game for you." HorizontalAlignment="Center" FontSize="12"
+          <TextBlock Text="RoDeck starts Roblox and joins the game for you." HorizontalAlignment="Center" FontSize="12"
                      Margin="0,16,0,0" Style="{StaticResource MutedText}"/>
           <Button Style="{StaticResource Subtle}" Content="More options  &#x25BE;" HorizontalAlignment="Center" Margin="0,6,0,0"
                   Click="MoreOptions_Click"/>

@@ -1,24 +1,35 @@
 using System.Windows;
 using System.Windows.Threading;
-using AltDeck.Services;
+using RoDeck.Services;
 
-namespace AltDeck;
+namespace RoDeck;
 
 public partial class App : Application
 {
-    // Only one AltDeck at a time: two copies would fight over the vault, Roblox's lock and the hotkeys.
-    private const string InstanceName = @"Local\AltDeck.SingleInstance";
-    private const string ShowSignalName = @"Local\AltDeck.ShowWindow";
+    // Only one RoDeck at a time: two copies would fight over the vault, Roblox's lock and the hotkeys.
+    private const string InstanceName = @"Local\RoDeck.SingleInstance";
+    private const string ShowSignalName = @"Local\RoDeck.ShowWindow";
     private static Mutex? _instance;
     private static EventWaitHandle? _showSignal;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
         Updater.WaitForPreviousCopy(e.Args);   // started by an update: let the old copy finish closing first
+        DataMigration.FromAltDeck();           // RoDeck used to be AltDeck: bring its accounts and settings over (once)
+
+        // the old AltDeck.exe still running would fight RoDeck over Roblox's lock, the clients and the hotkeys
+        if (Mutex.TryOpenExisting(@"Local\AltDeck.SingleInstance", out var oldApp))
+        {
+            oldApp.Dispose();
+            MessageBox.Show("AltDeck (the old name of RoDeck) is still running. Close it first (right-click its tray icon → Quit), then open RoDeck again.",
+                            "RoDeck", MessageBoxButton.OK, MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
         _instance = new Mutex(true, InstanceName, out bool firstCopy);
         if (!firstCopy)
         {
-            // AltDeck is already running (maybe hidden in the tray): bring that one to the front instead.
+            // RoDeck is already running (maybe hidden in the tray): bring that one to the front instead.
             try { using var signal = EventWaitHandle.OpenExisting(ShowSignalName); signal.Set(); } catch { }
             Shutdown();
             return;
@@ -28,13 +39,13 @@ public partial class App : Application
         {
             while (_showSignal.WaitOne())
                 Dispatcher.BeginInvoke(new Action(() => (MainWindow as MainWindow)?.BringToFront()));
-        }) { IsBackground = true, Name = "AltDeck show signal" }.Start();
+        }) { IsBackground = true, Name = "RoDeck show signal" }.Start();
 
         // Show errors instead of closing silently.
         DispatcherUnhandledException += (_, ex) =>
         {
             ActivityLog.Shared.Add(ActivityLog.Error, "Unexpected error: " + ex.Exception.Message);
-            MessageBox.Show(ex.Exception.ToString(), "AltDeck error");
+            MessageBox.Show(ex.Exception.ToString(), "RoDeck error");
             ex.Handled = true;
         };
         base.OnStartup(e);
@@ -52,8 +63,8 @@ public partial class App : Application
             if (Vault.Shared.IsPasswordProtected)
             {
                 var typed = PasswordDialog.Ask(
-                    null, "Unlock AltDeck",
-                    "Enter your master password to open the vault.\n\nForgot it? It can't be recovered. Close AltDeck, delete vault.dat in %AppData%\\AltDeck, and add your accounts again.",
+                    null, "Unlock RoDeck",
+                    "Enter your master password to open the vault.\n\nForgot it? It can't be recovered. Close RoDeck, delete vault.dat in %AppData%\\RoDeck, and add your accounts again.",
                     new[] { "Master password" },
                     v => Vault.Shared.TryUnlock(v[0]) ? null : "That password isn't right.",
                     cancelText: "Quit");
@@ -86,7 +97,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.ToString(), "AltDeck couldn't start");
+            MessageBox.Show(ex.ToString(), "RoDeck couldn't start");
             Shutdown();
         }
     }

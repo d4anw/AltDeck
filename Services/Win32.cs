@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 internal static class Win32
 {
@@ -72,7 +72,7 @@ internal static class Win32
     /// <summary>
     /// Brings a minimized window back and puts it on top WITHOUT making it the active window. Used for many windows at once:
     /// making each one active in turn fights Windows' focus rules, and a slow (CPU-limited) client could be skipped.
-    /// Async, so a busy client can't hold AltDeck up.
+    /// Async, so a busy client can't hold RoDeck up.
     /// </summary>
     public static void ShowQuietly(IntPtr h)
     {
@@ -179,7 +179,7 @@ internal static class Win32
     /// <summary>
     /// Puts a process in its own job object with a hard CPU cap. Returns the job handle (keep it to change the cap
     /// later), or IntPtr.Zero if Windows refused (for example the process is already in a job that forbids it).
-    /// The job never kills the process when AltDeck closes.
+    /// The job never kills the process when RoDeck closes.
     /// </summary>
     public static IntPtr CreateCpuCappedJob(int pid, int percent)
     {

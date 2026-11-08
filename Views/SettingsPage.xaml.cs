@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using AltDeck.ViewModels;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 public partial class SettingsPage : UserControl
 {
@@ -46,7 +46,7 @@ public partial class SettingsPage : UserControl
         e.Handled = true;
         if (DataContext is not MainViewModel vm) return;
 
-        var text = AltDeck.Services.HotkeyService.FromKeyPress(key, Keyboard.Modifiers);
+        var text = RoDeck.Services.HotkeyService.FromKeyPress(key, Keyboard.Modifiers);
         if (text == null) return;                         // a lone modifier: wait for the real key
         vm.Settings.PanicHotkey = text.Length == 0 ? "off" : text;
     }

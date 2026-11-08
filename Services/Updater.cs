@@ -4,25 +4,27 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
-/// <summary>A newer AltDeck.exe on GitHub. Sha256 is GitHub's own digest of the file (lowercase hex), when it gave one.</summary>
+/// <summary>A newer RoDeck.exe on GitHub. Sha256 is GitHub's own digest of the file (lowercase hex), when it gave one.</summary>
 public sealed record UpdateInfo(Version Version, string Tag, string Url, long Size, string? Sha256);
 
 /// <summary>
-/// Auto-update from GitHub Releases (the latest release of <see cref="Repo"/>, its asset named AltDeck.exe).
-/// The new exe is downloaded next to the running one as AltDeck.exe.new, checked against its size and GitHub's SHA-256,
-/// and swapped in when AltDeck closes: Windows can't overwrite a running exe but can rename it, so
-/// AltDeck.exe becomes AltDeck.exe.old and AltDeck.exe.new becomes AltDeck.exe. The .old file is deleted at the next start.
-/// Only the single-file AltDeck.exe updates itself; a developer build (dotnet run, bin\ folder) never does.
+/// Auto-update from GitHub Releases (the latest release of <see cref="Repo"/>, its asset named RoDeck.exe).
+/// The new exe is downloaded next to the running one as RoDeck.exe.new, checked against its size and GitHub's SHA-256,
+/// and swapped in when RoDeck closes: Windows can't overwrite a running exe but can rename it, so
+/// RoDeck.exe becomes RoDeck.exe.old and RoDeck.exe.new becomes RoDeck.exe. The .old file is deleted at the next start.
+/// Only the single-file RoDeck.exe updates itself; a developer build (dotnet run, bin\ folder) never does.
 /// </summary>
 public static class Updater
 {
-    public const string Repo = "d4anw/AltDeck";
-    const string AssetName = "AltDeck.exe";
+    public const string Repo = "d4anw/RoDeck";
+    const string AssetName = "RoDeck.exe";
+    /// <summary>Releases also carry the same exe as AltDeck.exe, which installs from before the rename look for.</summary>
+    const string OldAssetName = "AltDeck.exe";
     const string AfterUpdateArg = "--after-update";
 
-    /// <summary>This copy's version, from &lt;Version&gt; in AltDeck.csproj. Must come before Http, which uses it.</summary>
+    /// <summary>This copy's version, from &lt;Version&gt; in RoDeck.csproj. Must come before Http, which uses it.</summary>
     public static Version Current { get; } = Normalize(ParseVersion(
         (Assembly.GetEntryAssembly() ?? typeof(Updater).Assembly)
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion) ?? new Version(0, 0, 0));
@@ -32,18 +34,18 @@ public static class Updater
     static HttpClient CreateClient()
     {
         var c = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
-        c.DefaultRequestHeaders.UserAgent.ParseAdd("AltDeck/" + Current);   // GitHub's API refuses requests without one
+        c.DefaultRequestHeaders.UserAgent.ParseAdd("RoDeck/" + Current);   // GitHub's API refuses requests without one
         c.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return c;
     }
 
     static string? ExePath => Environment.ProcessPath;
 
-    /// <summary>True for the published single-file AltDeck.exe. A framework-dependent build has AltDeck.dll next to it.</summary>
+    /// <summary>True for the published single-file RoDeck.exe. A framework-dependent build has RoDeck.dll next to it.</summary>
     public static bool CanUpdate =>
         ExePath is { } p
         && string.Equals(Path.GetFileName(p), AssetName, StringComparison.OrdinalIgnoreCase)
-        && !File.Exists(Path.Combine(Path.GetDirectoryName(p)!, "AltDeck.dll"));
+        && !File.Exists(Path.Combine(Path.GetDirectoryName(p)!, "RoDeck.dll"));
 
     /// <summary>The downloaded update waiting to be installed, if any.</summary>
     public static UpdateInfo? Staged { get; private set; }
@@ -64,12 +66,12 @@ public static class Updater
         try { using var p = Process.GetProcessById(pid); p.WaitForExit(20_000); } catch { }   // already gone: fine
     }
 
-    /// <summary>Asks GitHub for the latest release. Null when it isn't newer than <paramref name="current"/> or has no AltDeck.exe.</summary>
+    /// <summary>Asks GitHub for the latest release. Null when it isn't newer than <paramref name="current"/> or has no RoDeck.exe.</summary>
     public static async Task<UpdateInfo?> CheckAsync(Version? current = null, CancellationToken ct = default)
     {
         using var r = await Http.GetAsync($"https://api.github.com/repos/{Repo}/releases/latest", ct);
         if (r.StatusCode == System.Net.HttpStatusCode.NotFound) return null;   // no release yet
-        if ((int)r.StatusCode == 403 || (int)r.StatusCode == 429) throw new IOException("GitHub is limiting checks right now. AltDeck tries again later.");
+        if ((int)r.StatusCode == 403 || (int)r.StatusCode == 429) throw new IOException("GitHub is limiting checks right now. RoDeck tries again later.");
         r.EnsureSuccessStatusCode();
 
         var json = JsonNode.Parse(await r.Content.ReadAsStringAsync(ct));
@@ -79,9 +81,11 @@ public static class Updater
         var version = ParseVersion(tag);
         if (version == null || Normalize(version) <= (current ?? Current)) return null;
 
-        foreach (var asset in json["assets"]?.AsArray() ?? new JsonArray())
+        var assets = (json["assets"]?.AsArray() ?? new JsonArray()).ToList();
+        var pick = assets.FirstOrDefault(a => string.Equals((string?)a?["name"], AssetName, StringComparison.OrdinalIgnoreCase))
+                ?? assets.FirstOrDefault(a => string.Equals((string?)a?["name"], OldAssetName, StringComparison.OrdinalIgnoreCase));
+        foreach (var asset in pick == null ? new List<JsonNode?>() : new List<JsonNode?> { pick })
         {
-            if (!string.Equals((string?)asset?["name"], AssetName, StringComparison.OrdinalIgnoreCase)) continue;
             var url = (string?)asset!["browser_download_url"];
             if (string.IsNullOrEmpty(url)) return null;
             var digest = (string?)asset["digest"];   // "sha256:<hex>"
@@ -106,7 +110,7 @@ public static class Updater
     public static async Task DownloadAsync(UpdateInfo u, string? targetExe = null, CancellationToken ct = default,
                                            IProgress<(long Done, long Total)>? progress = null)
     {
-        var exe = targetExe ?? ExePath ?? throw new InvalidOperationException("AltDeck can't tell where its exe is.");
+        var exe = targetExe ?? ExePath ?? throw new InvalidOperationException("RoDeck can't tell where its exe is.");
         var part = exe + ".download";
         var staged = exe + ".new";
 
@@ -153,10 +157,10 @@ public static class Updater
         }
     }
 
-    /// <summary>Swaps the downloaded exe in. Safe to call while AltDeck runs; the new version starts next time.</summary>
+    /// <summary>Swaps the downloaded exe in. Safe to call while RoDeck runs; the new version starts next time.</summary>
     public static void Install(string? targetExe = null)
     {
-        var exe = targetExe ?? ExePath ?? throw new InvalidOperationException("AltDeck can't tell where its exe is.");
+        var exe = targetExe ?? ExePath ?? throw new InvalidOperationException("RoDeck can't tell where its exe is.");
         var staged = exe + ".new";
         var old = exe + ".old";
         if (!File.Exists(staged)) throw new FileNotFoundException("No downloaded update.");
@@ -171,7 +175,7 @@ public static class Updater
         Staged = null;
     }
 
-    /// <summary>Starts the (new) AltDeck.exe, which waits until this copy has closed.</summary>
+    /// <summary>Starts the (new) RoDeck.exe, which waits until this copy has closed.</summary>
     public static void Restart()
     {
         if (ExePath is not { } exe) return;

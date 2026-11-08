@@ -1,10 +1,10 @@
 using System.Collections.Specialized;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>
 /// The app shell (0.5): the sidebar pages, the Multi-launch tabs and the account shown top right.

@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using AltDeck.Services;
+using RoDeck.Services;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 /// <summary>An image from a web link, loaded through <see cref="ImageCache"/>. Shows a soft placeholder until it's there,
 /// with rounded corners (<see cref="CornerRadius"/>).</summary>

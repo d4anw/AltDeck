@@ -3,7 +3,7 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using Forms = System.Windows.Forms;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>The notification-area icon: open, stop all clients, quit. Only visible while "Close to tray" is on.</summary>
 public sealed class TrayService : IDisposable
@@ -35,12 +35,12 @@ public sealed class TrayService : IDisposable
         _image = Icon.FromHandle(_handle);
 
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Open AltDeck", null, (_, _) => OpenRequested?.Invoke());
+        menu.Items.Add("Open RoDeck", null, (_, _) => OpenRequested?.Invoke());
         menu.Items.Add("Stop all clients", null, (_, _) => StopAllRequested?.Invoke());
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Quit AltDeck", null, (_, _) => QuitRequested?.Invoke());
+        menu.Items.Add("Quit RoDeck", null, (_, _) => QuitRequested?.Invoke());
 
-        _icon = new Forms.NotifyIcon { Icon = _image, Text = "AltDeck", ContextMenuStrip = menu, Visible = false };
+        _icon = new Forms.NotifyIcon { Icon = _image, Text = "RoDeck", ContextMenuStrip = menu, Visible = false };
         _icon.DoubleClick += (_, _) => OpenRequested?.Invoke();
         _icon.MouseClick += (_, e) => { if (e.Button == Forms.MouseButtons.Left) OpenRequested?.Invoke(); };
     }

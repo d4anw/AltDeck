@@ -1,4 +1,4 @@
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Browser-style back / forward. States are compared by a key (page, tab, which item is open…), so two steps that show

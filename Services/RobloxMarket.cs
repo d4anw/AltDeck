@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AltDeck.Models;
+using RoDeck.Models;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>The outcome of a purchase. <see cref="Message"/> is Roblox's reason when it didn't go through.</summary>
 public sealed record PurchaseResult(bool Ok, string Message);

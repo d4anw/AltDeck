@@ -1,6 +1,6 @@
 using System.Windows.Controls;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 public partial class ActivityPage : UserControl
 {

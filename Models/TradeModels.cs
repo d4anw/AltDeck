@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Models;
+namespace RoDeck.Models;
 
 /// <summary>One limited's numbers from the values list. <see cref="Value"/> is -1 when it has no value (RAP is used then).</summary>
 public sealed record LimitedInfo

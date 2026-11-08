@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 public sealed class LogEntry
 {
@@ -18,8 +18,8 @@ public sealed class LogEntry
 }
 
 /// <summary>
-/// Timestamped record of what AltDeck did: launches, drops, rejoins, give-ups, frozen restarts, sign-in problems.
-/// Shown on the Activity page and written to %AppData%\AltDeck\logs\altdeck-YYYY-MM-DD.log (kept for 14 days).
+/// Timestamped record of what RoDeck did: launches, drops, rejoins, give-ups, frozen restarts, sign-in problems.
+/// Shown on the Activity page and written to %AppData%\RoDeck\logs\rodeck-YYYY-MM-DD.log (kept for 14 days).
 /// Safe to call from any thread.
 /// </summary>
 public sealed class ActivityLog
@@ -41,7 +41,7 @@ public sealed class ActivityLog
     public ObservableCollection<LogEntry> Entries { get; } = new();
 
     public string LogDir { get; } = Path.Combine(SettingsStore.DataDir, "logs");
-    string FileFor(DateTime d) => Path.Combine(LogDir, $"altdeck-{d:yyyy-MM-dd}.log");
+    string FileFor(DateTime d) => Path.Combine(LogDir, $"rodeck-{d:yyyy-MM-dd}.log");
 
     /// <summary>Loads today's earlier lines (so a restart doesn't empty the page) and deletes old files.</summary>
     public void LoadToday()
@@ -68,7 +68,7 @@ public sealed class ActivityLog
         {
             if (!Directory.Exists(LogDir)) return;
             var cutoff = DateTime.Today.AddDays(-KeepDays);
-            foreach (var f in Directory.GetFiles(LogDir, "altdeck-*.log"))
+            foreach (var f in Directory.GetFiles(LogDir, "rodeck-*.log").Concat(Directory.GetFiles(LogDir, "altdeck-*.log")))
                 if (File.GetLastWriteTime(f) < cutoff) File.Delete(f);
         }
         catch { }

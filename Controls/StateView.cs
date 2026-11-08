@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 public enum LoadState { Ready, Loading, Empty, Error }
 
@@ -57,7 +57,7 @@ public partial class Loader : ObservableObject
                     any = await work(cts.Token);
                     break;
                 }
-                catch (AltDeck.Services.RobloxException ex) when (ex.TooMany && round < 2 && !cts.IsCancellationRequested)
+                catch (RoDeck.Services.RobloxException ex) when (ex.TooMany && round < 2 && !cts.IsCancellationRequested)
                 {
                     for (int left = Math.Clamp(ex.WaitSeconds, 5, 60); left > 0; left--)
                     {
@@ -77,9 +77,9 @@ public partial class Loader : ObservableObject
         {
             if (cts.IsCancellationRequested) return;
             State = LoadState.Error;
-            Message = ex is AltDeck.Services.RobloxException { TooMany: true }
+            Message = ex is RoDeck.Services.RobloxException { TooMany: true }
                 ? "Roblox is still busy. Give it a minute, then press Try again."
-                : ex is AltDeck.Services.RobloxException ? ex.Message : "Something went wrong: " + ex.Message;
+                : ex is RoDeck.Services.RobloxException ? ex.Message : "Something went wrong: " + ex.Message;
         }
     }
 

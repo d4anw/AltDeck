@@ -1,10 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using AltDeck.Models;
-using AltDeck.ViewModels;
+using RoDeck.Models;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 /// <summary>Avatar: the look of the account top right, its wardrobe, body and outfits.</summary>
 public partial class AvatarPage : UserControl

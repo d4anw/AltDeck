@@ -4,18 +4,18 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Media.Imaging;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Pictures from the web (game icons, avatars, items), kept in memory and on disk in
-/// %LocalAppData%\AltDeck\cache\images so pages open fast and don't download the same picture twice.
+/// %LocalAppData%\RoDeck\cache\images so pages open fast and don't download the same picture twice.
 /// Roblox's picture links change when the picture changes, so a cached file never goes stale; files unused for
 /// 14 days are removed at start.
 /// </summary>
 public static class ImageCache
 {
     static readonly string Dir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AltDeck", "cache", "images");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoDeck", "cache", "images");
 
     const int MemoryLimit = 600;
     static readonly ConcurrentDictionary<string, BitmapImage> Memory = new();

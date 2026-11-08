@@ -1,11 +1,11 @@
 using System.Windows;
 using System.Windows.Input;
-using AltDeck.Services;
+using RoDeck.Services;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>
-/// "AltDeck 0.4.4 is out. Update now?" with the release notes. Update downloads with a progress bar and closes with
+/// "RoDeck 0.4.4 is out. Update now?" with the release notes. Update downloads with a progress bar and closes with
 /// DialogResult true (the caller then restarts into the new version). Not now closes with false.
 /// <see cref="DontAskAgain"/> is the checkbox.
 /// </summary>
@@ -21,8 +21,8 @@ public partial class UpdateWindow : Window
         InitializeComponent();
         _update = update;
         var v = Short(update.Version);
-        Heading.Text = $"AltDeck {v} is out";
-        Sub.Text = $"You have {Short(Updater.Current)}. Update now? AltDeck restarts when it's done; your Roblox clients keep running.";
+        Heading.Text = $"RoDeck {v} is out";
+        Sub.Text = $"You have {Short(Updater.Current)}. Update now? RoDeck restarts when it's done; your Roblox clients keep running.";
         Notes.Text = releaseNotes != null ? WhatsNewWindow.ToPlainText(releaseNotes) : "See GitHub for what changed in this version.";
         UpdateBtn.Content = $"Update to {v}";
         if (askedByUser) DontAsk.Visibility = Visibility.Collapsed;   // they asked: no "don't ask" here
@@ -68,7 +68,7 @@ public partial class UpdateWindow : Window
             await Updater.DownloadAsync(_update, ct: _download.Token, progress: progress);
             Bar.Value = 100;
             PercentText.Text = "100%";
-            ProgressText.Text = "Checked. Restarting AltDeck…";
+            ProgressText.Text = "Checked. Restarting RoDeck…";
             LaterBtn.IsEnabled = false;
             await Task.Delay(600);   // let "Restarting" show for a moment
             DialogResult = true;

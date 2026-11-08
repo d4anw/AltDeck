@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
-using AltDeck.Controls;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Controls;
+using RoDeck.Models;
+using RoDeck.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace AltDeck.ViewModels;
+namespace RoDeck.ViewModels;
 
 /// <summary>
 /// Trades page, part 2: the current account's trades (inbound, outbound, completed, inactive), one trade with the value

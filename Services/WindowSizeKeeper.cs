@@ -2,13 +2,13 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AltDeck.Services;
+namespace RoDeck.Services;
 
 /// <summary>
 /// Roblox holds its window to at least 800×600 inside (816×638 with the frame): a small client jumps back to that size
 /// as soon as it's dragged by its title bar.
 ///
-/// AltDeck can't change that rule inside Roblox (that would mean injecting code into it). Instead it watches, from
+/// RoDeck can't change that rule inside Roblox (that would mean injecting code into it). Instead it watches, from
 /// outside, for the moment the user lets go of a Roblox window after moving or resizing it (a WinEvent hook, the same
 /// kind screen readers use), and then sets the window to what the mouse asked for:
 ///   • moved: the size it had before the drag, at the place it was dropped;
@@ -69,7 +69,7 @@ public sealed class WindowSizeKeeper : IDisposable
     {
         Current = this;
         _proc = OnEvent;
-        _thread = new Thread(Run) { IsBackground = true, Name = "AltDeck window size keeper" };
+        _thread = new Thread(Run) { IsBackground = true, Name = "RoDeck window size keeper" };
         _thread.SetApartmentState(ApartmentState.STA);
         _thread.Start();
     }

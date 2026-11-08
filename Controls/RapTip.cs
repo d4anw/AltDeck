@@ -3,10 +3,10 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using AltDeck.Models;
-using AltDeck.Services;
+using RoDeck.Models;
+using RoDeck.Services;
 
-namespace AltDeck.Controls;
+namespace RoDeck.Controls;
 
 /// <summary>
 /// A tooltip for a limited (its DataContext is a <see cref="LimitedTile"/>): the item's name, value and RAP, and a chart of

@@ -1,8 +1,8 @@
 using System.Windows.Controls;
 using System.Windows.Input;
-using AltDeck.ViewModels;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 /// <summary>Games: charts, search, favourites, recently played, and a page per game with its server finder.</summary>
 public partial class GamesPage : UserControl

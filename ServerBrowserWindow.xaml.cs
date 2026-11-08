@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using AltDeck.Services;
+using RoDeck.Services;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>One line in the server list.</summary>
 public sealed class ServerRow

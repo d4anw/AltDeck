@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
-using AltDeck.ViewModels;
+using RoDeck.ViewModels;
 
-namespace AltDeck.Views;
+namespace RoDeck.Views;
 
 public partial class AccountsPage : UserControl
 {
@@ -59,7 +59,7 @@ public partial class AccountsPage : UserControl
         }
         var ok = MessageBox.Show(Window.GetWindow(this),
             $"Found {items.Count} account{(items.Count == 1 ? "" : "s")} in {System.IO.Path.GetFileName(pick.FileName)}.\n\n" +
-            "Add them to AltDeck? Accounts you already have are refreshed, not doubled. Names, notes and groups from the file " +
+            "Add them to RoDeck? Accounts you already have are refreshed, not doubled. Names, notes and groups from the file " +
             "only fill in what's empty. Passwords in the file are ignored.",
             "Import accounts", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (ok == MessageBoxResult.Yes) await RunImportAsync(items);

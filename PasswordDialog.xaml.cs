@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace AltDeck;
+namespace RoDeck;
 
 /// <summary>Asks for one or more passwords. The caller's validator can keep the dialog open with an error message.</summary>
 public partial class PasswordDialog : Window
