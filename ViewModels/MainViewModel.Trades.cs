@@ -142,7 +142,7 @@ public partial class MainViewModel
             AssetId = id, Name = v.Name, Price = price, Rap = v.Rap, Value = v.Value, Demand = v.Demand, Projected = v.Projected,
             // a scan only knows the price is this low now, not when it was listed: keep the older time if the price only went up
             At = scanned && old != null && price >= old.Price ? old.At : at,
-            Listed = !scanned || old?.Listed == true,
+            Listed = !scanned || (old?.Listed == true && price >= old.Price),
             ThumbUrl = old?.ThumbUrl ?? ""
         };
         _allDeals[id] = d;
@@ -215,7 +215,8 @@ public partial class MainViewModel
         IEnumerable<DealTile> list = _allDeals.Values.Where(PassesDeal);
         list = (DealSort?.Value ?? 0) switch
         {
-            1 => list.OrderByDescending(d => d.At).ThenByDescending(d => d.Discount),
+            // real listings by when they were listed (like Rolimons); deals the price check found have no listing time, so they go after
+            1 => list.OrderByDescending(d => d.Listed).ThenByDescending(d => d.Listed ? d.At.Ticks : 0).ThenByDescending(d => d.Discount),
             2 => list.OrderByDescending(d => d.Saving),
             _ => list.OrderByDescending(d => d.Discount)
         };
