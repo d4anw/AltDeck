@@ -32,13 +32,12 @@ public static class Limited
 {
     public static string DemandText(int d) => d switch { 0 => "Terrible", 1 => "Low", 2 => "Normal", 3 => "High", 4 => "Amazing", _ => "" };
     public static string Robux(long r) => $"R$ {r:N0}";
-    /// <summary>12,345 → "12.3K", 1,234,567 → "1.23M".</summary>
-    public static string Short(long r) => r switch
-    {
-        >= 1_000_000 => $"{r / 1_000_000d:0.##}M",
-        >= 10_000 => $"{r / 1_000d:0.#}K",
-        _ => r.ToString("N0")
-    };
+    /// <summary>475,397 stays "475,397"; 1,234,567 → "1.23M".</summary>
+    public static string Short(long r) => r >= 1_000_000 ? $"{r / 1_000_000d:0.##}M" : r.ToString("N0");
+
+    /// <summary>"+R$ 216 (+2.7%)" / "−255 (−3.2%)" for a difference against a base.</summary>
+    public static string Diff(long diff, long of) =>
+        $"{(diff >= 0 ? "+" : "−")}{Math.Abs(diff):N0} ({(diff >= 0 ? "+" : "−")}{(of > 0 ? Math.Abs((double)diff / of) : 0):0.#%})";
 }
 
 /// <summary>A limited in a grid: the catalog, an inventory, a trade, or a side of a trade being made.</summary>
@@ -62,7 +61,10 @@ public partial class LimitedTile : ObservableObject
     public bool HasValue => Value > 0;
     public long Worth => HasValue ? Value : Rap;
     public string RapText => "RAP " + Limited.Short(Rap);
-    public string ValueText => HasValue ? "Value " + Limited.Short(Value) : "No value";
+    /// <summary>Its value, or its RAP when it has no value (as traders count it).</summary>
+    public string ValueText => "Value " + Limited.Short(Worth);
+    public string WorthNumber => Limited.Short(Worth);
+    public string RapNumber => Limited.Short(Rap);
     public string DemandText => Limited.DemandText(Demand);
     public string SerialText => Serial > 0 ? $"#{Serial:N0}" : "";
 
@@ -157,6 +159,24 @@ public partial class TradeRow : ObservableObject
     [ObservableProperty] private int result;
     [ObservableProperty] private bool isSelected;
     public bool HasSummary => Summary.Length > 0;
+    /// <summary>What you give and what you get (value), for the coloured bar.</summary>
+    [ObservableProperty] private string giveText = "";
+    [ObservableProperty] private string getText = "";
+    /// <summary>The partner's whole inventory value (when it's public), under their name.</summary>
+    [ObservableProperty] private string partnerWorth = "";
+
+    /// <summary>"2 days", "5 hours", "3 min".</summary>
+    public string AgoText
+    {
+        get
+        {
+            if (Created == default) return "";
+            var s = DateTime.UtcNow - Created;
+            return s.TotalDays >= 1 ? $"{(int)s.TotalDays} day{((int)s.TotalDays == 1 ? "" : "s")}"
+                 : s.TotalHours >= 1 ? $"{(int)s.TotalHours} hour{((int)s.TotalHours == 1 ? "" : "s")}"
+                 : $"{Math.Max(1, (int)s.TotalMinutes)} min";
+        }
+    }
 
     public string PartnerLabel => string.IsNullOrWhiteSpace(PartnerDisplay) ? PartnerName : PartnerDisplay;
     public string WhenText => Created == default ? "" : Created.ToLocalTime().ToString("d MMM, HH:mm");

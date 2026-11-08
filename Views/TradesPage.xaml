@@ -4,6 +4,47 @@
              xmlns:ctl="clr-namespace:AltDeck.Controls">
   <UserControl.Resources>
     <SolidColorBrush x:Key="Win" Color="#3DD68C"/>
+    <SolidColorBrush x:Key="WinBg" Color="#1F3A2C"/>
+    <SolidColorBrush x:Key="LossBg" Color="#4A1F22"/>
+
+    <!-- a difference pill: green when it's in your favour, red when not -->
+    <Style x:Key="DiffPill" TargetType="Border">
+      <Setter Property="Padding" Value="10,3"/>
+      <Setter Property="CornerRadius" Value="9"/>
+      <Setter Property="Margin" Value="4,0"/>
+      <Setter Property="Background" Value="{DynamicResource Card2}"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="1"><Setter Property="Background" Value="{StaticResource WinBg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="-1"><Setter Property="Background" Value="{StaticResource LossBg}"/></DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+    <!-- a trade item: picture with serial, name, value (orange) and RAP (blue) -->
+    <DataTemplate x:Key="TradeItemCard">
+      <StackPanel Width="118" Margin="0,0,12,12">
+        <Grid>
+          <Border Height="118" CornerRadius="10" Background="{DynamicResource Card2}"/>
+          <ctl:RemoteImage Url="{Binding ThumbUrl}" Height="118" CornerRadius="10"/>
+          <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="6" Padding="6,1" CornerRadius="6" Background="#C0000000"
+                  Visibility="{Binding SerialText, Converter={StaticResource EmptyCollapsed}}">
+            <TextBlock Text="{Binding SerialText}" FontSize="10" Foreground="White"/>
+          </Border>
+          <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" Padding="6,1" CornerRadius="6" Background="#C0000000"
+                  Visibility="{Binding IsOnHold, Converter={StaticResource BoolVis}}">
+            <TextBlock Text="On hold" FontSize="10" Foreground="White"/>
+          </Border>
+        </Grid>
+        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Margin="0,6,0,2" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+        <StackPanel Orientation="Horizontal" ToolTip="Value (Rolimons; RAP when it has none)">
+          <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+          <TextBlock Text="{Binding WorthNumber}" FontSize="12"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" ToolTip="RAP">
+          <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+          <TextBlock Text="{Binding RapNumber}" FontSize="12"/>
+        </StackPanel>
+      </StackPanel>
+    </DataTemplate>
 
     <!-- a limited as a small card: picture, name, value / RAP, serial; accent border when picked -->
     <DataTemplate x:Key="LimitedCard">
@@ -39,6 +80,7 @@
     <!-- a plain clickable wrapper (the card has its own look) -->
     <Style x:Key="CardButton" TargetType="Button">
       <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
       <Setter Property="Focusable" Value="False"/>
       <Setter Property="Margin" Value="0,0,12,12"/>
       <Setter Property="Template">
@@ -380,7 +422,7 @@
 
           <Grid>
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="360"/>
+              <ColumnDefinition Width="380"/>
               <ColumnDefinition Width="20"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -391,23 +433,66 @@
                 <ItemsControl ItemsSource="{Binding TradeRows}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <Button Style="{StaticResource CardButton}" Margin="0,0,0,8" HorizontalContentAlignment="Stretch"
+                      <Button Style="{StaticResource CardButton}" Margin="0,0,0,6" HorizontalContentAlignment="Stretch"
                               Command="{Binding DataContext.OpenTradeRowItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding}">
-                        <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                        <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="12,9">
                           <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <ctl:AvatarView Width="40" Height="40" Url="{Binding HeadshotUrl}"/>
-                            <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                              <Grid>
-                                <TextBlock Text="{Binding PartnerLabel}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,80,0"/>
-                                <TextBlock Text="{Binding WhenText}" FontSize="11" Style="{StaticResource MutedText}" HorizontalAlignment="Right"/>
-                              </Grid>
-                              <TextBlock Text="{Binding Summary}" FontSize="12" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
-                                         Style="{StaticResource VerdictText}" Tag="{Binding Result}"/>
-                              <TextBlock Text="Checking value…" FontSize="12" Margin="0,3,0,0" Style="{StaticResource MutedText}"
-                                         Visibility="{Binding HasSummary, Converter={StaticResource BoolVisInv}}"/>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="Auto"/>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="Auto"/>
+                              <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ctl:AvatarView Width="44" Height="44" Url="{Binding HeadshotUrl}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding PartnerLabel}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding PartnerName}"/>
+                              <TextBlock Text="{Binding PartnerWorth}" FontSize="11" FontWeight="SemiBold" Foreground="#F2C14E" Margin="0,1,0,0"
+                                         ToolTip="Their inventory value" Visibility="{Binding PartnerWorth, Converter={StaticResource EmptyCollapsed}}"/>
+                              <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <Button Padding="10,2" Margin="0,0,6,0" FontSize="11" Focusable="False" Foreground="White" Background="#B5363C" BorderThickness="0"
+                                        Command="{Binding DataContext.DeclineRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" Visibility="{Binding IsActive, Converter={StaticResource BoolVis}}">
+                                  <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                      <Setter Property="Content" Value="Decline"/>
+                                      <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.TradeType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Outbound">
+                                          <Setter Property="Content" Value="Cancel"/>
+                                        </DataTrigger>
+                                      </Style.Triggers>
+                                    </Style>
+                                  </Button.Style>
+                                </Button>
+                                <Button Style="{StaticResource IconBtn}" Content="&#xE8A7;" FontSize="11" Width="24" Height="22" Padding="0" Margin="0" Focusable="False"
+                                        ToolTip="Open their profile on roblox.com"
+                                        Command="{Binding DataContext.OpenPartnerProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                              </StackPanel>
                             </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding AgoText}" FontSize="11" Style="{StaticResource MutedText}" VerticalAlignment="Top"
+                                       Margin="0,0,10,0" ToolTip="{Binding WhenText}"/>
+                            <!-- what you give over what you get, with a bar: green = you gain value, red = you lose -->
+                            <Grid Grid.Column="3" VerticalAlignment="Center" MinWidth="70">
+                              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                              <Border Width="6" CornerRadius="3" Margin="0,0,8,0" Tag="{Binding Result}">
+                                <Border.Style>
+                                  <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{DynamicResource Line}"/>
+                                    <Style.Triggers>
+                                      <DataTrigger Binding="{Binding Result}" Value="1"><Setter Property="Background" Value="{StaticResource Win}"/></DataTrigger>
+                                      <DataTrigger Binding="{Binding Result}" Value="-1"><Setter Property="Background" Value="{DynamicResource Red}"/></DataTrigger>
+                                    </Style.Triggers>
+                                  </Style>
+                                </Border.Style>
+                              </Border>
+                              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding GiveText}" FontWeight="SemiBold" HorizontalAlignment="Right" ToolTip="You give (value)"/>
+                                <TextBlock Text="{Binding GetText}" FontWeight="SemiBold" HorizontalAlignment="Right" ToolTip="You get (value)"/>
+                                <TextBlock Text="…" Style="{StaticResource MutedText}" HorizontalAlignment="Right"
+                                           Visibility="{Binding HasSummary, Converter={StaticResource BoolVisInv}}"/>
+                              </StackPanel>
+                            </Grid>
                           </Grid>
                         </Border>
                       </Button>
@@ -430,47 +515,92 @@
               <ctl:StateView State="{Binding TradeLoad.State}" Message="{Binding TradeLoad.Message}" MinHeight="200">
                 <StackPanel>
                   <Grid>
-                    <TextBlock FontSize="18" FontWeight="Bold" TextTrimming="CharacterEllipsis" Margin="0,0,40,0">
-                      <Run Text="Trade with"/> <Run Text="{Binding OpenTradeRow.PartnerLabel, Mode=OneWay}"/>
-                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,40,0">
+                      <TextBlock FontSize="22" FontWeight="Bold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
+                        <Run Text="Trade with"/> <Run Text="{Binding OpenTradeRow.PartnerLabel, Mode=OneWay}"/>
+                        <Run Text="{Binding OpenTradeRow.PartnerName, Mode=OneWay, StringFormat='@{0}'}" Foreground="{DynamicResource Muted}" FontWeight="Normal"/>
+                      </TextBlock>
+                      <Button Style="{StaticResource IconBtn}" Content="&#xE8A7;" Margin="6,0,0,0" ToolTip="Open their profile on roblox.com"
+                              Command="{Binding OpenPartnerProfileCommand}" VerticalAlignment="Center"/>
+                    </StackPanel>
                     <Button Style="{StaticResource IconBtn}" Content="&#xE711;" HorizontalAlignment="Right" Margin="0" ToolTip="Close"
                             Command="{Binding CloseTradeCommand}"/>
                   </Grid>
-                  <TextBlock Text="{Binding OpenTrade.Status}" FontSize="12" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
+                  <TextBlock Text="{Binding TradeSubtitle}" FontSize="12" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
 
-                  <Border Margin="0,14,0,0" Padding="14,10" CornerRadius="10" Background="{DynamicResource Card2}">
-                    <TextBlock Text="{Binding TradeVerdict}" FontWeight="SemiBold" TextWrapping="Wrap" Style="{StaticResource VerdictText}"
-                               Tag="{Binding TradeVerdictKind}"/>
-                  </Border>
-
-                  <TextBlock Text="You give" FontWeight="SemiBold" Margin="0,16,0,2"/>
-                  <TextBlock Text="{Binding TradeGiveText}" FontSize="12" Style="{StaticResource MutedText}" Margin="0,0,0,8" TextWrapping="Wrap"/>
-                  <ItemsControl ItemsSource="{Binding TradeGive}">
+                  <!-- give -->
+                  <TextBlock Text="{Binding TradeGiveTitle}" FontSize="16" FontWeight="Bold" Margin="0,18,0,10"/>
+                  <ItemsControl ItemsSource="{Binding TradeGive}" ItemTemplate="{StaticResource TradeItemCard}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate><ContentControl Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}" Margin="0,0,10,10"/></DataTemplate>
-                    </ItemsControl.ItemTemplate>
                   </ItemsControl>
+                  <Grid Margin="0,2,0,0" Visibility="{Binding TradeGiveRobux, Converter={StaticResource EmptyCollapsed}}">
+                    <TextBlock Text="Robux you add:" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding TradeGiveRobux}" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                  </Grid>
+                  <Grid Margin="0,8,0,0">
+                    <TextBlock Text="Total value:" FontWeight="SemiBold" VerticalAlignment="Top"/>
+                    <StackPanel HorizontalAlignment="Right">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding TradeGiveValue}" FontWeight="Bold" FontSize="15"/>
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding TradeGiveRap}" FontWeight="Bold" FontSize="15"/>
+                      </StackPanel>
+                    </StackPanel>
+                  </Grid>
 
-                  <TextBlock Text="You get" FontWeight="SemiBold" Margin="0,8,0,2"/>
-                  <TextBlock Text="{Binding TradeGetText}" FontSize="12" Style="{StaticResource MutedText}" Margin="0,0,0,8" TextWrapping="Wrap"/>
-                  <ItemsControl ItemsSource="{Binding TradeGet}">
-                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate><ContentControl Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}" Margin="0,0,10,10"/></DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-
-                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0"
-                              Visibility="{Binding TradeCanRespond, Converter={StaticResource BoolVis}}">
-                    <Button Content="Decline" Command="{Binding DeclineTradeCommand}"/>
-                    <Button Content="Counter" Command="{Binding CounterTradeCommand}"/>
-                    <Button Content="Accept" Style="{StaticResource Primary}" Margin="0" Command="{Binding AcceptTradeCommand}"/>
+                  <!-- the difference: what you get minus what you give -->
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,12">
+                    <Border Style="{StaticResource DiffPill}" Tag="{Binding TradeValueDiffKind}" ToolTip="Value difference">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding TradeValueDiff}" FontSize="12" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource DiffPill}" Tag="{Binding TradeRapDiffKind}" ToolTip="RAP difference">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding TradeRapDiff}" FontSize="12" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Border>
                   </StackPanel>
-                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0"
-                              Visibility="{Binding TradeCanCancel, Converter={StaticResource BoolVis}}">
+                  <Border Height="1" Background="{DynamicResource Line}" Margin="0,0,0,4"/>
+
+                  <!-- get -->
+                  <TextBlock Text="{Binding TradeGetTitle}" FontSize="16" FontWeight="Bold" Margin="0,12,0,10"/>
+                  <ItemsControl ItemsSource="{Binding TradeGet}" ItemTemplate="{StaticResource TradeItemCard}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  </ItemsControl>
+                  <Grid Margin="0,2,0,0" Visibility="{Binding TradeGetRobux, Converter={StaticResource EmptyCollapsed}}">
+                    <TextBlock Text="Robux offered (after 30% fee):" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding TradeGetRobux}" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                  </Grid>
+                  <Grid Margin="0,8,0,0">
+                    <TextBlock Text="Total value:" FontWeight="SemiBold" VerticalAlignment="Top"/>
+                    <StackPanel HorizontalAlignment="Right">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding TradeGetValue}" FontWeight="Bold" FontSize="15"/>
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding TradeGetRap}" FontWeight="Bold" FontSize="15"/>
+                      </StackPanel>
+                    </StackPanel>
+                  </Grid>
+
+                  <StackPanel Orientation="Horizontal" Margin="0,16,0,0" Visibility="{Binding TradeCanRespond, Converter={StaticResource BoolVis}}">
+                    <Button Content="Accept" Style="{StaticResource Primary}" Command="{Binding AcceptTradeCommand}"/>
+                    <Button Content="Counter" Command="{Binding CounterTradeCommand}"/>
+                    <Button Content="Decline" Margin="0" Command="{Binding DeclineTradeCommand}"/>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,16,0,0" Visibility="{Binding TradeCanCancel, Converter={StaticResource BoolVis}}">
                     <Button Content="Cancel trade" Margin="0" Command="{Binding DeclineTradeCommand}"/>
                   </StackPanel>
+                  <TextBlock Text="Values from Rolimons (RAP when an item has no value). Robux you get count after Roblox's 30% fee."
+                             FontSize="11" Style="{StaticResource MutedText}" Margin="0,12,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
               </ctl:StateView>
             </Border>

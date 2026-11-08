@@ -106,9 +106,10 @@ public partial class MainViewModel
                 if (gen != _tradeGen) return;
                 Summarise(r, d);
             }
-            catch (RobloxException ex) when (ex.TooMany) { return; }   // the rest fill in when opened
+            catch (RobloxException ex) when (ex.TooMany) { break; }   // the rest fill in when opened
             catch (RobloxException) { }
         }
+        await FillPartnerWorthsAsync(rows, a, gen);
     }
 
     private async Task<TradeDetail> GetTradeDetailAsync(Account a, long id)
@@ -122,8 +123,59 @@ public partial class MainViewModel
     private static void Summarise(TradeRow r, TradeDetail d)
     {
         long diff = d.Difference;
-        r.Result = d.Give == 0 && d.Get == 0 ? 0 : Math.Abs(diff) < Math.Max(1, d.Give) * 0.02 ? 0 : Math.Sign(diff);
-        r.Summary = $"Give R$ {Limited.Short(d.Give)} · Get R$ {Limited.Short(d.Get)}  ({(diff >= 0 ? "+" : "−")}{Limited.Short(Math.Abs(diff))})";
+        r.Result = d.Give == 0 && d.Get == 0 ? 0 : Math.Sign(diff);
+        r.GiveText = d.Give.ToString("N0");
+        r.GetText = d.Get.ToString("N0");
+        r.Summary = $"{(diff >= 0 ? "+" : "−")}{Math.Abs(diff):N0}";
+    }
+
+    /// <summary>Partners' inventory values (public inventories only), remembered for 10 minutes.</summary>
+    private readonly Dictionary<long, (DateTime At, string Text)> _partnerWorths = new();
+
+    private async Task FillPartnerWorthsAsync(List<TradeRow> rows, Account a, int gen)
+    {
+        foreach (var id in rows.Select(r => r.PartnerId).Distinct())
+        {
+            if (gen != _tradeGen) return;
+            if (!_partnerWorths.TryGetValue(id, out var known) || DateTime.Now - known.At > TimeSpan.FromMinutes(10))
+            {
+                string text;
+                try
+                {
+                    var items = await RobloxTrades.GetCollectiblesAsync(a.Cookie, id, CancellationToken.None);
+                    text = items.Sum(i => i.Worth).ToString("N0");
+                }
+                catch (RobloxException ex) when (ex.TooMany) { return; }
+                catch (RobloxException) { text = "private"; }
+                known = (DateTime.Now, text);
+                _partnerWorths[id] = known;
+            }
+            foreach (var r in rows.Where(r => r.PartnerId == id)) r.PartnerWorth = known.Text;
+        }
+    }
+
+    /// <summary>The Decline / Cancel on a row: one click, nothing is exchanged either way.</summary>
+    [RelayCommand]
+    private async Task DeclineRow(TradeRow? r)
+    {
+        if (r == null || !r.IsActive || CurrentAccount is not { } a) return;
+        bool mine = TradeType == "Outbound";
+        try
+        {
+            await RobloxTrades.DeclineAsync(a.Cookie, r.Id);
+            TradeRows.Remove(r);
+            if (OpenTradeRow == r) CloseTrade();
+            StatusMessage = mine ? $"Trade to {r.PartnerLabel} cancelled." : $"Trade from {r.PartnerLabel} declined.";
+            _ = RefreshInboundCountAsync();
+        }
+        catch (RobloxException ex) { StatusMessage = ex.TooMany ? "Roblox is busy. Try again in a moment." : ex.Message; }
+    }
+
+    [RelayCommand]
+    private void OpenPartnerProfile(object? x)
+    {
+        long id = x switch { TradeRow r => r.PartnerId, long l => l, _ => OpenTradeRow?.PartnerId ?? 0 };
+        if (id > 0) Web($"https://www.roblox.com/users/{id}/profile");
     }
 
     // ================================================================== one trade
@@ -137,6 +189,13 @@ public partial class MainViewModel
     public ObservableCollection<LimitedTile> TradeGet { get; } = new();
     [ObservableProperty] private string tradeGiveText = "", tradeGetText = "", tradeVerdict = "";
     [ObservableProperty] private int tradeVerdictKind;
+    // the opened trade, laid out like a trade window: totals per side, the difference as two pills (value and RAP)
+    [ObservableProperty] private string tradeGiveValue = "", tradeGiveRap = "", tradeGetValue = "", tradeGetRap = "";
+    [ObservableProperty] private string tradeValueDiff = "", tradeRapDiff = "";
+    [ObservableProperty] private int tradeValueDiffKind, tradeRapDiffKind;
+    [ObservableProperty] private string tradeGiveRobux = "", tradeGetRobux = "", tradeSubtitle = "";
+    public string TradeGiveTitle => TradeType is "Completed" or "Inactive" ? "Items you gave" : "Items you will give";
+    public string TradeGetTitle => TradeType is "Completed" or "Inactive" ? "Items you got" : "Items you will receive";
     public bool TradeCanRespond => OpenTradeRow is { IsActive: true } && TradeType == "Inbound" && OpenTrade != null;
     public bool TradeCanCancel => OpenTradeRow is { IsActive: true } && TradeType == "Outbound" && OpenTrade != null;
 
@@ -170,6 +229,24 @@ public partial class MainViewModel
         TradeGiveText = SideText(d.Mine, false);
         TradeGetText = SideText(d.Theirs, true);
         (TradeVerdict, TradeVerdictKind) = Verdict(d.Give, d.Get, d.RapDifference);
+
+        long giveRap = d.Mine.Rap + d.Mine.Robux, getRap = d.Theirs.Rap + (long)(d.Theirs.Robux * 0.7);
+        TradeGiveValue = d.Give.ToString("N0");
+        TradeGiveRap = giveRap.ToString("N0");
+        TradeGetValue = d.Get.ToString("N0");
+        TradeGetRap = getRap.ToString("N0");
+        TradeValueDiff = Limited.Diff(d.Get - d.Give, d.Give);
+        TradeRapDiff = Limited.Diff(getRap - giveRap, giveRap);
+        TradeValueDiffKind = Math.Sign(d.Get - d.Give);
+        TradeRapDiffKind = Math.Sign(getRap - giveRap);
+        TradeGiveRobux = d.Mine.Robux > 0 ? d.Mine.Robux.ToString("N0") : "";
+        TradeGetRobux = d.Theirs.Robux > 0 ? ((long)(d.Theirs.Robux * 0.7)).ToString("N0") : "";
+        var row = OpenTradeRow;
+        TradeSubtitle = row == null ? d.Status
+            : row.IsActive && row.Expiration != default ? $"Expires on {row.Expiration.ToLocalTime():d MMM yyyy}"
+            : d.Status;
+        OnPropertyChanged(nameof(TradeGiveTitle));
+        OnPropertyChanged(nameof(TradeGetTitle));
     }
 
     private static string SideText(TradeSide s, bool received) =>

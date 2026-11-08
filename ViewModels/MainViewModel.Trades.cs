@@ -64,7 +64,8 @@ public partial class MainViewModel
     private bool _scanRunning;
     private int _scanDone, _scanTotal;
     private DateTime _scanFinishedAt;
-    private readonly DispatcherTimer _dealTimer = new() { Interval = TimeSpan.FromSeconds(12) };
+    private readonly DispatcherTimer _dealTimer = new() { Interval = TimeSpan.FromSeconds(1) };   // new listings, every second
+    private DateTime _dealPauseUntil;
     private bool _dealTimerHooked, _dealPolling;
 
     public IReadOnlyList<MarketOption> DealThresholds { get; } = new List<MarketOption>
@@ -88,7 +89,7 @@ public partial class MainViewModel
     private void StartDeals()
     {
         DealThreshold ??= DealThresholds[1];
-        DealSort ??= DealSorts[0];
+        DealSort ??= DealSorts[1];   // newest first
         if (!_dealTimerHooked) { _dealTimer.Tick += async (_, _) => { await PollDealsAsync(); MaybeScan(); }; _dealTimerHooked = true; }
         if (!_dealTimer.IsEnabled) { _dealTimer.Start(); _ = PollDealsAsync(); MaybeScan(); }
     }
@@ -158,7 +159,7 @@ public partial class MainViewModel
     /// <summary>Asks for the newest listings (every 12 s while Deals is open) and adds the new ones to the top.</summary>
     private async Task PollDealsAsync()
     {
-        if (_dealPolling) return;
+        if (_dealPolling || DateTime.Now < _dealPauseUntil) return;
         _dealPolling = true;
         try
         {
@@ -179,6 +180,8 @@ public partial class MainViewModel
         catch (Exception ex) when (ex is RobloxException or System.Text.Json.JsonException)
         {
             _dealErrors++;
+            // something's wrong on their side: ask less often for a bit instead of every second
+            _dealPauseUntil = DateTime.Now.AddSeconds(Math.Min(60, 5 * _dealErrors));
             DealsStatus = _dealErrors > 2 ? "Rolimons isn't answering right now. Still trying…" : DealsStatus;
         }
         finally { _dealPolling = false; }
