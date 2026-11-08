@@ -113,7 +113,7 @@
           </Grid.RowDefinitions>
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-              <TextBlock Text="PLAY" FontSize="11" FontWeight="SemiBold" Margin="16,4,0,6" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="PLAY" FontSize="11" FontWeight="SemiBold" Margin="12,4,0,6" Style="{StaticResource MutedText}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE80F;" GroupName="nav" Content="Home"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Home, Mode=TwoWay}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE7FC;" GroupName="nav" Content="Games"
@@ -122,14 +122,14 @@
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Friends, Mode=TwoWay}">
                 <Grid>
                   <TextBlock Text="Friends" VerticalAlignment="Center"/>
-                  <Border HorizontalAlignment="Right" Background="{DynamicResource Red}" CornerRadius="9" Padding="7,1"
+                  <Border Style="{StaticResource Badge}" HorizontalAlignment="Right" Background="{DynamicResource Red}"
                           ToolTip="Friend requests" Visibility="{Binding HasRequests, Converter={StaticResource BoolVis}}">
-                    <TextBlock Text="{Binding RequestCount}" FontSize="11" FontWeight="SemiBold" Foreground="White"/>
+                    <TextBlock Text="{Binding RequestCount}" Style="{StaticResource BadgeText}" Foreground="White"/>
                   </Border>
                 </Grid>
               </RadioButton>
 
-              <TextBlock Text="AVATAR &amp; ITEMS" FontSize="11" FontWeight="SemiBold" Margin="16,18,0,6" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="AVATAR &amp; ITEMS" FontSize="11" FontWeight="SemiBold" Margin="12,18,0,6" Style="{StaticResource MutedText}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE77B;" GroupName="nav" Content="Avatar"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Avatar, Mode=TwoWay}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE719;" GroupName="nav" Content="Marketplace"
@@ -137,28 +137,28 @@
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE8AB;" GroupName="nav" Content="Trades"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Trades, Mode=TwoWay}"/>
 
-              <TextBlock Text="TOOLS" FontSize="11" FontWeight="SemiBold" Margin="16,18,0,6" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="TOOLS" FontSize="11" FontWeight="SemiBold" Margin="12,18,0,6" Style="{StaticResource MutedText}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE8FD;" GroupName="nav"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Multi, Mode=TwoWay}">
                 <Grid>
                   <TextBlock Text="Multi-launch" VerticalAlignment="Center"/>
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Background="{DynamicResource Red}" Margin="0,0,6,0" Padding="7,1" Cursor="Hand"
+                    <Button Margin="0,0,6,0" Cursor="Hand" VerticalAlignment="Center"
                             ToolTip="{Binding ExpiredSignInText}" Command="{Binding ShowNeedsSignInCommand}"
                             Visibility="{Binding HasExpiredSignIns, Converter={StaticResource BoolVis}}">
                       <Button.Template>
                         <ControlTemplate TargetType="Button">
-                          <Border Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter/>
+                          <Border Style="{StaticResource Badge}" Background="{DynamicResource Red}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
                           </Border>
                         </ControlTemplate>
                       </Button.Template>
-                      <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
+                      <TextBlock Style="{StaticResource BadgeText}" Foreground="White">
                         <Run Text="&#x26A0;"/><Run Text=" "/><Run Text="{Binding NeedsSignInCount, Mode=OneWay}"/>
                       </TextBlock>
                     </Button>
-                    <Border Background="{DynamicResource Card2}" CornerRadius="9" Padding="7,1" ToolTip="Clients running">
-                      <TextBlock Text="{Binding RunningCount}" FontSize="11" Foreground="{DynamicResource Fg}"/>
+                    <Border Style="{StaticResource Badge}" ToolTip="Clients running">
+                      <TextBlock Text="{Binding RunningCount}" Style="{StaticResource BadgeText}"/>
                     </Border>
                   </StackPanel>
                 </Grid>
@@ -168,7 +168,7 @@
               <Border Height="1" Background="{DynamicResource Line}" Margin="12,14,12,10"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE713;" GroupName="nav" Content="Settings"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Settings, Mode=TwoWay}"/>
-              <TextBlock Text="{Binding LockBadge, Mode=OneWay}" Margin="14,18,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="{Binding LockBadge, Mode=OneWay}" Margin="12,12,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
             </StackPanel>
           </ScrollViewer>
 

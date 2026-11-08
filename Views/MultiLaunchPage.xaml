@@ -23,9 +23,9 @@
         <RadioButton Style="{StaticResource Seg}" GroupName="multitab"
                      IsChecked="{Binding MultiTab, Converter={StaticResource Eq}, ConverterParameter=Running, Mode=TwoWay}">
           <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Running"/>
-            <Border Background="{DynamicResource Card2}" CornerRadius="8" Padding="6,0" Margin="8,0,0,0">
-              <TextBlock Text="{Binding RunningCount}" FontSize="11"/>
+            <TextBlock Text="Running" VerticalAlignment="Center"/>
+            <Border Style="{StaticResource Badge}" Margin="8,0,0,0">
+              <TextBlock Text="{Binding RunningCount}" Style="{StaticResource BadgeText}"/>
             </Border>
           </StackPanel>
         </RadioButton>
@@ -34,14 +34,14 @@
         <RadioButton Style="{StaticResource Seg}" GroupName="multitab"
                      IsChecked="{Binding MultiTab, Converter={StaticResource Eq}, ConverterParameter=Accounts, Mode=TwoWay}">
           <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Accounts"/>
-            <Border Background="{DynamicResource Card2}" CornerRadius="8" Padding="6,0" Margin="8,0,0,0">
-              <TextBlock Text="{Binding AccountCount}" FontSize="11"/>
+            <TextBlock Text="Accounts" VerticalAlignment="Center"/>
+            <Border Style="{StaticResource Badge}" Margin="8,0,0,0">
+              <TextBlock Text="{Binding AccountCount}" Style="{StaticResource BadgeText}"/>
             </Border>
-            <Border Background="{DynamicResource Red}" CornerRadius="8" Padding="6,0" Margin="6,0,0,0"
+            <Border Style="{StaticResource Badge}" Background="{DynamicResource Red}" Margin="6,0,0,0"
                     ToolTip="{Binding ExpiredSignInText}"
                     Visibility="{Binding HasExpiredSignIns, Converter={StaticResource BoolVis}}">
-              <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
+              <TextBlock Style="{StaticResource BadgeText}" Foreground="White">
                 <Run Text="&#x26A0;"/><Run Text=" "/><Run Text="{Binding NeedsSignInCount, Mode=OneWay}"/>
               </TextBlock>
             </Border>
