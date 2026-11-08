@@ -278,34 +278,63 @@
                   </Border>
                 </StackPanel>
 
-                <UniformGrid Columns="3" Margin="0,16,0,0">
-                  <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="Value" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding OpenLimited.ValueText}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
-                  </StackPanel>
-                  <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="RAP" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding OpenLimited.Rap, StringFormat='R$ {0:N0}'}" FontSize="18" FontWeight="Bold"/>
-                  </StackPanel>
-                  <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="Demand · trend" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock FontSize="18" FontWeight="Bold">
-                      <Run Text="{Binding OpenLimitedInfo.DemandText, Mode=OneWay, FallbackValue='–'}"/>
-                      <Run Text="{Binding OpenLimitedInfo.TrendText, Mode=OneWay, StringFormat='· {0}', FallbackValue=''}" FontSize="13" FontWeight="Normal"/>
-                    </TextBlock>
-                  </StackPanel>
-                  <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="Sold" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding OpenResale.Sales, StringFormat='{}{0:N0} times', FallbackValue='…'}" FontSize="18" FontWeight="Bold"/>
-                  </StackPanel>
-                  <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="Copies" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding OpenResale.Stock, StringFormat='{}{0:N0}', FallbackValue='–'}" FontSize="18" FontWeight="Bold"/>
-                  </StackPanel>
-                  <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="Roblox RAP" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding OpenResale.Rap, StringFormat='R$ {0:N0}', FallbackValue='…'}" FontSize="18" FontWeight="Bold"/>
-                  </StackPanel>
+                <UniformGrid Columns="2" Margin="0,18,0,0">
+                  <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE7BF;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Type" FontSize="12" Style="{StaticResource MutedText}"/>
+                      <TextBlock Text="{Binding OpenStats.TypeText, FallbackValue='…'}" FontSize="17" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Acronym" FontSize="12" Style="{StaticResource MutedText}"/>
+                      <TextBlock Text="{Binding OpenStats.AcronymText, FallbackValue='…'}" FontSize="17" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,16" ToolTip="How many copies exist now (Roblox). Rolimons' 'available' and 'premium' copies come from their own owner scans, which aren't public.">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Copies" FontSize="12" Style="{StaticResource MutedText}"/>
+                      <TextBlock Text="{Binding OpenStats.CopiesText, FallbackValue='…'}" FontSize="17" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,16" ToolTip="The RAP if someone buys the cheapest copy now: RAP moves 10% toward each sale's price.">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="RAP after sale" FontSize="12" Style="{StaticResource MutedText}"/>
+                      <TextBlock Text="{Binding OpenStats.RapAfterSaleText, FallbackValue='…'}" FontSize="17" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,16" ToolTip="Sales per day over the last 30 days">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Avg daily sales" FontSize="12" Style="{StaticResource MutedText}"/>
+                      <TextBlock Text="{Binding OpenStats.AvgDailyText, FallbackValue='…'}" FontSize="17" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE8C7;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Sold in 30 days" FontSize="12" Style="{StaticResource MutedText}"/>
+                      <TextBlock Text="{Binding OpenStats.Sold30Text, FallbackValue='…'}" FontSize="17" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </Grid>
+                  <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource Icons}" FontSize="18" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Trend" FontSize="12" Style="{StaticResource MutedText}"/>
+                      <TextBlock Text="{Binding OpenStats.TrendText, FallbackValue='…'}" FontSize="17" FontWeight="SemiBold"/>
+                    </StackPanel>
+                  </Grid>
                 </UniformGrid>
 
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -316,7 +345,50 @@
               </StackPanel>
             </Grid>
 
-            <TextBlock Text="RAP over time" FontWeight="SemiBold" Margin="0,24,0,8"/>
+            <UniformGrid Columns="4" Margin="0,20,-12,0">
+                  <Border Style="{StaticResource CardBox}" Padding="16,12" Margin="0,0,12,0" BorderThickness="0,2,0,0" BorderBrush="{DynamicResource Blue}">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <TextBlock Text="&#xE8C7;" FontFamily="{StaticResource Icons}" FontSize="24" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="Best price" FontSize="12" Foreground="{DynamicResource Blue}"/>
+                        <TextBlock Text="{Binding OpenStats.BestPriceText, FallbackValue='…'}" FontSize="19" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <Border Style="{StaticResource CardBox}" Padding="16,12" Margin="0,0,12,0" BorderThickness="0,2,0,0" BorderBrush="{DynamicResource Blue}">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="24" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="RAP" FontSize="12" Foreground="{DynamicResource Blue}"/>
+                        <TextBlock Text="{Binding OpenStats.RapText, FallbackValue='…'}" FontSize="19" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <Border Style="{StaticResource CardBox}" Padding="16,12" Margin="0,0,12,0" BorderThickness="0,2,0,0" BorderBrush="{DynamicResource Blue}">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Icons}" FontSize="24" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="Value" FontSize="12" Foreground="{DynamicResource Blue}"/>
+                        <TextBlock Text="{Binding OpenStats.ValueText, FallbackValue='…'}" FontSize="19" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <Border Style="{StaticResource CardBox}" Padding="16,12" Margin="0,0,12,0" BorderThickness="0,2,0,0" BorderBrush="{DynamicResource Blue}">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <TextBlock Text="&#xE8E1;" FontFamily="{StaticResource Icons}" FontSize="24" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="Demand" FontSize="12" Foreground="{DynamicResource Blue}"/>
+                        <TextBlock Text="{Binding OpenStats.DemandText, FallbackValue='…'}" FontSize="19" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+            </UniformGrid>
+
+            <TextBlock Text="Sale price over the last year" FontWeight="SemiBold" Margin="0,24,0,8"/>
             <ctl:StateView State="{Binding LimitedLoad.State}" Message="{Binding LimitedLoad.Message}" MinHeight="120">
               <Border Style="{StaticResource CardBox}" Padding="18,16">
                 <StackPanel>

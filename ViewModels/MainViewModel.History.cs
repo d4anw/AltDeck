@@ -8,7 +8,8 @@ namespace AltDeck.ViewModels;
 /// </summary>
 public partial class MainViewModel
 {
-    private sealed record NavState(string Page, string MultiTab, GameTile? Game, long Profile = 0, MarketItem? Item = null);
+    private sealed record NavState(string Page, string MultiTab, GameTile? Game, long Profile = 0, MarketItem? Item = null,
+                                   string TradesTab = "", LimitedTile? Limited = null, TradeRow? Trade = null);
 
     private readonly Stack<NavState> _back = new();
     private readonly Stack<NavState> _forward = new();
@@ -21,7 +22,10 @@ public partial class MainViewModel
         if (_restoring) return;
         var now = new NavState(Page, MultiTab, IsGameOpen && Page == "Games" ? _lastOpened : null,
                                IsProfileOpen && Page == "Friends" ? _lastProfileId : 0,
-                               IsMarketItemOpen && Page == "Marketplace" ? _lastMarketItem : null);
+                               IsMarketItemOpen && Page == "Marketplace" ? _lastMarketItem : null,
+                               Page == "Trades" ? TradesTab : "",
+                               Page == "Trades" && TradesTab == "Limiteds" ? OpenLimited : null,
+                               Page == "Trades" && TradesTab == "Trades" ? OpenTradeRow : null);
         if (_here == now) return;
         if (_here != null)
         {
@@ -72,6 +76,14 @@ public partial class MainViewModel
                 if (!IsMarketItemOpen || _lastMarketItem != s.Item) _ = OpenMarketItemAsync(s.Item);
             }
             else if (IsMarketItemOpen && s.Page == "Marketplace") CloseMarketItem();
+            if (s.Page == "Trades")
+            {
+                if (s.TradesTab.Length > 0) TradesTab = s.TradesTab;
+                if (s.Limited != null) { if (OpenLimited != s.Limited) _ = OpenLimitedTile(s.Limited); }
+                else if (OpenLimited != null) { OpenLimited = null; _limitedFrom = ""; OnPropertyChanged(nameof(LimitedBackText)); }
+                if (s.Trade != null) { if (OpenTradeRow != s.Trade && TradeRows.Contains(s.Trade)) _ = OpenTradeRowItem(s.Trade); }
+                else if (s.TradesTab == "Trades" && OpenTradeRow != null) CloseTrade();
+            }
         }
         finally
         {

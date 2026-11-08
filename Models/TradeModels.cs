@@ -40,6 +40,38 @@ public static class Limited
         $"{(diff >= 0 ? "+" : "−")}{Math.Abs(diff):N0} ({(diff >= 0 ? "+" : "−")}{(of > 0 ? Math.Abs((double)diff / of) : 0):0.#%})";
 }
 
+/// <summary>Everything the item page shows about one limited, from Roblox and the values list.</summary>
+public sealed class ItemStats
+{
+    public string Type { get; init; } = "";
+    public string Acronym { get; init; } = "";
+    public bool LimitedU { get; init; }
+    /// <summary>Copies that exist now / were made (0 = Roblox didn't say).</summary>
+    public long Copies { get; init; }
+    public long Made { get; init; }
+    public long BestPrice { get; init; }
+    public long Rap { get; init; }
+    public long Value { get; init; } = -1;
+    public int Demand { get; init; } = -1;
+    public int Trend { get; init; } = -1;
+    public long Sold30 { get; init; }
+    public List<(DateTime Day, long Price)> History { get; init; } = new();
+
+    public string TypeText => Type + (LimitedU ? " · Limited U" : " · Limited");
+    public string AcronymText => Acronym.Length > 0 ? Acronym : "None";
+    public string CopiesText => Copies <= 0 ? "Unknown" : Made > Copies ? $"{Copies:N0} of {Made:N0} made" : Copies.ToString("N0");
+    public string BestPriceText => BestPrice > 0 ? BestPrice.ToString("N0") : "No sellers";
+    public string RapText => Rap.ToString("N0");
+    public string ValueText => Value > 0 ? Value.ToString("N0") : "Not assigned";
+    public string DemandText => Demand >= 0 ? Limited.DemandText(Demand) : "Not assigned";
+    public string TrendText => Trend switch { 0 => "Lowering", 1 => "Unstable", 2 => "Stable", 3 => "Raising", 4 => "Fluctuating", _ => "Not assigned" };
+    /// <summary>Sales a day over the last 30 days.</summary>
+    public string AvgDailyText => (Sold30 / 30.0).ToString("0.00");
+    public string Sold30Text => Sold30.ToString("N0");
+    /// <summary>Roblox moves RAP 10 % of the way to each sale's price: the RAP if someone buys the cheapest copy now.</summary>
+    public string RapAfterSaleText => BestPrice > 0 && Rap > 0 ? ((long)Math.Round(Rap * 0.9 + BestPrice * 0.1)).ToString("N0") : "–";
+}
+
 /// <summary>A limited in a grid: the catalog, an inventory, a trade, or a side of a trade being made.</summary>
 public partial class LimitedTile : ObservableObject
 {

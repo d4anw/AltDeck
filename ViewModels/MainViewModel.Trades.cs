@@ -21,7 +21,8 @@ public partial class MainViewModel
     [ObservableProperty] private string tradesTab = "Deals";
     [ObservableProperty] private string valuesNote = "";
 
-    partial void OnTradesTabChanged(string value) => MaybeLoadTrades();
+    partial void OnTradesTabChanged(string value) { MaybeLoadTrades(); RecordNav(); }
+    partial void OnOpenLimitedChanged(LimitedTile? value) { if (Page == "Trades") RecordNav(); }
 
     private void MaybeLoadTrades()
     {
@@ -305,7 +306,7 @@ public partial class MainViewModel
     public bool IsLimitedOpen => OpenLimited != null;
     public LimitedInfo? OpenLimitedInfo => OpenLimited != null ? LimitedValues.Get(OpenLimited.AssetId) : null;
     public Loader LimitedLoad { get; } = new();
-    [ObservableProperty] private ResaleData? openResale;
+    [ObservableProperty] private ItemStats? openStats;
     [ObservableProperty] private string openLimitedPicture = "";
     [ObservableProperty] private PointCollection rapChart = new();
     [ObservableProperty] private string rapChartRange = "";
@@ -315,17 +316,17 @@ public partial class MainViewModel
     {
         if (t == null) return;
         OpenLimited = t;
-        OpenResale = null;
+        OpenStats = null;
         RapChart = new PointCollection();
         RapChartRange = "";
         OpenLimitedPicture = t.ThumbUrl;
         await LimitedLoad.RunAsync(async ct =>
         {
             var pic = Thumbnails.GetAsync("Asset", new[] { t.AssetId }, "420x420", ct);
-            var data = await RobloxTrades.GetResaleDataAsync(t.AssetId, ct);
+            var stats = await RobloxTrades.GetItemStatsAsync(t.AssetId, ct);
             if (OpenLimited != t) return true;
-            OpenResale = data;
-            DrawRapChart(data);
+            OpenStats = stats;
+            DrawRapChart(stats.History);
             if ((await pic).TryGetValue(t.AssetId, out var u)) OpenLimitedPicture = u;
             return true;
         }, "Loading sales…");
@@ -335,8 +336,15 @@ public partial class MainViewModel
     [RelayCommand]
     private void CloseLimited()
     {
-        OpenLimited = null;
-        if (_limitedFrom.Length > 0) TradesTab = _limitedFrom;
+        if (_limitedFrom.Length > 0)
+        {
+            // one step in the back / forward history: from the item page straight to where it was opened from
+            _restoring = true;
+            OpenLimited = null;
+            _restoring = false;
+            TradesTab = _limitedFrom;
+        }
+        else OpenLimited = null;
         _limitedFrom = "";
         OnPropertyChanged(nameof(LimitedBackText));
     }
@@ -357,14 +365,18 @@ public partial class MainViewModel
         if (t == null) return Task.CompletedTask;
         _limitedFrom = TradesTab == "Limiteds" ? "" : TradesTab;
         OnPropertyChanged(nameof(LimitedBackText));
+        _restoring = true;   // the tab switch and the item page are one step in the history
         TradesTab = "Limiteds";
+        _restoring = false;
         return OpenLimitedTile(t);
     }
 
     /// <summary>RAP over time as a line in a 600 × 140 box.</summary>
-    private void DrawRapChart(ResaleData d)
+    private void DrawRapChart(List<(DateTime Day, long Price)> history)
     {
-        var pts = d.History.Where(p => p.Price > 0).TakeLast(180).ToList();
+        var since = DateTime.UtcNow.AddDays(-365);
+        var pts = history.Where(p => p.Price > 0 && p.Day >= since).ToList();
+        if (pts.Count < 2) pts = history.Where(p => p.Price > 0).TakeLast(60).ToList();
         if (pts.Count < 2) { RapChart = new PointCollection(); RapChartRange = ""; return; }
         long lo = pts.Min(p => p.Price), hi = pts.Max(p => p.Price);
         if (hi == lo) hi = lo + 1;

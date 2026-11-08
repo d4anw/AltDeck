@@ -195,6 +195,58 @@ public static class RobloxTrades
         return new ResaleData(Long(r, "recentAveragePrice"), Long(r, "sales"), Long(r, "assetStock"), Long(r, "numberRemaining"), points);
     }
 
+    /// <summary>
+    /// The item page's numbers: type, copies, best price, RAP and sales from Roblox; acronym, value, demand and trend from
+    /// the values list.
+    /// </summary>
+    public static async Task<ItemStats> GetItemStatsAsync(long assetId, CancellationToken ct)
+    {
+        using var det = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct);
+        var d = det.RootElement;
+        var cid = Str(d, "CollectibleItemId");
+        if (cid.Length > 0) CollectibleIds[assetId] = cid;
+        var col = d.TryGetProperty("CollectiblesItemDetails", out var c) && c.ValueKind == JsonValueKind.Object ? c : default;
+
+        long made = 0, rap = 0, sold30 = 0;
+        var points = new List<(DateTime, long)>();
+        var old = RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v1/assets/{assetId}/resale-data", null, ct);
+        if (cid.Length > 0)
+        {
+            using var rd = await RobloxHttp.GetJsonAsync($"https://apis.roblox.com/marketplace-sales/v1/item/{cid}/resale-data", null, ct);
+            var r = rd.RootElement;
+            rap = r.TryGetProperty("recentAveragePrice", out var ra) && ra.ValueKind == JsonValueKind.Number ? (long)Math.Round(ra.GetDouble()) : 0;
+            if (r.TryGetProperty("priceDataPoints", out var pd) && pd.ValueKind == JsonValueKind.Array)
+                foreach (var p in pd.EnumerateArray())
+                    if (Date(p, "date") is { } day && day != default && Long(p, "value") > 0) points.Add((day, Long(p, "value")));
+            var since = DateTime.UtcNow.AddDays(-30);
+            if (r.TryGetProperty("volumeDataPoints", out var vd) && vd.ValueKind == JsonValueKind.Array)
+                foreach (var p in vd.EnumerateArray())
+                    if (Date(p, "date") > since) sold30 += Long(p, "value");
+            points.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+            Histories[assetId] = (DateTime.UtcNow, points);
+        }
+        try { using var o = await old; made = Long(o.RootElement, "assetStock"); if (rap == 0) rap = Long(o.RootElement, "recentAveragePrice"); }
+        catch (RobloxException) { }
+
+        var v = LimitedValues.Get(assetId);
+        long copies = Long(col, "TotalQuantity");
+        return new ItemStats
+        {
+            Type = Models.MarketItem.AssetKind((int)Long(d, "AssetTypeId")),
+            Acronym = v?.Acronym ?? "",
+            LimitedU = d.TryGetProperty("IsLimitedUnique", out var lu) && lu.ValueKind == JsonValueKind.True || made > 0,
+            Copies = copies > 0 ? copies : made,
+            Made = made,
+            BestPrice = Long(col, "CollectibleLowestResalePrice"),
+            Rap = rap > 0 ? rap : v?.Rap ?? 0,
+            Value = v?.Value ?? -1,
+            Demand = v?.Demand ?? -1,
+            Trend = v?.Trend ?? -1,
+            Sold30 = sold30,
+            History = points
+        };
+    }
+
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> CollectibleIds = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<(DateTime, long)> Points)> Histories = new();
 

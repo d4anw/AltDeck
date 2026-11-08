@@ -200,7 +200,11 @@ public partial class MainViewModel
     public bool TradeCanRespond => OpenTradeRow is { IsActive: true } && TradeType == "Inbound" && OpenTrade != null;
     public bool TradeCanCancel => OpenTradeRow is { IsActive: true } && TradeType == "Outbound" && OpenTrade != null;
 
-    partial void OnOpenTradeRowChanged(TradeRow? value) => OnPropertyChanged(nameof(IsTradeOpen));
+    partial void OnOpenTradeRowChanged(TradeRow? value)
+    {
+        OnPropertyChanged(nameof(IsTradeOpen));
+        if (Page == "Trades") RecordNav();
+    }
 
     [RelayCommand]
     private async Task OpenTradeRowItem(TradeRow? r)
