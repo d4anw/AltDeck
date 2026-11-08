@@ -194,8 +194,8 @@ public partial class TradeRow : ObservableObject
     [ObservableProperty] private bool isSelected;
     public bool HasSummary => Summary.Length > 0;
     /// <summary>What you give and what you get (value), for the coloured bar.</summary>
-    [ObservableProperty] private string giveText = "";
-    [ObservableProperty] private string getText = "";
+    [ObservableProperty] private string giveText = "…";
+    [ObservableProperty] private string getText = "…";
     /// <summary>The partner's whole inventory value (when it's public), under their name.</summary>
     [ObservableProperty] private string partnerWorth = "";
 

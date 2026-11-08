@@ -79,7 +79,7 @@ public partial class MainViewModel
     [ObservableProperty] private bool dealsAffordable;
     [ObservableProperty] private bool dealsValueOnly;
     /// <summary>"Value" (value, or RAP when there's none) or "RAP": what a deal is measured against.</summary>
-    [ObservableProperty] private string dealBasis = "Value";
+    [ObservableProperty] private string dealBasis = "RAP";
     partial void OnDealBasisChanged(string value) => FilterDeals();
     [ObservableProperty] private string dealsStatus = "Watching the market…";
     private DateTime _dealsCheckedAt;

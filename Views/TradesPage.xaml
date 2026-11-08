@@ -146,10 +146,10 @@
               <StackPanel Orientation="Horizontal" Margin="0,0,20,10" VerticalAlignment="Center"
                           ToolTip="What a deal is measured against. Value uses RAP for items without a value.">
                 <TextBlock Text="Deal on" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,8,0"/>
-                <RadioButton Style="{StaticResource Seg}" Content="Value" GroupName="dealbasis"
-                             IsChecked="{Binding DealBasis, Converter={StaticResource Eq}, ConverterParameter=Value, Mode=TwoWay}"/>
-                <RadioButton Style="{StaticResource Seg}" Content="RAP" GroupName="dealbasis" Margin="0"
+                <RadioButton Style="{StaticResource Seg}" Content="RAP" GroupName="dealbasis"
                              IsChecked="{Binding DealBasis, Converter={StaticResource Eq}, ConverterParameter=RAP, Mode=TwoWay}"/>
+                <RadioButton Style="{StaticResource Seg}" Content="Value" GroupName="dealbasis" Margin="0"
+                             IsChecked="{Binding DealBasis, Converter={StaticResource Eq}, ConverterParameter=Value, Mode=TwoWay}"/>
               </StackPanel>
               <CheckBox Content="Hide projected" IsChecked="{Binding DealsHideProjected}" Margin="0,0,20,10" VerticalAlignment="Center"
                         ToolTip="Projected items have a pushed-up RAP, so they look cheaper than they are"/>
@@ -530,8 +530,9 @@
                             <ctl:AvatarView Width="44" Height="44" Url="{Binding HeadshotUrl}" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
                               <TextBlock Text="{Binding PartnerLabel}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding PartnerName}"/>
+                              <!-- always takes its line, so the row doesn't grow when the value arrives -->
                               <TextBlock Text="{Binding PartnerWorth}" FontSize="11" FontWeight="SemiBold" Foreground="#F2C14E" Margin="0,1,0,0"
-                                         ToolTip="Their inventory value" Visibility="{Binding PartnerWorth, Converter={StaticResource EmptyCollapsed}}"/>
+                                         ToolTip="Their inventory value"/>
                               <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                                 <Button Padding="10,2" Margin="0,0,6,0" FontSize="11" Focusable="False" Foreground="White" Background="#B5363C" BorderThickness="0"
                                         Command="{Binding DataContext.DeclineRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -572,8 +573,6 @@
                               <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding GiveText}" FontWeight="SemiBold" HorizontalAlignment="Right" ToolTip="You give (value)"/>
                                 <TextBlock Text="{Binding GetText}" FontWeight="SemiBold" HorizontalAlignment="Right" ToolTip="You get (value)"/>
-                                <TextBlock Text="…" Style="{StaticResource MutedText}" HorizontalAlignment="Right"
-                                           Visibility="{Binding HasSummary, Converter={StaticResource BoolVisInv}}"/>
                               </StackPanel>
                             </Grid>
                           </Grid>
