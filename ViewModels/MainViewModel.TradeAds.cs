@@ -47,6 +47,7 @@ public partial class MainViewModel
     /// <summary>When the Trade ads tab opens: fill the slots from the saved ad (with values and pictures).</summary>
     private void LoadTradeAdTab()
     {
+        foreach (var t in AdTags) t.Refresh();   // pictures added to the folder since last time
         if (!_adSetUp)
         {
             _adSetUp = true;
@@ -80,17 +81,39 @@ public partial class MainViewModel
     partial void OnAdPickerMinChanged(string value) => FillAdPicker();
     partial void OnAdPickerMaxChanged(string value) => FillAdPicker();
 
+    /// <summary>A filled slot: click empties it. An empty slot: click opens the picker to fill it.</summary>
     [RelayCommand]
     private void OpenAdSlot(AdSlot? slot)
     {
         if (slot == null) return;
+        if (!slot.IsEmpty) { slot.Clear(); OnAdChanged(); return; }
         AdPickerSlot = slot;
         AdPickerSearch = "";
+        foreach (var t in AdTags) t.Refresh();
         IsAdPickerOpen = true;
         FillAdPicker();
     }
 
     [RelayCommand] private void CloseAdPicker() => IsAdPickerOpen = false;
+
+    /// <summary>Opens the folder for your own tag pictures (any.png, upgrade.png…), and shows new ones when you come back.</summary>
+    [RelayCommand]
+    private void OpenTagPictures()
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(AdTag.PicturesDir);
+            var readme = System.IO.Path.Combine(AdTag.PicturesDir, "README.txt");
+            if (!System.IO.File.Exists(readme))
+                System.IO.File.WriteAllText(readme,
+                    "Put your own pictures for the trade ad tags here, named after the tag:" + Environment.NewLine +
+                    string.Join(", ", RolimonsAds.Tags.Select(t => t.Tag + ".png")) + Environment.NewLine + Environment.NewLine +
+                    "PNG, JPG, WebP or GIF. RoDeck shows them instead of its own tiles. They stay on this PC." + Environment.NewLine);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", AdTag.PicturesDir) { UseShellExecute = true });
+        }
+        catch { }
+        foreach (var t in AdTags) t.Refresh();
+    }
 
     [RelayCommand] private void SortAdPicker(string? dir) => AdPickerAscending = dir == "asc";
 
@@ -276,6 +299,28 @@ public partial class AdTag : ObservableObject
     public string Tag { get; init; } = "";
     public string Name { get; init; } = "";
     public string Upper => Name.ToUpperInvariant();
+
+    /// <summary>
+    /// Your own picture for this tag, if you put one in the tag pictures folder (e.g. upgrade.png). It stays on this PC;
+    /// without one, RoDeck's own tile is shown.
+    /// </summary>
+    public string? Picture
+    {
+        get
+        {
+            foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".webp", ".gif" })
+            {
+                var f = System.IO.Path.Combine(PicturesDir, Tag + ext);
+                if (System.IO.File.Exists(f)) return f;
+            }
+            return null;
+        }
+    }
+    public bool HasPicture => Picture != null;
+    public static string PicturesDir => System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RoDeck", "tag pictures");
+    /// <summary>After pictures were added or removed.</summary>
+    public void Refresh() { OnPropertyChanged(nameof(Picture)); OnPropertyChanged(nameof(HasPicture)); }
     public string Glyph => Tag switch
     {
         "any" => "", "demand" => "", "rares" => "", "robux" => "", "upgrade" => "",

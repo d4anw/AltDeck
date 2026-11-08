@@ -137,12 +137,16 @@
                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,18" Opacity="0.95"/>
         <TextBlock Text="{Binding Upper}" FontSize="13" FontWeight="Black" Foreground="White" HorizontalAlignment="Center"
                    VerticalAlignment="Bottom" Margin="0,0,0,12"/>
+        <!-- your own picture for this tag (from the tag pictures folder) covers RoDeck's tile -->
+        <Border CornerRadius="14" Background="{DynamicResource Card2}" Visibility="{Binding HasPicture, Converter={StaticResource BoolVis}}">
+          <Image Source="{Binding Picture}" Stretch="Uniform" Margin="4"/>
+        </Border>
       </Grid>
     </DataTemplate>
 
     <!-- one of the ad's slots: dashed and empty ("Offer" / "Want"), an item card, or a tag tile -->
     <DataTemplate x:Key="AdSlotTile">
-      <Button Style="{StaticResource CardButton}" Margin="0,0,10,10" ToolTip="Click to choose what goes here"
+      <Button Style="{StaticResource CardButton}" Margin="0,0,10,10" ToolTip="Empty: click to choose what goes here. Filled: click to empty it."
               Command="{Binding DataContext.OpenAdSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
         <Grid Width="104" Height="104">
           <Border CornerRadius="14" BorderThickness="1.5" Background="{DynamicResource Card}"
@@ -318,7 +322,14 @@
               <StackPanel>
                 <TextBlock Text="How it works" FontWeight="SemiBold" Margin="0,0,0,6"/>
                 <TextBlock TextWrapping="Wrap" FontSize="12" Style="{StaticResource MutedText}" LineHeight="19"
-                           Text="Click a slot to fill it: Offer slots take your own limiteds, Want slots take any limited or a tag like Upgrade or Any (up to 4 each). Start posts the ad on Rolimons right away and again every 15 minutes or more while RoDeck runs, also from the tray. Rolimons allows one ad per account every 15 minutes."/>
+                           Text="Click an empty slot to fill it, click a filled slot to empty it. Offer slots take your own limiteds, Want slots take any limited or a tag like Upgrade or Any (up to 4 each). Start posts the ad on Rolimons right away and again every 15 minutes or more while RoDeck runs, also from the tray. Rolimons allows one ad per account every 15 minutes."/>
+                <Button HorizontalAlignment="Left" Margin="0,12,0,0" Command="{Binding OpenTagPicturesCommand}"
+                        ToolTip="Put your own pictures for the tags there (any.png, upgrade.png…); RoDeck shows them instead of its own tiles">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8B9;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="Tag pictures folder"/>
+                  </StackPanel>
+                </Button>
               </StackPanel>
             </Border>
           </StackPanel>
