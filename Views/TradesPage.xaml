@@ -120,6 +120,62 @@
       </Setter>
     </Style>
 
+    <!-- a request tag (Any, Upgrade…): RoDeck's own tile, its colour with a soft shine, a big icon and a bold name -->
+    <DataTemplate x:Key="AdTagTile">
+      <Grid Width="104" Height="104">
+        <Border CornerRadius="14" Background="{Binding Top, Converter={StaticResource HexBrush}}"/>
+        <Border CornerRadius="14">
+          <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+              <GradientStop Color="#33FFFFFF" Offset="0"/>
+              <GradientStop Color="#00FFFFFF" Offset="0.45"/>
+              <GradientStop Color="#55000000" Offset="1"/>
+            </LinearGradientBrush>
+          </Border.Background>
+        </Border>
+        <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Icons}" FontSize="34" Foreground="White"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,18" Opacity="0.95"/>
+        <TextBlock Text="{Binding Upper}" FontSize="13" FontWeight="Black" Foreground="White" HorizontalAlignment="Center"
+                   VerticalAlignment="Bottom" Margin="0,0,0,12"/>
+      </Grid>
+    </DataTemplate>
+
+    <!-- one of the ad's slots: dashed and empty ("Offer" / "Want"), an item card, or a tag tile -->
+    <DataTemplate x:Key="AdSlotTile">
+      <Button Style="{StaticResource CardButton}" Margin="0,0,10,10" ToolTip="Click to choose what goes here"
+              Command="{Binding DataContext.OpenAdSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+        <Grid Width="104" Height="104">
+          <Border CornerRadius="14" BorderThickness="1.5" Background="{DynamicResource Card}"
+                  Visibility="{Binding IsEmpty, Converter={StaticResource BoolVis}}">
+            <Border.BorderBrush>
+              <DrawingBrush Viewport="0,0,8,8" ViewportUnits="Absolute" TileMode="Tile">
+                <DrawingBrush.Drawing>
+                  <GeometryDrawing Brush="#55FFFFFF">
+                    <GeometryDrawing.Geometry>
+                      <GeometryGroup><RectangleGeometry Rect="0,0,4,4"/><RectangleGeometry Rect="4,4,4,4"/></GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                  </GeometryDrawing>
+                </DrawingBrush.Drawing>
+              </DrawingBrush>
+            </Border.BorderBrush>
+            <TextBlock Text="{Binding EmptyText}" FontStyle="Italic" FontWeight="SemiBold" Style="{StaticResource MutedText}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <Border CornerRadius="14" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"
+                  Visibility="{Binding HasItem, Converter={StaticResource BoolVis}}">
+            <Grid>
+              <ctl:RemoteImage Url="{Binding Item.ThumbUrl}" Margin="8,6,8,26" CornerRadius="8" Background="Transparent" Stretch="Uniform"/>
+              <TextBlock Text="{Binding Item.WorthNumber}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                         Margin="0,0,0,8" Foreground="{DynamicResource Accent}" ToolTip="{Binding Item.Name}"/>
+            </Grid>
+          </Border>
+          <ContentControl Content="{Binding Tag}" ContentTemplate="{StaticResource AdTagTile}"
+                          Visibility="{Binding HasTag, Converter={StaticResource BoolVis}}"/>
+        </Grid>
+      </Button>
+    </DataTemplate>
+
+
     <!-- win / loss colouring for an int: 1 green, -1 red -->
     <Style x:Key="VerdictText" TargetType="TextBlock">
       <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
@@ -168,102 +224,76 @@
         <!-- ================= TRADE ADS ================= -->
         <Grid Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Ads}">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="24"/>
             <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
 
-          <!-- the ad -->
-          <StackPanel>
-            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="2,0,0,14"
-                       Text="One Rolimons trade ad that RoDeck posts again every 15 minutes or more while it runs, also from the tray. Rolimons allows one ad per account every 15 minutes."/>
-            <Border Style="{StaticResource CardBox}" Padding="20,16">
-              <StackPanel>
-                <TextBlock FontWeight="SemiBold" Margin="0,0,0,10"><Run Text="You offer"/> <Run Text="{Binding AdOffer.Count, Mode=OneWay, StringFormat='({0}/4)'}" Foreground="{DynamicResource Muted}"/></TextBlock>
-                <ItemsControl ItemsSource="{Binding AdOffer}" MinHeight="40">
-                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Button Style="{StaticResource CardButton}" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}" Margin="0,0,10,10"
-                            Command="{Binding DataContext.ToggleAdOfferCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Text="Pick up to 4 of your limiteds on the right." Style="{StaticResource MutedText}" FontSize="12" Margin="0,0,0,8"
-                           Visibility="{Binding AdOffer.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
-
-                <Border Height="1" Background="{DynamicResource Line}" Margin="0,4,0,12"/>
-                <TextBlock FontWeight="SemiBold" Margin="0,0,0,10"><Run Text="You want"/> <Run Text="{Binding AdRequestCount, Mode=OneWay, StringFormat='({0}/4)'}" Foreground="{DynamicResource Muted}"/></TextBlock>
-                <ItemsControl ItemsSource="{Binding AdRequest}" MinHeight="40">
-                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Button Style="{StaticResource CardButton}" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}" Margin="0,0,10,10"
-                            Command="{Binding DataContext.ToggleAdRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Text="Search items on the right, or pick tags below." Style="{StaticResource MutedText}" FontSize="12" Margin="0,0,0,8"
-                           Visibility="{Binding AdRequest.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
-
-                <ItemsControl ItemsSource="{Binding AdTags}">
-                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Button Content="{Binding Name}" Margin="0,0,8,8"
-                              Command="{Binding DataContext.ToggleAdTagCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
-                        <Button.Style>
-                          <Style TargetType="Button" BasedOn="{StaticResource Chip}">
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Button.Style>
-                      </Button>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <Border Height="1" Background="{DynamicResource Line}" Margin="0,8,0,14"/>
-                <Grid>
-                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Every" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,8,0"/>
-                    <TextBox Text="{Binding Settings.TradeAdMinutes}" Width="56" Style="{StaticResource NumBox}"/>
-                    <TextBlock Text="min (15 at least)" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="8,0,0,0"/>
+          <!-- the ad: 4 offer slots, 4 want slots -->
+          <Border Style="{StaticResource CardBox}" Padding="22,18" VerticalAlignment="Top">
+            <StackPanel>
+              <Grid Margin="0,0,0,10">
+                <TextBlock Text="YOU OFFER" FontSize="12" FontWeight="Bold" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                <Border HorizontalAlignment="Right" Padding="10,3" CornerRadius="9" Background="{DynamicResource AccentSoft}" ToolTip="Value of what you offer">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{Binding AdOfferValue}" FontWeight="Bold" FontSize="12"/>
                   </StackPanel>
-                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Post now" Command="{Binding PostAdNowCommand}" IsEnabled="{Binding CanStartAd}"/>
-                    <Button Content="Start" Style="{StaticResource Primary}" Margin="0" Padding="22,9" Command="{Binding StartAdCommand}"
-                            IsEnabled="{Binding CanStartAd}" Visibility="{Binding AdRunning, Converter={StaticResource BoolVisInv}}"/>
-                    <Button Content="Stop" Margin="0" Padding="22,9" Command="{Binding StopAdCommand}"
-                            Visibility="{Binding AdRunning, Converter={StaticResource BoolVis}}"/>
+                </Border>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding AdOfferSlots}" ItemTemplate="{StaticResource AdSlotTile}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+
+              <Grid Margin="0,10,0,10">
+                <TextBlock Text="YOU WANT" FontSize="12" FontWeight="Bold" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                <Border HorizontalAlignment="Right" Padding="10,3" CornerRadius="9" Background="{DynamicResource AccentSoft}" ToolTip="Value of the items you ask for">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{Binding AdWantValue}" FontWeight="Bold" FontSize="12"/>
                   </StackPanel>
-                </Grid>
-                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                  <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,8,0">
-                    <Ellipse.Style>
-                      <Style TargetType="Ellipse">
-                        <Setter Property="Fill" Value="{DynamicResource Muted}"/>
-                        <Style.Triggers>
-                          <DataTrigger Binding="{Binding AdRunning}" Value="True"><Setter Property="Fill" Value="#3DD68C"/></DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </Ellipse.Style>
-                  </Ellipse>
-                  <TextBlock Text="{Binding AdStatus}" FontSize="12" TextWrapping="Wrap"/>
+                </Border>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding AdWantSlots}" ItemTemplate="{StaticResource AdSlotTile}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+
+              <Border Height="1" Background="{DynamicResource Line}" Margin="0,8,0,14"/>
+              <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="Every" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,8,0"/>
+                  <TextBox Text="{Binding Settings.TradeAdMinutes}" Width="56" Style="{StaticResource NumBox}"/>
+                  <TextBlock Text="min" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="8,0,0,0"/>
                 </StackPanel>
-                <TextBlock Text="{Binding AdLastResult, StringFormat='Last answer from Rolimons: {0}'}" FontSize="11" Style="{StaticResource MutedText}" Margin="15,4,0,0"
-                           TextWrapping="Wrap" Visibility="{Binding AdLastResult, Converter={StaticResource EmptyCollapsed}}"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                  <Button Content="Post now" Command="{Binding PostAdNowCommand}" IsEnabled="{Binding CanStartAd}"/>
+                  <Button Content="Start" Style="{StaticResource Primary}" Margin="0" Padding="22,9" Command="{Binding StartAdCommand}"
+                          IsEnabled="{Binding CanStartAd}" Visibility="{Binding AdRunning, Converter={StaticResource BoolVisInv}}"/>
+                  <Button Content="Stop" Margin="0" Padding="22,9" Command="{Binding StopAdCommand}"
+                          Visibility="{Binding AdRunning, Converter={StaticResource BoolVis}}"/>
+                </StackPanel>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="0,12,0,0" MaxWidth="450" HorizontalAlignment="Left">
+                <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,8,0">
+                  <Ellipse.Style>
+                    <Style TargetType="Ellipse">
+                      <Setter Property="Fill" Value="{DynamicResource Muted}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding AdRunning}" Value="True"><Setter Property="Fill" Value="#3DD68C"/></DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Text="{Binding AdStatus}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
-            </Border>
-          </StackPanel>
+              <TextBlock Text="{Binding AdLastResult, StringFormat='Last answer from Rolimons: {0}'}" FontSize="11" Style="{StaticResource MutedText}"
+                         Margin="15,4,0,0" TextWrapping="Wrap" MaxWidth="450" HorizontalAlignment="Left"
+                         Visibility="{Binding AdLastResult, Converter={StaticResource EmptyCollapsed}}"/>
+            </StackPanel>
+          </Border>
 
-          <!-- picking -->
+          <!-- how it works + verification -->
           <StackPanel Grid.Column="2">
-            <!-- Rolimons verification -->
             <Border Style="{StaticResource CardBox}" Padding="20,16" Margin="0,0,0,16">
               <StackPanel>
                 <TextBlock Text="Rolimons verification" FontWeight="SemiBold"/>
@@ -284,33 +314,78 @@
                 </Grid>
               </StackPanel>
             </Border>
-
-            <TextBlock Margin="2,0,0,8" FontWeight="SemiBold"><Run Text="Your limiteds"/> <Run Text="(click to offer)" Foreground="{DynamicResource Muted}"/></TextBlock>
-            <ctl:StateView State="{Binding MyTradableLoad.State}" Message="{Binding MyTradableLoad.Message}" MinHeight="100"
-                           EmptyText="No tradable limiteds on this account.">
-              <ItemsControl ItemsSource="{Binding MyTradable}">
-                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <Button Style="{StaticResource CardButton}" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}" Margin="0,0,10,10"
-                            Command="{Binding DataContext.ToggleAdOfferCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </ctl:StateView>
-
-            <TextBlock Margin="2,16,0,8" FontWeight="SemiBold"><Run Text="Items you want"/> <Run Text="(search, click to add)" Foreground="{DynamicResource Muted}"/></TextBlock>
-            <ctl:SearchBox Text="{Binding AdRequestSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Search limiteds or acronyms" Margin="0,0,0,10"/>
-            <ItemsControl ItemsSource="{Binding AdRequestHits}">
-              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Button Style="{StaticResource CardButton}" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}" Margin="0,0,10,10"
-                            Command="{Binding DataContext.ToggleAdRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <Border Style="{StaticResource CardBox}" Padding="20,16">
+              <StackPanel>
+                <TextBlock Text="How it works" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                <TextBlock TextWrapping="Wrap" FontSize="12" Style="{StaticResource MutedText}" LineHeight="19"
+                           Text="Click a slot to fill it: Offer slots take your own limiteds, Want slots take any limited or a tag like Upgrade or Any (up to 4 each). Start posts the ad on Rolimons right away and again every 15 minutes or more while RoDeck runs, also from the tray. Rolimons allows one ad per account every 15 minutes."/>
+              </StackPanel>
+            </Border>
           </StackPanel>
+
+          <!-- the picker, over the tab -->
+          <Grid Grid.ColumnSpan="3" Visibility="{Binding IsAdPickerOpen, Converter={StaticResource BoolVis}}">
+            <Border Background="#99000000" CornerRadius="16" Margin="-12,-8,-12,0"/>
+            <Border Style="{StaticResource CardBox}" Background="{DynamicResource Card}" Padding="20,16" Margin="20,0,20,0" VerticalAlignment="Top" MaxWidth="900">
+              <StackPanel>
+                <Grid Margin="0,0,0,12">
+                  <TextBlock Text="{Binding AdPickerTitle}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Empty this slot" Command="{Binding ClearAdSlotCommand}"
+                            Visibility="{Binding AdPickerSlot.IsEmpty, Converter={StaticResource BoolVisInv}, FallbackValue=Collapsed}"/>
+                    <Button Style="{StaticResource IconBtn}" Content="&#xE711;" Margin="0" ToolTip="Close" Command="{Binding CloseAdPickerCommand}"/>
+                  </StackPanel>
+                </Grid>
+
+                <!-- tags (want slots only) -->
+                <StackPanel Visibility="{Binding AdPickerShowsTags, Converter={StaticResource BoolVis}}">
+                  <TextBlock Text="TAGS" FontSize="11" FontWeight="Bold" Style="{StaticResource MutedText}" Margin="0,0,0,8"/>
+                  <ItemsControl ItemsSource="{Binding AdTags}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Style="{StaticResource CardButton}" Margin="0,0,8,8" Content="{Binding}" ContentTemplate="{StaticResource AdTagTile}"
+                                Command="{Binding DataContext.PickAdTagCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="ITEMS" FontSize="11" FontWeight="Bold" Style="{StaticResource MutedText}" Margin="0,8,0,8"/>
+                </StackPanel>
+
+                <!-- search, sort, value range -->
+                <Grid Margin="0,0,0,12">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <ctl:SearchBox Text="{Binding AdPickerSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Filter by name or acronym" Margin="0,0,12,0"/>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton Style="{StaticResource Seg}" Content="High → Low" GroupName="adsort"
+                                 IsChecked="{Binding AdPickerAscending, Converter={StaticResource Not}}"/>
+                    <RadioButton Style="{StaticResource Seg}" Content="Low → High" GroupName="adsort" Margin="0,0,12,0"
+                                 IsChecked="{Binding AdPickerAscending}"/>
+                    <TextBox Text="{Binding AdPickerMin, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Lowest value"/>
+                    <TextBlock Text="–" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                    <TextBox Text="{Binding AdPickerMax, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Highest value"/>
+                  </StackPanel>
+                </Grid>
+
+                <ScrollViewer MaxHeight="430" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                  <ItemsControl ItemsSource="{Binding AdPickerItems}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Style="{StaticResource CardButton}" Margin="0,0,10,10" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}"
+                                Command="{Binding DataContext.PickAdItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+                <TextBlock Text="Nothing matches." Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                           Visibility="{Binding AdPickerItems.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+              </StackPanel>
+            </Border>
+          </Grid>
         </Grid>
 
         <!-- ================= DEALS ================= -->

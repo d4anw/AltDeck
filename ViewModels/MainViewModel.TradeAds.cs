@@ -8,107 +8,149 @@ using CommunityToolkit.Mvvm.Input;
 namespace RoDeck.ViewModels;
 
 /// <summary>
-/// Trades → Trade ads: one Rolimons trade ad (up to 4 items offered; up to 4 items or tags asked for) that RoDeck
-/// posts again every 15+ minutes while it runs, also from the tray. Off until you start it.
+/// Trades → Trade ads: one Rolimons trade ad (4 offer slots; 4 want slots that hold items or tags) that RoDeck posts
+/// again every 15+ minutes while it runs, also from the tray. Off until you start it. Clicking a slot opens a picker.
 /// </summary>
 public partial class MainViewModel
 {
-    public ObservableCollection<LimitedTile> AdOffer { get; } = new();
-    public ObservableCollection<LimitedTile> AdRequest { get; } = new();
+    public ObservableCollection<AdSlot> AdOfferSlots { get; } = new();
+    public ObservableCollection<AdSlot> AdWantSlots { get; } = new();
     public ObservableCollection<AdTag> AdTags { get; } = new();
-    public ObservableCollection<LimitedTile> AdRequestHits { get; } = new();
-    [ObservableProperty] private string adRequestSearch = "";
     [ObservableProperty] private string adStatus = "";
+    [ObservableProperty] private string adLastResult = "";
     [ObservableProperty] private string roliCookieInput = "";
+    [ObservableProperty] private string adOfferValue = "0";
+    [ObservableProperty] private string adWantValue = "0";
     public bool HasRoliCookie => Settings.RoliVerification.Length > 0;
     public bool AdRunning => Settings.TradeAdOn;
-    public int AdRequestCount => AdRequest.Count + AdTags.Count(t => t.IsSelected);
-    public bool CanStartAd => HasRoliCookie && AdOffer.Count > 0 && AdRequestCount > 0;
+    private int OfferCount => AdOfferSlots.Count(s => s.Item != null);
+    private int WantCount => AdWantSlots.Count(s => !s.IsEmpty);
+    public bool CanStartAd => HasRoliCookie && OfferCount > 0 && WantCount > 0;
 
     private readonly DispatcherTimer _adTimer = new() { Interval = TimeSpan.FromSeconds(20) };
     private bool _adPosting, _adSetUp;
     private DateTime _adRetryAt = DateTime.MinValue;
 
-    /// <summary>Called once at start: the tags, the saved ad, and the timer (which does nothing while the ad is off).</summary>
+    /// <summary>Called once at start: the tags, the slots and the timer (which does nothing while the ad is off).</summary>
     private void SetupTradeAds()
     {
-        foreach (var (tag, name) in RolimonsAds.Tags)
+        foreach (var (tag, name) in RolimonsAds.Tags) AdTags.Add(new AdTag { Tag = tag, Name = name });
+        for (int i = 0; i < 4; i++)
         {
-            var t = new AdTag { Tag = tag, Name = name, IsSelected = Settings.TradeAdTags.Contains(tag) };
-            t.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(AdTag.IsSelected)) OnAdChanged(); };
-            AdTags.Add(t);
+            AdOfferSlots.Add(new AdSlot { Index = i, IsOffer = true });
+            AdWantSlots.Add(new AdSlot { Index = i, IsOffer = false });
         }
         _adTimer.Tick += async (_, _) => await AdTickAsync();
         _adTimer.Start();
     }
 
-    /// <summary>When the Trade ads tab opens: show the saved ad's items with their values and pictures.</summary>
+    /// <summary>When the Trade ads tab opens: fill the slots from the saved ad (with values and pictures).</summary>
     private void LoadTradeAdTab()
     {
         if (!_adSetUp)
         {
             _adSetUp = true;
-            foreach (var id in Settings.TradeAdOffer) AdOffer.Add(LimitedTile.From(id, $"Item {id}", 0));
-            foreach (var id in Settings.TradeAdRequest) AdRequest.Add(LimitedTile.From(id, $"Item {id}", 0));
-            _ = FillLimitedThumbsAsync(AdOffer.Concat(AdRequest).ToList());
+            var tiles = new List<LimitedTile>();
+            for (int i = 0; i < 4 && i < Settings.TradeAdOffer.Count; i++)
+                tiles.Add(AdOfferSlots[i].Item = LimitedTile.From(Settings.TradeAdOffer[i], $"Item {Settings.TradeAdOffer[i]}", 0));
+            int w = 0;
+            foreach (var id in Settings.TradeAdRequest.Take(4)) tiles.Add(AdWantSlots[w++].Item = LimitedTile.From(id, $"Item {id}", 0));
+            foreach (var tag in Settings.TradeAdTags)
+                if (w < 4 && AdTags.FirstOrDefault(t => t.Tag == tag) is { } t) AdWantSlots[w++].Tag = t;
+            _ = FillLimitedThumbsAsync(tiles);
             if (CurrentAccount is { } a && _myTradableAll.Count == 0) _ = LoadMyTradableAsync(a, null);
         }
-        UpdateAdStatus();
+        NotifyAd();
     }
 
-    // ---- building the ad
+    // ================================================================== the picker
 
-    /// <summary>Click one of your limiteds: in or out of the offer (up to 4, no duplicates).</summary>
+    [ObservableProperty] private bool isAdPickerOpen;
+    [ObservableProperty] private AdSlot? adPickerSlot;
+    [ObservableProperty] private string adPickerSearch = "";
+    [ObservableProperty] private bool adPickerAscending;
+    [ObservableProperty] private string adPickerMin = "", adPickerMax = "";
+    public ObservableCollection<LimitedTile> AdPickerItems { get; } = new();
+    public bool AdPickerShowsTags => AdPickerSlot is { IsOffer: false };
+    public string AdPickerTitle => AdPickerSlot is not { } s ? "" : s.IsOffer ? $"Offer slot {s.Index + 1}: one of your limiteds" : $"Want slot {s.Index + 1}: a tag or any limited";
+
+    partial void OnAdPickerSlotChanged(AdSlot? value) { OnPropertyChanged(nameof(AdPickerShowsTags)); OnPropertyChanged(nameof(AdPickerTitle)); }
+    partial void OnAdPickerSearchChanged(string value) => FillAdPicker();
+    partial void OnAdPickerAscendingChanged(bool value) => FillAdPicker();
+    partial void OnAdPickerMinChanged(string value) => FillAdPicker();
+    partial void OnAdPickerMaxChanged(string value) => FillAdPicker();
+
     [RelayCommand]
-    private void ToggleAdOffer(LimitedTile? t)
+    private void OpenAdSlot(AdSlot? slot)
     {
-        if (t == null) return;
-        var have = AdOffer.FirstOrDefault(x => x.AssetId == t.AssetId);
-        if (have != null) AdOffer.Remove(have);
-        else if (AdOffer.Count >= 4) { StatusMessage = "Rolimons allows up to 4 items in the offer."; return; }
-        else AdOffer.Add(t);
+        if (slot == null) return;
+        AdPickerSlot = slot;
+        AdPickerSearch = "";
+        IsAdPickerOpen = true;
+        FillAdPicker();
+    }
+
+    [RelayCommand] private void CloseAdPicker() => IsAdPickerOpen = false;
+
+    [RelayCommand] private void SortAdPicker(string? dir) => AdPickerAscending = dir == "asc";
+
+    private void FillAdPicker()
+    {
+        if (AdPickerSlot is not { } slot) return;
+        var q = (AdPickerSearch ?? "").Trim();
+        long? min = long.TryParse(AdPickerMin, out var mn) ? mn : null, max = long.TryParse(AdPickerMax, out var mx) ? mx : null;
+        IEnumerable<LimitedTile> source = slot.IsOffer
+            ? _myTradableAll.GroupBy(t => t.AssetId).Select(g => g.First())               // one tile per item you own
+            : LimitedValues.All.Select(v => LimitedTile.From(v.AssetId, v.Name, v.Rap));
+        var list = source.Where(t =>
+                (q.Length == 0 || t.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(LimitedValues.Get(t.AssetId)?.Acronym, q, StringComparison.OrdinalIgnoreCase))
+                && (min == null || t.Worth >= min) && (max == null || t.Worth <= max));
+        list = AdPickerAscending ? list.OrderBy(t => t.Worth) : list.OrderByDescending(t => t.Worth);
+        var shown = list.Take(120).ToList();
+        AdPickerItems.Clear();
+        foreach (var t in shown) AdPickerItems.Add(t);
+        _ = FillLimitedThumbsAsync(shown.Where(t => t.ThumbUrl.Length == 0).ToList());
+    }
+
+    [RelayCommand]
+    private void PickAdItem(LimitedTile? t)
+    {
+        if (t == null || AdPickerSlot is not { } slot) return;
+        var row = slot.IsOffer ? AdOfferSlots : AdWantSlots;
+        foreach (var other in row) if (other != slot && other.Item?.AssetId == t.AssetId) other.Clear();   // no doubles: it moves here
+        slot.Tag = null;
+        slot.Item = t;
+        IsAdPickerOpen = false;
         OnAdChanged();
     }
 
-    partial void OnAdRequestSearchChanged(string value)
-    {
-        AdRequestHits.Clear();
-        var q = (value ?? "").Trim();
-        if (q.Length < 2) return;
-        var hits = LimitedValues.All
-            .Where(v => v.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || string.Equals(v.Acronym, q, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(v => v.Worth).Take(12)
-            .Select(v => LimitedTile.From(v.AssetId, v.Name, v.Rap)).ToList();
-        foreach (var h in hits) AdRequestHits.Add(h);
-        _ = FillLimitedThumbsAsync(hits);
-    }
-
     [RelayCommand]
-    private void ToggleAdRequest(LimitedTile? t)
+    private void PickAdTag(AdTag? tag)
     {
-        if (t == null) return;
-        var have = AdRequest.FirstOrDefault(x => x.AssetId == t.AssetId);
-        if (have != null) AdRequest.Remove(have);
-        else if (AdRequestCount >= 4) { StatusMessage = "Rolimons allows up to 4 things asked for (items and tags together)."; return; }
-        else AdRequest.Add(t);
+        if (tag == null || AdPickerSlot is not { IsOffer: false } slot) return;
+        foreach (var other in AdWantSlots) if (other != slot && other.Tag == tag) other.Clear();
+        slot.Item = null;
+        slot.Tag = tag;
+        IsAdPickerOpen = false;
         OnAdChanged();
     }
 
     [RelayCommand]
-    private void ToggleAdTag(AdTag? t)
+    private void ClearAdSlot()
     {
-        if (t == null) return;
-        if (!t.IsSelected && AdRequestCount >= 4) { StatusMessage = "Rolimons allows up to 4 things asked for (items and tags together)."; return; }
-        t.IsSelected = !t.IsSelected;
+        AdPickerSlot?.Clear();
+        IsAdPickerOpen = false;
+        OnAdChanged();
     }
 
-    /// <summary>The ad changed: save it, and stop posting if it isn't a complete ad anymore.</summary>
+    /// <summary>The ad changed: save it, update the totals, and stop posting if it isn't a complete ad anymore.</summary>
     private void OnAdChanged()
     {
-        Settings.TradeAdOffer = AdOffer.Select(x => x.AssetId).ToList();
-        Settings.TradeAdRequest = AdRequest.Select(x => x.AssetId).ToList();
-        Settings.TradeAdTags = AdTags.Where(t => t.IsSelected).Select(t => t.Tag).ToList();
-        if (Settings.TradeAdOn && !(AdOffer.Count > 0 && AdRequestCount > 0)) Settings.TradeAdOn = false;
+        Settings.TradeAdOffer = AdOfferSlots.Where(s => s.Item != null).Select(s => s.Item!.AssetId).ToList();
+        Settings.TradeAdRequest = AdWantSlots.Where(s => s.Item != null).Select(s => s.Item!.AssetId).ToList();
+        Settings.TradeAdTags = AdWantSlots.Where(s => s.Tag != null).Select(s => s.Tag!.Tag).ToList();
+        if (Settings.TradeAdOn && !(OfferCount > 0 && WantCount > 0)) Settings.TradeAdOn = false;
         _saveTimer.Stop();
         _saveTimer.Start();
         NotifyAd();
@@ -116,11 +158,13 @@ public partial class MainViewModel
 
     private void NotifyAd()
     {
-        foreach (var n in new[] { nameof(HasRoliCookie), nameof(AdRunning), nameof(AdRequestCount), nameof(CanStartAd) }) OnPropertyChanged(n);
+        AdOfferValue = AdOfferSlots.Sum(s => s.Item?.Worth ?? 0).ToString("N0");
+        AdWantValue = AdWantSlots.Sum(s => s.Item?.Worth ?? 0).ToString("N0");
+        foreach (var n in new[] { nameof(HasRoliCookie), nameof(AdRunning), nameof(CanStartAd) }) OnPropertyChanged(n);
         UpdateAdStatus();
     }
 
-    // ---- the verification cookie
+    // ================================================================== the verification cookie
 
     [RelayCommand]
     private void SaveRoliCookie()
@@ -142,7 +186,7 @@ public partial class MainViewModel
         NotifyAd();
     }
 
-    // ---- posting
+    // ================================================================== posting
 
     [RelayCommand]
     private void StartAd()
@@ -207,8 +251,6 @@ public partial class MainViewModel
         }
     }
 
-    [ObservableProperty] private string adLastResult = "";
-
     private string NextText()
     {
         var minutes = Math.Max(RolimonsAds.MinMinutes, Settings.TradeAdMinutes);
@@ -221,17 +263,42 @@ public partial class MainViewModel
     private void UpdateAdStatus()
     {
         AdStatus = !HasRoliCookie ? "Add your Rolimons verification first."
-                 : AdOffer.Count == 0 ? "Pick up to 4 of your limiteds to offer."
-                 : AdRequestCount == 0 ? "Pick what you want: items or tags (up to 4)."
+                 : OfferCount == 0 ? "Click an Offer slot to pick one of your limiteds."
+                 : WantCount == 0 ? "Click a Want slot to pick an item or a tag."
                  : Settings.TradeAdOn ? $"Posting every {Math.Max(RolimonsAds.MinMinutes, Settings.TradeAdMinutes)} min · next {NextText()} · {Settings.TradeAdPosts} posted so far"
                  : "Ready. Press Start to post it now and every few minutes after.";
     }
 }
 
-/// <summary>A request tag chip on the Trade ads tab.</summary>
+/// <summary>A request tag (Any, Upgrade, Demand…): RoDeck's own tile with a colour and an icon.</summary>
 public partial class AdTag : ObservableObject
 {
     public string Tag { get; init; } = "";
     public string Name { get; init; } = "";
-    [ObservableProperty] private bool isSelected;
+    public string Upper => Name.ToUpperInvariant();
+    public string Glyph => Tag switch
+    {
+        "any" => "", "demand" => "", "rares" => "", "robux" => "", "upgrade" => "",
+        "downgrade" => "", "rap" => "", "wishlist" => "", "projecteds" => "", "adds" => "", _ => ""
+    };
+    /// <summary>The tile's colour (top, bottom) as hex.</summary>
+    public string Top => Tag switch
+    {
+        "any" => "#8B5CF6", "demand" => "#F97316", "rares" => "#EAB308", "robux" => "#94A3B8", "upgrade" => "#22C55E",
+        "downgrade" => "#3B82F6", "rap" => "#06B6D4", "wishlist" => "#EC4899", "projecteds" => "#FACC15", "adds" => "#EF4444", _ => "#64748B"
+    };
+}
+
+/// <summary>One of the ad's 4 offer or 4 want slots: empty, an item, or (want slots) a tag.</summary>
+public partial class AdSlot : ObservableObject
+{
+    public int Index { get; init; }
+    public bool IsOffer { get; init; }
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsEmpty), nameof(HasItem))] private LimitedTile? item;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsEmpty), nameof(HasTag))] private AdTag? tag;
+    public bool IsEmpty => Item == null && Tag == null;
+    public bool HasItem => Item != null;
+    public bool HasTag => Tag != null;
+    public string EmptyText => IsOffer ? "Offer" : "Want";
+    public void Clear() { Item = null; Tag = null; }
 }
