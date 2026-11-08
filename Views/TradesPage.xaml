@@ -140,7 +140,7 @@
           <Grid Margin="0,0,0,6">
             <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
               <ComboBox Width="190" Margin="0,0,10,10" ItemsSource="{Binding DealThresholds}" SelectedItem="{Binding DealThreshold}" DisplayMemberPath="Name"
-                        ToolTip="How far below its value (or RAP) a listing must be"/>
+                        ToolTip="How far below its RAP (or value, see Deal on) a listing must be"/>
               <ComboBox Width="170" Margin="0,0,20,10" ItemsSource="{Binding DealSorts}" SelectedItem="{Binding DealSort}" DisplayMemberPath="Name"
                         ToolTip="Sort"/>
               <StackPanel Orientation="Horizontal" Margin="0,0,20,10" VerticalAlignment="Center"
@@ -161,7 +161,7 @@
           </Grid>
           <TextBlock Text="{Binding DealsStatus}" FontSize="12" Style="{StaticResource MutedText}" Margin="2,0,0,4"/>
           <TextBlock FontSize="12" Style="{StaticResource MutedText}" Margin="2,0,0,14" TextWrapping="Wrap"
-                     Text="Every limited's cheapest price, compared with its value (or RAP when it has none). New listings come in live, and every limited is checked again every few minutes. Buy shows the cheapest copy's real price on a confirm card first: a deal can be sold to someone else in seconds."/>
+                     Text="Every limited's cheapest price, compared with its RAP or its value (pick with Deal on; Value uses RAP when an item has none). New listings come in live, and every limited is checked again every few minutes. Buy shows the cheapest copy's real price on a confirm card first: a deal can be sold to someone else in seconds."/>
 
           <Border Style="{StaticResource CardBox}" Padding="6" Visibility="{Binding Deals.Count, Converter={StaticResource CountVis}}">
             <ItemsControl ItemsSource="{Binding Deals}">

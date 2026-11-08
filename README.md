@@ -4,9 +4,9 @@
 
 # RoDeck
 
-### All your Roblox accounts in one launcher, signed in and ready to play.
+### All your Roblox in one app: accounts, games, friends, avatar, marketplace and trades.
 
-A local-only multi-account launcher for Windows 10 and 11.<br>
+A local-only Roblox app for Windows 10 and 11, with every account you own a click away.<br>
 Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.<br>
 <sub>Formerly <b>AltDeck</b>. Not affiliated with or endorsed by Roblox Corporation.</sub>
 
@@ -46,19 +46,75 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.<br
 
 ## 💡 What is RoDeck?
 
-Playing on more than one Roblox account normally means signing out, signing back in, finding the game again,
-and only having one Roblox window open at a time. RoDeck takes care of that.
+RoDeck replaces the Roblox app on your PC, and it's built for people with more than one account.
+Pick an account top right and everything (games, friends, avatar, marketplace, trades) is for that account;
+switch with one click, no signing out.
 
-- **Add each account once**: sign in through a browser window, paste many cookies at once, or import an `AccountData.json` file.
-- **Launch one account or many** into any game, private server or share link.
-- **Run several Roblox clients side by side**, with live previews and CPU / memory / GPU dials.
-- **Get kicked or crash? RoDeck rejoins for you**, back into the same server when it can.
+- **Play:** game charts, search, favourites and a server finder (best ping, fewest or most players, where your friends are).
+- **Friends:** who's online and where, join them, requests, search players, star your favourites.
+- **Avatar editor:** wardrobe, body, colours, outfits, R6/R15, a 3D preview and accessory adjustment.
+- **Marketplace:** browse and search items, try them on, get free items in one click, buy behind a confirm screen.
+- **Trades:** live deals below RAP or value, every limited with its value and RAP history, inventory value per account, and your trades with a win/loss verdict.
+- **Many accounts at once:** launch one or many into any game, run clients side by side, and RoDeck rejoins when one gets kicked or crashes.
 
 Everything runs on your PC. There's no RoDeck account, no RoDeck server and no tracking.
+RoDeck used to be called **AltDeck**; updating from AltDeck keeps all your accounts and settings.
 
 <br>
 
 ## ✨ Features
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🎮 Games
+Charts, search, favourites and recently played. Each game has its own page with pictures, stats and a
+**server finder**: best ping, fewest or most players, or where your friends are. Play closes your other client first.
+
+</td>
+<td valign="top">
+
+### 👫 Friends
+Online first, with where they are and a join button. Accept or decline requests in the list,
+find players, open profiles and star favourites.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🧍 Avatar editor
+Wardrobe by category, body colours and scales, outfits, R6 / R15, a turnable 3D preview,
+accessory adjustment and "copy this look to another account".
+
+</td>
+<td valign="top">
+
+### 🛒 Marketplace
+Categories, search, sort and price filters. **Try on** shows it on your avatar first. Free items in one
+click; Robux purchases always show item, price, account and balance first, with an optional spending limit.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 💎 Trades and deals
+**Deals:** limiteds listed below their RAP or value, live. **Limiteds:** values, demand, trend, RAP after
+sale and a sale-price chart (hover any item). **Inventory value** per account. **Your trades** with both
+sides, value/RAP difference and accept / counter / decline.
+
+</td>
+<td valign="top">
+
+### 🔔 Notifications
+Optional Windows notifications for friends coming online, new trades, friend requests and big deals.
+All off until you turn them on.
+
+</td>
+</tr>
+</table>
 
 <table>
 <tr>
@@ -339,9 +395,7 @@ RoDeck is open source under the [MIT License](LICENSE).
 
 ## 📜 Disclaimer
 
-RoDeck is a fan-made tool and is not affiliated with, endorsed by or connected to Roblox Corporation.
+RoDeck is an independent, open-source project. It is not affiliated with, endorsed by, sponsored by or connected to
+Roblox Corporation. "Roblox" is a trademark of Roblox Corporation.
 Use it only with accounts you own, and follow Roblox's Terms of Use.
-
----
-
-<sub>RoDeck is an independent, open-source project. It is not affiliated with, endorsed by or sponsored by Roblox Corporation. "Roblox" is a trademark of Roblox Corporation.</sub>
+Limited values come from Rolimons and are estimates; buying and trading always ask you first.

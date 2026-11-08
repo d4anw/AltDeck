@@ -77,6 +77,7 @@ public partial class MainViewModel
         CurrentAccount = Accounts.FirstOrDefault(a => a.Id == Settings.CurrentAccountId) ?? DefaultAccount();
         Accounts.CollectionChanged += OnAccountsChangedForShell;
         RecordNav();   // the first page is a step too, so back from the next page returns to it
+        SetupNotifications();
     }
 
     private Account? DefaultAccount() =>

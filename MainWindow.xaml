@@ -168,11 +168,13 @@
                           Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Settings}">
                 <Button Style="{StaticResource Subtle}" Content="General" Command="{Binding GoSectionCommand}" CommandParameter="General"/>
                 <Button Style="{StaticResource Subtle}" Content="Automation" Command="{Binding GoSectionCommand}" CommandParameter="Automation"/>
+                <Button Style="{StaticResource Subtle}" Content="Shortcuts" Command="{Binding GoSectionCommand}" CommandParameter="Shortcuts"/>
+                <Button Style="{StaticResource Subtle}" Content="Launching" Command="{Binding GoSectionCommand}" CommandParameter="Launching"/>
+                <Button Style="{StaticResource Subtle}" Content="Notifications" Command="{Binding GoSectionCommand}" CommandParameter="Notifications"/>
+                <Button Style="{StaticResource Subtle}" Content="Marketplace" Command="{Binding GoSectionCommand}" CommandParameter="Marketplace"/>
                 <Button Style="{StaticResource Subtle}" Content="Security" Command="{Binding GoSectionCommand}" CommandParameter="Security"/>
                 <Button Style="{StaticResource Subtle}" Content="Data" Command="{Binding GoSectionCommand}" CommandParameter="Data"/>
                 <Button Style="{StaticResource Subtle}" Content="About" Command="{Binding GoSectionCommand}" CommandParameter="About"/>
-                <Button Style="{StaticResource Subtle}" Content="Launching" Command="{Binding GoSectionCommand}" CommandParameter="Launching"/>
-                <Button Style="{StaticResource Subtle}" Content="Shortcuts" Command="{Binding GoSectionCommand}" CommandParameter="Shortcuts"/>
               </StackPanel>
               <TextBlock Text="{Binding LockBadge, Mode=OneWay}" Margin="14,18,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
             </StackPanel>

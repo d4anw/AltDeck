@@ -66,8 +66,9 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 
 ## Phase 7: Polish → 1.0
 - [x] New name: AltDeck is now RoDeck (accounts and settings move over by themselves, old installs still update)
-- [ ] Notifications: friend online, trade received, friend request
-- [ ] Screenshots and README rework for the new app
+- [x] Notifications: friend online, trade received, friend request, big deals (all off until turned on)
+- [x] README rework for the new app (no screenshots: accounts stay private)
+- [x] Polish pass: settings menu order, texts for the all-in-one app, unused page removed
 - [ ] 1.0: RoDeck replaces the Roblox app
 
 ## Every phase

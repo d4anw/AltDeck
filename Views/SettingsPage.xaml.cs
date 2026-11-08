@@ -27,6 +27,7 @@ public partial class SettingsPage : UserControl
             "General" => SecGeneral,
             "Automation" => SecAutomation,
             "Marketplace" => SecMarket,
+            "Notifications" => SecNotify,
             "Security" => SecSecurity,
             "Data" => SecData,
             "About" => SecAbout,

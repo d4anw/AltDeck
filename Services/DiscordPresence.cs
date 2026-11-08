@@ -77,8 +77,8 @@ public sealed class DiscordPresence
 
             var activity = new JsonObject
             {
-                ["details"] = running == 0 ? "Idle, nothing running" : $"{running} alt{(running == 1 ? "" : "s")} running",
-                ["state"] = "Multi-account launcher",
+                ["details"] = running == 0 ? "Idle, nothing running" : $"{running} client{(running == 1 ? "" : "s")} running",
+                ["state"] = "All-in-one Roblox app",
                 ["timestamps"] = new JsonObject { ["start"] = _startUnix },
                 // the big picture on the card: an art asset named "altdeck_logo" uploaded to the Discord app
                 // (Rich Presence > Art Assets). If it doesn't exist, Discord just shows its "?" placeholder.

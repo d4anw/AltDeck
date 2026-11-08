@@ -57,6 +57,15 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool muteOnStart;
     /// <summary>Marketplace: the most Robux one purchase may cost (0 = no limit). Above it, RoDeck won't buy.</summary>
     [ObservableProperty] private long marketSpendLimit;
+
+    // Notifications (Windows pop-ups) for the account top right: all off until turned on
+    [ObservableProperty] private bool notifyFriendOnline;
+    [ObservableProperty] private bool notifyFavouritesOnly = true;   // with friends online: only starred friends
+    [ObservableProperty] private bool notifyTrades;
+    [ObservableProperty] private bool notifyFriendRequests;
+    [ObservableProperty] private bool notifyDeals;
+    [ObservableProperty] private int notifyDealPercent = 30;
+    [ObservableProperty] private bool notifyDealsAffordable;
     [ObservableProperty] private bool lowestGraphics = true;
     [ObservableProperty] private bool lighterRendering = true;
     [ObservableProperty] private string msaa = "x1";

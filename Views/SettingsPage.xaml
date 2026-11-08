@@ -167,6 +167,48 @@
           </Border>
         </StackPanel>
 
+        <StackPanel x:Name="SecNotify" Margin="0,28,0,0">
+          <TextBlock Text="Notifications" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Friend comes online"
+                              Description="A Windows notification when a friend of the account top right comes online. Checked once a minute.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyFriendOnline}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Only starred friends"
+                              Description="Only for friends you starred on the Friends page, so a big friend list doesn't flood you."
+                              Visibility="{Binding Settings.NotifyFriendOnline, Converter={StaticResource BoolVis}}">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyFavouritesOnly}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Trade received"
+                              Description="When someone sends the account a trade, with what you'd give and get. Checked once a minute.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyTrades}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Friend request"
+                              Description="When someone sends the account a friend request. Checked once a minute.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyFriendRequests}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Limited deals"
+                              Description="When a limited is listed far below its RAP (or value, as picked on Trades → Deals). Checked every few seconds, even when RoDeck is in the tray.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyDeals}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Deal at least"
+                              Description="How far below it has to be. Projected items (pushed-up RAP) are never announced."
+                              Visibility="{Binding Settings.NotifyDeals, Converter={StaticResource BoolVis}}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBox Text="{Binding Settings.NotifyDealPercent}" Width="56" FontFamily="Consolas"/>
+                  <TextBlock Text="% below" VerticalAlignment="Center" Margin="8,0,0,0" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Only deals I can afford"
+                              Description="Skip deals that cost more Robux than the account top right has."
+                              Visibility="{Binding Settings.NotifyDeals, Converter={StaticResource BoolVis}}">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyDealsAffordable}"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
         <StackPanel x:Name="SecMarket" Margin="0,28,0,0">
           <TextBlock Text="Marketplace" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
           <Border Style="{StaticResource CardBox}" Padding="24,4">

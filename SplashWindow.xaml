@@ -23,7 +23,7 @@
           <TextBlock x:Name="Title1" Text="RoDeck" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,22,0,0" Opacity="0">
             <TextBlock.RenderTransform><TranslateTransform x:Name="TitleShift" Y="12"/></TextBlock.RenderTransform>
           </TextBlock>
-          <TextBlock x:Name="Tagline" Text="Multi-account Roblox launcher" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0"
+          <TextBlock x:Name="Tagline" Text="All your Roblox in one app" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,0"
                      Opacity="0" Foreground="{DynamicResource Muted}"/>
         </StackPanel>
         <!-- thin progress line along the bottom -->

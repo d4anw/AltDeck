@@ -17,6 +17,8 @@ public sealed class TrayService : IDisposable
     public event Action? OpenRequested;
     public event Action? StopAllRequested;
     public event Action? QuitRequested;
+    /// <summary>The last notification was clicked.</summary>
+    public event Action? BalloonClicked;
 
     public TrayService()
     {
@@ -42,6 +44,7 @@ public sealed class TrayService : IDisposable
 
         _icon = new Forms.NotifyIcon { Icon = _image, Text = "RoDeck", ContextMenuStrip = menu, Visible = false };
         _icon.DoubleClick += (_, _) => OpenRequested?.Invoke();
+        _icon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke();
         _icon.MouseClick += (_, e) => { if (e.Button == Forms.MouseButtons.Left) OpenRequested?.Invoke(); };
     }
 

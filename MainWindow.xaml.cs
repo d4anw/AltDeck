@@ -31,13 +31,23 @@ public partial class MainWindow : Window
         _vm.Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == "BackgroundImage") ApplyBackground();
-            else if (e.PropertyName == "CloseToTray") _tray.Visible = _vm.Settings.CloseToTray;
+            else if (e.PropertyName == "CloseToTray" || e.PropertyName?.StartsWith("Notify") == true) _tray.Visible = TrayWanted;
             else if (e.PropertyName == "PanicHotkey") ApplyHotkey();
         };
         ApplyBackground();
 
-        // ---- tray icon (only while "Close to tray" is on)
-        _tray.Visible = _vm.Settings.CloseToTray;
+        // ---- tray icon (while "Close to tray" or a notification is on: Windows shows notifications through it)
+        _tray.Visible = TrayWanted;
+        _vm.Notification += (title, text, where) => Dispatcher.InvokeAsync(() =>
+        {
+            _lastNotificationPage = where;
+            _tray.Balloon(title, text);
+        });
+        _tray.BalloonClicked += () => Dispatcher.InvokeAsync(() =>
+        {
+            ShowFromTray();
+            if (_lastNotificationPage.Length > 0) _vm.OpenNotification(_lastNotificationPage);
+        });
         _tray.OpenRequested += ShowFromTray;
         _tray.StopAllRequested += () =>
         {
@@ -136,6 +146,9 @@ public partial class MainWindow : Window
         }
         finally { _updateOpen = false; }
     }
+
+    private string _lastNotificationPage = "";
+    private bool TrayWanted => _vm.Settings.CloseToTray || _vm.AnyNotifications;
 
     /// <summary>Shows the window (from the tray, minimized or behind other apps). Used when RoDeck is started a second time.</summary>
     public void BringToFront()
