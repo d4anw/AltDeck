@@ -25,13 +25,14 @@ public static class LimitedValues
     public static List<LimitedInfo> All => Items.Values.ToList();
 
     /// <summary>Makes sure the values are at most 5 minutes old (or uses the last good copy when Rolimons doesn't answer).</summary>
-    public static async Task EnsureAsync(CancellationToken ct, bool force = false)
+    public static async Task EnsureAsync(CancellationToken ct, bool force = false, TimeSpan? maxAge = null)
     {
-        if (!force && Items.Count > 0 && DateTime.UtcNow - _loadedAt < TimeSpan.FromMinutes(5)) return;
+        var age = maxAge ?? TimeSpan.FromMinutes(5);
+        if (!force && Items.Count > 0 && DateTime.UtcNow - _loadedAt < age) return;
         await Gate.WaitAsync(ct);
         try
         {
-            if (!force && Items.Count > 0 && DateTime.UtcNow - _loadedAt < TimeSpan.FromMinutes(5)) return;
+            if (!force && Items.Count > 0 && DateTime.UtcNow - _loadedAt < age) return;
             if (Items.Count == 0) LoadDisk();
             try
             {

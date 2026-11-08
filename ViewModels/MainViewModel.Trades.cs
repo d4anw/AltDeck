@@ -96,7 +96,7 @@ public partial class MainViewModel
 
     private void MaybeScan()
     {
-        if (_scanRunning || DateTime.Now - _scanFinishedAt < TimeSpan.FromMinutes(4)) return;
+        if (_scanRunning || DateTime.Now - _scanFinishedAt < TimeSpan.FromMinutes(2)) return;
         _ = ScanAllAsync();
     }
 
@@ -121,6 +121,7 @@ public partial class MainViewModel
                 var added = new List<DealTile>();
                 foreach (var (id, price) in prices)
                     if (AddDeal(id, price, now, scanned: true) is { } d) added.Add(d);
+                foreach (var id in chunk) if (!prices.ContainsKey(id)) _allDeals.Remove(id);   // nobody sells it anymore
                 _scanDone += chunk.Length;
                 await FillDealThumbsAsync(added);
                 FilterDeals();
@@ -163,7 +164,8 @@ public partial class MainViewModel
         _dealPolling = true;
         try
         {
-            await LimitedValues.EnsureAsync(CancellationToken.None);
+            // deals are only as right as the RAP / value they're measured with: keep those at most a minute old here
+            await LimitedValues.EnsureAsync(CancellationToken.None, maxAge: TimeSpan.FromMinutes(1));
             var fresh = await LimitedValues.GetNewPricesAsync(CancellationToken.None);
             var added = new List<DealTile>();
             foreach (var (id, price, at) in fresh.OrderBy(f => f.At))
@@ -198,11 +200,22 @@ public partial class MainViewModel
 
     private void FilterDeals()
     {
+        // measure every deal against the newest RAP / value (they move all the time), not the ones from when it was found
+        foreach (var (id, d) in _allDeals.ToList())
+        {
+            var v = LimitedValues.Get(id);
+            if (v == null || (v.Rap == d.Rap && v.Value == d.Value && v.Projected == d.Projected)) continue;
+            _allDeals[id] = new DealTile
+            {
+                AssetId = id, Name = d.Name, Price = d.Price, Rap = v.Rap, Value = v.Value, Demand = v.Demand,
+                Projected = v.Projected, At = d.At, Listed = d.Listed, ThumbUrl = d.ThumbUrl
+            };
+        }
         foreach (var d in _allDeals.Values) d.Tick();
         IEnumerable<DealTile> list = _allDeals.Values.Where(PassesDeal);
         list = (DealSort?.Value ?? 0) switch
         {
-            1 => list.OrderByDescending(d => d.At),
+            1 => list.OrderByDescending(d => d.At).ThenByDescending(d => d.Discount),
             2 => list.OrderByDescending(d => d.Saving),
             _ => list.OrderByDescending(d => d.Discount)
         };
