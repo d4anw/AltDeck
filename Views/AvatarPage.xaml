@@ -92,7 +92,7 @@
               <Grid>
                 <ctl:RemoteImage Url="{Binding AvatarPicture}" CornerRadius="19" Background="Transparent" Stretch="Uniform" Margin="10"
                                  Visibility="{Binding Showing3D, Converter={StaticResource BoolVisInv}}"/>
-                <ctl:Avatar3DView Avatar="{Binding Avatar3DModel}" Margin="4"
+                <ctl:Avatar3DView Avatar="{Binding Avatar3DShown}" Margin="4"
                                   Visibility="{Binding Showing3D, Converter={StaticResource BoolVis}}"/>
 
                 <!-- 3D / picture switch -->
@@ -254,8 +254,12 @@
                 <TextBlock FontSize="17" FontWeight="Bold" TextTrimming="CharacterEllipsis">
                   <Run Text="Adjust"/> <Run Text="{Binding AdjustItem.Name, Mode=OneWay}"/>
                 </TextBlock>
-                <TextBlock Text="Move, turn and resize it within Roblox's limits. The preview follows a moment after you let go."
+                <TextBlock Text="Move, turn and resize it within Roblox's limits. Saved to Roblox a moment after you let go."
                            FontSize="12" Style="{StaticResource MutedText}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding AdjustLiveNote, Converter={StaticResource EmptyCollapsed}}">
+                  <Ellipse Width="7" Height="7" Fill="#3DD68C" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                  <TextBlock Text="{Binding AdjustLiveNote}" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
               </StackPanel>
               <Button Grid.Column="2" Style="{StaticResource IconBtn}" Content="&#xE711;" VerticalAlignment="Top" Margin="0"
                       ToolTip="Close" Command="{Binding CloseAdjustCommand}"/>

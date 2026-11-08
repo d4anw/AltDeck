@@ -145,7 +145,12 @@ public partial class MainViewModel
     [ObservableProperty] private bool pictureIsNewer;
 
     public bool Showing3D => Show3D && Avatar3DModel != null && !PictureIsNewer;
-    partial void OnAvatar3DModelChanged(Avatar3D? value) { PictureIsNewer = false; OnPropertyChanged(nameof(Showing3D)); }
+    partial void OnAvatar3DModelChanged(Avatar3D? value)
+    {
+        PictureIsNewer = false;
+        OnPropertyChanged(nameof(Showing3D));
+        MakeLiveModel(value);
+    }
     partial void OnShow3DChanged(bool value)
     {
         OnPropertyChanged(nameof(Showing3D));
@@ -183,9 +188,10 @@ public partial class MainViewModel
         {
             try
             {
+                var baseline = SnapshotRefine();   // what this model will show: the look as it is now
                 var model = await RobloxAvatar3D.LoadAsync(a.Cookie, a.UserId, previous, CancellationToken.None);
                 if (generation != _previewGeneration || a != CurrentAccount) return;
-                if (model != null) { Avatar3DModel = model; Preview3DNote = ""; }
+                if (model != null) { _modelBaseline = baseline; Avatar3DModel = model; Preview3DNote = ""; }
                 else if (Avatar3DModel == null) Preview3DNote = "3D isn't ready yet; showing the picture.";
                 return;
             }

@@ -10,7 +10,13 @@ namespace RoDeck.Services;
 
 /// <summary>A 3D avatar ready to show: the model (frozen, usable on any thread), its centre and size, and the
 /// Roblox link it came from (to notice when a newer one exists).</summary>
-public sealed record Avatar3D(Model3DGroup Model, Point3D Center, double Size, string SourceUrl);
+public sealed record Avatar3D(Model3DGroup Model, Point3D Center, double Size, string SourceUrl,
+                              IReadOnlyList<string?>? PartTextures = null)
+{
+    /// <summary>The texture of each piece of the model (same order as Model.Children); null for untextured pieces.
+    /// Every accessory has its own texture, which is how the piece of one accessory is found.</summary>
+    public IReadOnlyList<string?> Textures => PartTextures ?? Array.Empty<string?>();
+}
 
 /// <summary>Some of the model's textures couldn't be downloaded (yet): showing it would give a grey avatar.</summary>
 public sealed class MissingTexturesException : Exception
@@ -101,6 +107,40 @@ public static class RobloxAvatar3D
         return text;
     }
 
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, HashSet<string>> AssetTextures = new();
+
+    /// <summary>
+    /// The texture names of one item's own 3D model (thumbnails.roblox.com/v1/assets-thumbnail-3d, needs a sign-in).
+    /// The same textures appear on the avatar's model, so they tell which piece of the avatar is this item.
+    /// Empty when Roblox has no 3D model for it.
+    /// </summary>
+    public static async Task<HashSet<string>> GetAssetTexturesAsync(string cookie, long assetId, CancellationToken ct)
+    {
+        if (AssetTextures.TryGetValue(assetId, out var known)) return known;
+        string url = "";
+        for (int i = 0; i < 8 && url.Length == 0; i++)
+        {
+            using var doc = await RobloxHttp.GetJsonAsync($"https://thumbnails.roblox.com/v1/assets-thumbnail-3d?assetId={assetId}", cookie, ct);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("state", out var st) && st.GetString() == "Completed"
+                && root.TryGetProperty("imageUrl", out var u) && u.ValueKind == JsonValueKind.String) url = u.GetString() ?? "";
+            else await Task.Delay(1000, ct);
+        }
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (url.Length > 0)
+        {
+            using var meta = JsonDocument.Parse(await RobloxApi.Http.GetStringAsync(url, ct));
+            var r = meta.RootElement;
+            if (r.TryGetProperty("textures", out var tx) && tx.ValueKind == JsonValueKind.Array)
+                foreach (var t in tx.EnumerateArray()) if (t.GetString() is { Length: > 0 } name) set.Add(name);
+            if (r.TryGetProperty("mtl", out var mtl) && mtl.GetString() is { Length: > 0 } mtlHash)
+                foreach (var m in ParseMtl(await CachedTextAsync(mtlHash, ct)).Values)
+                    if (m.Texture != null) set.Add(m.Texture);
+        }
+        AssetTextures[assetId] = set;
+        return set;
+    }
+
     // ------------------------------------------------------------------ OBJ / MTL
 
     sealed class Mtl { public Color Diffuse = Colors.LightGray; public string? Texture; public double Opacity = 1; }
@@ -183,6 +223,7 @@ public static class RobloxAvatar3D
         }
 
         var model = new Model3DGroup();
+        var partTextures = new List<string?>();
         foreach (var (name, g) in groups)
         {
             if (g.Mesh.TriangleIndices.Count == 0) continue;
@@ -200,13 +241,14 @@ public static class RobloxAvatar3D
             var part = new GeometryModel3D(g.Mesh, material) { BackMaterial = material };
             part.Freeze();
             model.Children.Add(part);
+            partTextures.Add(m?.Texture);
         }
 
         var b = model.Bounds;
         var center = new Point3D(b.X + b.SizeX / 2, b.Y + b.SizeY / 2, b.Z + b.SizeZ / 2);
         double size = Math.Max(b.SizeX, Math.Max(b.SizeY, b.SizeZ));
         model.Freeze();
-        return new Avatar3D(model, center, size, source);
+        return new Avatar3D(model, center, size, source, partTextures);
 
         static double D(string s) => double.Parse(s, CultureInfo.InvariantCulture);
         static int Idx(string s, int count) { int i = int.Parse(s, CultureInfo.InvariantCulture); return i < 0 ? count + i : i - 1; }
