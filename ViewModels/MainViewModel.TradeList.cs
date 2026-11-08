@@ -34,6 +34,7 @@ public partial class MainViewModel
     private void MaybeLoadTradeList()
     {
         if (Page != "Trades" || TradesTab != "Trades") return;
+        if (IsTradeOpen && _tradesFor == CurrentAccount) return;   // back from an item's page: keep the trade open
         if (_tradesFor == CurrentAccount && _tradesTypeLoaded == TradeType && DateTime.Now - _tradesLoadedAt < TimeSpan.FromMinutes(2)) return;
         _ = LoadTradeListAsync();
     }

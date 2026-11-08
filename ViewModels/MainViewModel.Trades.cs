@@ -331,13 +331,32 @@ public partial class MainViewModel
         }, "Loading sales…");
     }
 
-    [RelayCommand] private void CloseLimited() => OpenLimited = null;
+    /// <summary>Back from an item's page: to the trade / inventory it was opened from, or to the list of limiteds.</summary>
+    [RelayCommand]
+    private void CloseLimited()
+    {
+        OpenLimited = null;
+        if (_limitedFrom.Length > 0) TradesTab = _limitedFrom;
+        _limitedFrom = "";
+        OnPropertyChanged(nameof(LimitedBackText));
+    }
 
-    /// <summary>A limited in an account's inventory: its page on the Limiteds tab.</summary>
+    /// <summary>Which tab the open item page goes back to ("" = the Limiteds list).</summary>
+    private string _limitedFrom = "";
+    public string LimitedBackText => _limitedFrom switch
+    {
+        "Trades" => "Back to the trade",
+        "Inventory" => "Back to inventory value",
+        _ => "Back to limiteds"
+    };
+
+    /// <summary>A limited in an inventory or a trade: its item page on the Limiteds tab, with Back returning there.</summary>
     [RelayCommand]
     private Task OpenLimitedFromInventory(LimitedTile? t)
     {
         if (t == null) return Task.CompletedTask;
+        _limitedFrom = TradesTab == "Limiteds" ? "" : TradesTab;
+        OnPropertyChanged(nameof(LimitedBackText));
         TradesTab = "Limiteds";
         return OpenLimitedTile(t);
     }
