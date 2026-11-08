@@ -113,7 +113,7 @@
           </Grid.RowDefinitions>
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-              <TextBlock Text="PLAY" FontSize="11" FontWeight="SemiBold" Margin="12,4,0,6" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="PLAY" FontSize="11" FontWeight="SemiBold" Margin="4,4,0,6" Style="{StaticResource MutedText}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE80F;" GroupName="nav" Content="Home"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Home, Mode=TwoWay}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE7FC;" GroupName="nav" Content="Games"
@@ -129,7 +129,7 @@
                 </Grid>
               </RadioButton>
 
-              <TextBlock Text="AVATAR &amp; ITEMS" FontSize="11" FontWeight="SemiBold" Margin="12,18,0,6" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="AVATAR &amp; ITEMS" FontSize="11" FontWeight="SemiBold" Margin="4,18,0,6" Style="{StaticResource MutedText}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE77B;" GroupName="nav" Content="Avatar"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Avatar, Mode=TwoWay}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE719;" GroupName="nav" Content="Marketplace"
@@ -137,7 +137,7 @@
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE8AB;" GroupName="nav" Content="Trades"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Trades, Mode=TwoWay}"/>
 
-              <TextBlock Text="TOOLS" FontSize="11" FontWeight="SemiBold" Margin="12,18,0,6" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="TOOLS" FontSize="11" FontWeight="SemiBold" Margin="4,18,0,6" Style="{StaticResource MutedText}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE8FD;" GroupName="nav"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Multi, Mode=TwoWay}">
                 <Grid>
@@ -165,10 +165,10 @@
               </RadioButton>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE9D9;" GroupName="nav" Content="FPS &amp; FastFlags"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Performance, Mode=TwoWay}"/>
-              <Border Height="1" Background="{DynamicResource Line}" Margin="12,14,12,10"/>
+              <Border Height="1" Background="{DynamicResource Line}" Margin="4,14,4,10"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE713;" GroupName="nav" Content="Settings"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Settings, Mode=TwoWay}"/>
-              <TextBlock Text="{Binding LockBadge, Mode=OneWay}" Margin="12,12,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
+              <TextBlock Text="{Binding LockBadge, Mode=OneWay}" Margin="4,12,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
             </StackPanel>
           </ScrollViewer>
 

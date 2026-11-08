@@ -468,7 +468,8 @@
       <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="Padding" Value="5,0"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
-      <Setter Property="Background" Value="{DynamicResource Card2}"/>
+      <!-- Line, not Card2: Card2 is also a tab's / row's own colour, which made the pill invisible -->
+      <Setter Property="Background" Value="{DynamicResource Line}"/>
       <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
     <Style x:Key="BadgeText" TargetType="TextBlock">
