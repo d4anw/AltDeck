@@ -20,10 +20,14 @@ public sealed class SettingsStore
         try
         {
             if (File.Exists(FilePath))
-                return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new AppSettings();
+            {
+                var s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new AppSettings();
+                if (!s.TrayDefaultApplied) { s.CloseToTray = true; s.TrayDefaultApplied = true; }   // Close to tray is now the default
+                return s;
+            }
         }
         catch { }
-        return new AppSettings();
+        return new AppSettings { TrayDefaultApplied = true };
     }
 
     public void Save(AppSettings s)

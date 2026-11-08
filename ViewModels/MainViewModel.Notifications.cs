@@ -23,6 +23,9 @@ public partial class MainViewModel
     private HashSet<long>? _seenTrades, _seenRequests;
     private readonly HashSet<string> _seenDealNotes = new();
 
+    /// <summary>The number on the bell top right: friend requests plus trades waiting.</summary>
+    public int BellCount => RequestCount + InboundCount;
+
     public bool AnyNotifications => Settings.NotifyFriendOnline || Settings.NotifyTrades || Settings.NotifyFriendRequests || Settings.NotifyDeals;
 
     /// <summary>For the tray panel: which notifications are on.</summary>

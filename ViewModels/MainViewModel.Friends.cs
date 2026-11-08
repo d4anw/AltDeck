@@ -119,7 +119,7 @@ public partial class MainViewModel
     public Loader RequestsLoad { get; } = new();
 
     /// <summary>Incoming friend requests of the account top right (the badge on Friends).</summary>
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasRequests))]
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasRequests)), NotifyPropertyChangedFor(nameof(BellCount))]
     private int requestCount;
     public bool HasRequests => RequestCount > 0;
 

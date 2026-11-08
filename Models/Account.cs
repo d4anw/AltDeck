@@ -61,7 +61,7 @@ public partial class Account : ObservableObject
 
     [ObservableProperty]
     [property: JsonIgnore]
-    [NotifyPropertyChangedFor(nameof(RobuxText))]
+    [NotifyPropertyChangedFor(nameof(RobuxText)), NotifyPropertyChangedFor(nameof(RobuxShort))]
     private long? robux;
 
     [ObservableProperty]
@@ -73,6 +73,8 @@ public partial class Account : ObservableObject
     /// <summary>"R$ 1,234", plus "· Premium". Empty until the account has been checked.</summary>
     [JsonIgnore] public string RobuxText =>
         Robux is long r ? $"R$ {r:N0}{(IsPremium ? "  ·  Premium" : "")}" : (IsPremium ? "Premium" : "");
+    /// <summary>Just the amount ("1,234"), for the Robux pill top right. Empty until checked.</summary>
+    [JsonIgnore] public string RobuxShort => Robux is long r ? r.ToString("N0") : "";
     [JsonIgnore] public string Label => string.IsNullOrWhiteSpace(Alias) ? DisplayName : Alias;
     [JsonIgnore] public string Initials => string.IsNullOrWhiteSpace(Label) ? "?" : Label.Trim().Substring(0, Math.Min(2, Label.Trim().Length)).ToUpperInvariant();
     [JsonIgnore] public string[] GroupList => (Groups ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

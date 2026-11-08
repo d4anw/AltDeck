@@ -86,6 +86,8 @@ public partial class LimitedTile : ObservableObject
     public long Serial { get; init; }
     public string InstanceId { get; init; } = "";
     public bool IsOnHold { get; init; }
+    /// <summary>A limited bundle (a dynamic head, for one) rather than a single asset: it has its own pictures and item page.</summary>
+    public bool IsBundle { get; init; }
 
     [ObservableProperty] private string thumbUrl = "";
     [ObservableProperty] private bool isSelected;
@@ -101,9 +103,9 @@ public partial class LimitedTile : ObservableObject
     public string SerialText => Serial > 0 ? $"#{Serial:N0}" : "";
 
     /// <summary>Builds a tile from what Roblox said plus the values list.</summary>
-    public static LimitedTile From(long assetId, string name, long robloxRap, long serial = 0, string instanceId = "", bool onHold = false)
+    public static LimitedTile From(long assetId, string name, long robloxRap, long serial = 0, string instanceId = "", bool onHold = false, bool bundle = false)
     {
-        var v = Services.LimitedValues.Get(assetId);
+        var v = bundle ? null : Services.LimitedValues.Get(assetId);   // the values list only has assets
         return new LimitedTile
         {
             AssetId = assetId,
@@ -115,7 +117,8 @@ public partial class LimitedTile : ObservableObject
             Rare = v?.Rare ?? false,
             Serial = serial,
             InstanceId = instanceId,
-            IsOnHold = onHold
+            IsOnHold = onHold,
+            IsBundle = bundle
         };
     }
 }

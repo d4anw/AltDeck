@@ -297,8 +297,11 @@ public partial class MainViewModel
 
     private static async Task FillLimitedThumbsAsync(IList<LimitedTile> tiles)
     {
-        var pics = await Thumbnails.GetAsync("Asset", tiles.Select(t => t.AssetId), "150x150");
-        foreach (var t in tiles) if (pics.TryGetValue(t.AssetId, out var u)) t.ThumbUrl = u;
+        // assets and bundles (dynamic heads) have their own picture lists
+        var assets = Thumbnails.GetAsync("Asset", tiles.Where(t => !t.IsBundle).Select(t => t.AssetId), "150x150");
+        var bundles = Thumbnails.GetAsync("BundleThumbnail", tiles.Where(t => t.IsBundle).Select(t => t.AssetId), "150x150");
+        var a = await assets; var b = await bundles;
+        foreach (var t in tiles) if ((t.IsBundle ? b : a).TryGetValue(t.AssetId, out var u)) t.ThumbUrl = u;
     }
 
     // ---- one limited
@@ -323,8 +326,8 @@ public partial class MainViewModel
         OpenLimitedPicture = t.ThumbUrl;
         await LimitedLoad.RunAsync(async ct =>
         {
-            var pic = Thumbnails.GetAsync("Asset", new[] { t.AssetId }, "420x420", ct);
-            var stats = await RobloxTrades.GetItemStatsAsync(t.AssetId, ct);
+            var pic = Thumbnails.GetAsync(t.IsBundle ? "BundleThumbnail" : "Asset", new[] { t.AssetId }, "420x420", ct);
+            var stats = await RobloxTrades.GetItemStatsAsync(t.AssetId, t.IsBundle, ct);
             if (OpenLimited != t) return true;
             OpenStats = stats;
             DrawRapChart(stats.History);
@@ -381,12 +384,12 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
-    private Task BuyOpenLimited() => OpenLimited is { } t ? OpenLimitedInMarketAsync(t.AssetId, t.Name, buy: false) : Task.CompletedTask;
+    private Task BuyOpenLimited() => OpenLimited is { } t ? OpenLimitedInMarketAsync(t.AssetId, t.Name, buy: false, t.IsBundle) : Task.CompletedTask;
 
     [RelayCommand]
     private void OpenLimitedOnRolimons()
     {
-        if (OpenLimited is { } t) Web($"https://www.rolimons.com/item/{t.AssetId}");
+        if (OpenLimited is { } t) Web($"https://www.rolimons.com/{(t.IsBundle ? "bundle" : "item")}/{t.AssetId}");
     }
 
     private static void Web(string url)
@@ -395,12 +398,12 @@ public partial class MainViewModel
     }
 
     /// <summary>Shows a limited on the Marketplace page (sellers list). With <paramref name="buy"/>, the cheapest copy's confirm card opens too.</summary>
-    private async Task OpenLimitedInMarketAsync(long assetId, string name, bool buy)
+    private async Task OpenLimitedInMarketAsync(long assetId, string name, bool buy, bool bundle = false)
     {
         _autoBuyFor = buy ? assetId : 0;
         if (MarketCats.Count == 0 && MarketLoad.State != LoadState.Loading) _ = LoadMarketAsync();
         Page = "Marketplace";
-        await OpenMarketItemAsync(new MarketItem { Id = assetId, ItemType = "Asset", Name = name, IsLimited = true });
+        await OpenMarketItemAsync(new MarketItem { Id = assetId, ItemType = bundle ? "Bundle" : "Asset", Name = name, IsLimited = true });
     }
 
     // ================================================================== inventory value per account

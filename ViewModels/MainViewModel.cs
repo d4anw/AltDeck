@@ -190,6 +190,8 @@ public partial class MainViewModel : ObservableObject
         if (Accounts.Count > 0) await CheckAllAsync();
     }
 
+    public void SaveSettingsNow() { try { _store.Save(Settings); } catch { } }
+
     /// <summary>Called when the window closes: Roblox's own settings and any CPU limits go back to normal.</summary>
     public void Shutdown()
     {

@@ -33,6 +33,29 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <!-- the grey rounded buttons in the title bar: bell, Robux, account -->
+    <Style x:Key="TitlePill" TargetType="Button">
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+      <Setter Property="Background" Value="{DynamicResource Card2}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+              <ContentPresenter VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource Line}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </Window.Resources>
 
   <shell:WindowChrome.WindowChrome>
@@ -59,39 +82,41 @@
           <TextBlock Text="RoDeck" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-          <!-- the account the pages show: avatar, name, Robux. Click to switch. -->
-          <Button x:Name="AccountBtn" Click="AccountBtn_Click" Cursor="Hand" Margin="0,0,8,0" VerticalAlignment="Center"
-                  shell:WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Switch account">
-            <Button.Template>
-              <ControlTemplate TargetType="Button">
-                <Border x:Name="b" Background="Transparent" CornerRadius="17" Padding="4,4,12,4">
-                  <ContentPresenter/>
-                </Border>
-                <ControlTemplate.Triggers>
-                  <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
-                  </Trigger>
-                </ControlTemplate.Triggers>
-              </ControlTemplate>
-            </Button.Template>
+          <!-- notifications: friend requests and trades waiting (the dot counts both) -->
+          <Button x:Name="BellBtn" Style="{StaticResource TitlePill}" Width="34" Padding="0" Click="BellBtn_Click" ToolTip="Notifications">
+            <Grid Width="34" Height="34">
+              <TextBlock Text="&#xEA8F;" FontFamily="{StaticResource Icons}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource Badge}" Background="{DynamicResource Red}" Height="15" MinWidth="15" Padding="4,0"
+                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-5,0"
+                      Visibility="{Binding BellCount, Converter={StaticResource CountVis}}">
+                <TextBlock Text="{Binding BellCount}" Style="{StaticResource BadgeText}" FontSize="10" Foreground="White"/>
+              </Border>
+            </Grid>
+          </Button>
+          <!-- Robux of the account in use -->
+          <Button Style="{StaticResource TitlePill}" Padding="9,0,12,0" Margin="8,0,0,0" ToolTip="Robux" Click="Robux_Click"
+                  Visibility="{Binding CurrentAccount.RobuxShort, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">
             <StackPanel Orientation="Horizontal">
-              <ctl:AvatarView Width="28" Height="28" Url="{Binding CurrentAccount.AvatarUrl}" Initials="{Binding CurrentAccount.Initials}"/>
-              <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
-                <TextBlock Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue='No account', TargetNullValue='No account'}"
-                           FontSize="12" FontWeight="SemiBold" MaxWidth="150" TextTrimming="CharacterEllipsis"/>
-                <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay, FallbackValue='Add one under Multi-launch'}"
-                           FontSize="10.5" Foreground="{DynamicResource Accent}" MaxWidth="150" TextTrimming="CharacterEllipsis"/>
-              </StackPanel>
-              <TextBlock Text="&#xE70D;" FontFamily="{StaticResource Icons}" FontSize="9" Margin="10,0,0,0"
-                         VerticalAlignment="Center" Foreground="{DynamicResource Muted}"/>
+              <Viewbox Width="18" Height="18" VerticalAlignment="Center">
+                <Canvas Width="20" Height="20">
+                  <!-- a rounded hexagon with a square in the middle -->
+                  <Path Stroke="{DynamicResource Fg}" StrokeThickness="2.2" StrokeLineJoin="Round"
+                        Data="M10,1.6 L17.3,5.8 L17.3,14.2 L10,18.4 L2.7,14.2 L2.7,5.8 Z"/>
+                  <Rectangle Canvas.Left="7.2" Canvas.Top="7.2" Width="5.6" Height="5.6" RadiusX="0.8" RadiusY="0.8" Fill="{DynamicResource Fg}"/>
+                </Canvas>
+              </Viewbox>
+              <TextBlock Text="{Binding CurrentAccount.RobuxShort, Mode=OneWay}" FontSize="14" Margin="8,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
           </Button>
-          <Rectangle Width="1" Height="18" Fill="{DynamicResource Line}" Margin="0,0,6,0"/>
-          <Button Style="{StaticResource TitleBtn}" Content="&#xE72C;" ToolTip="Check all sign-ins" Command="{Binding CheckAllCommand}"/>
-          <Button Style="{StaticResource TitleBtn}" Content="&#xE706;" ToolTip="Switch light / dark" Command="{Binding ToggleThemeCommand}"/>
-          <Button Style="{StaticResource TitleBtn}" Content="&#xE72E;" ToolTip="Accounts &amp; security: vault and master password"
-                  Command="{Binding GoSectionCommand}" CommandParameter="Accounts"/>
-          <Rectangle Width="1" Height="18" Fill="{DynamicResource Line}" Margin="6,0"/>
+          <!-- the account the pages show: avatar and name. Click to switch, or for the account tools. -->
+          <Button x:Name="AccountBtn" Style="{StaticResource TitlePill}" Click="AccountBtn_Click" Padding="3,0,11,0" Margin="8,0,10,0" ToolTip="Switch account">
+            <StackPanel Orientation="Horizontal">
+              <ctl:AvatarView Width="28" Height="28" Url="{Binding CurrentAccount.AvatarUrl}" Initials="{Binding CurrentAccount.Initials}"/>
+              <TextBlock Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue='No account', TargetNullValue='No account'}"
+                         FontSize="14" FontWeight="SemiBold" Margin="8,0,0,0" MaxWidth="160" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              <TextBlock Text="&#x25BC;" FontSize="10" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
           <Button Style="{StaticResource TitleBtn}" Content="&#xE921;" Click="Min_Click"/>
           <Button x:Name="MaxBtn" Style="{StaticResource TitleBtn}" Content="&#xE922;" Click="Max_Click"/>
           <Button Style="{StaticResource TitleBtn}" Content="&#xE8BB;" Click="Close_Click"/>

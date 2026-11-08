@@ -21,7 +21,9 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private string lastSeenVersion = "";
     [ObservableProperty] private string currentAccountId = "";   // the account Home, Games, Avatar, Friends… show (top right)   // to show "What's new" once after an update
     [ObservableProperty] private string discordAppId = "";   // not used any more (RoDeck has its own built-in app); kept so older settings.json files load as before
-    [ObservableProperty] private bool closeToTray;
+    [ObservableProperty] private bool closeToTray = true;      // X hides RoDeck to the tray (on by default)
+    [ObservableProperty] private bool trayDefaultApplied;     // set once: older settings.json files get Close to tray turned on once
+    [ObservableProperty] private bool trayTipShown;           // the "still running in the tray" note was shown (it shows only once ever)
     [ObservableProperty] private bool skipSplash;
     [ObservableProperty] private bool detailedView = true;
 

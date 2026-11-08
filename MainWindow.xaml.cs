@@ -14,7 +14,6 @@ public partial class MainWindow : Window
     private readonly TrayService _tray = new();
     private readonly HotkeyService _hotkey = new();
     private bool _reallyExit;       // true when the person chose Quit (or Windows is signing out): Close must not hide to the tray
-    private bool _trayTipShown;
     private bool _updateOpen;          // the update window is showing
     private bool _restartAfterUpdate;  // the person chose "Update": restart into the new version on close
 
@@ -78,6 +77,7 @@ public partial class MainWindow : Window
             // A borderless window overflows the screen when maximized (the bottom ends up under the taskbar),
             // so ask for exactly the work area of the monitor it is on.
             ((System.Windows.Interop.HwndSource)PresentationSource.FromVisual(this)).AddHook(MaximizeHook);
+            RoundCorners();
             _hotkey.Attach(this);
             _hotkey.Pressed += OnPanicHotkey;
             _hotkey.PressedId += OnPresetHotkey;
@@ -92,9 +92,10 @@ public partial class MainWindow : Window
             e.Cancel = true;
             _tray.Visible = true;
             Hide();
-            if (!_trayTipShown)
+            if (!_vm.Settings.TrayTipShown)   // once ever, not every time
             {
-                _trayTipShown = true;
+                _vm.Settings.TrayTipShown = true;
+                _vm.SaveSettingsNow();
                 _tray.Balloon("RoDeck is still running",
                     _vm.AdRunning ? "Your trade ad keeps posting. Click the RoDeck icon by the clock to see it, stop it or quit."
                                   : "Clients and auto-rejoin keep working. Click the RoDeck icon by the clock to open it or quit.");
@@ -254,6 +255,20 @@ public partial class MainWindow : Window
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
     private struct MonitorInfo { public int Size; public RectI Monitor, Work; public int Flags; }
 
+    [System.Runtime.InteropServices.DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    /// <summary>Rounded corners like other Windows 11 apps (Windows squares them itself when maximized). Older Windows: no change.</summary>
+    private void RoundCorners()
+    {
+        try
+        {
+            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            int round = 2;                                   // DWMWCP_ROUND
+            DwmSetWindowAttribute(hwnd, 33, ref round, 4);   // DWMWA_WINDOW_CORNER_PREFERENCE
+        }
+        catch { }
+    }
+
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int flags);
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
 
@@ -288,10 +303,42 @@ public partial class MainWindow : Window
             menu.Items.Add(item);
         }
         if (_vm.Accounts.Count > 0) menu.Items.Add(new System.Windows.Controls.Separator());
-        var manage = new System.Windows.Controls.MenuItem { Header = _vm.Accounts.Count > 0 ? "Manage accounts…" : "Add an account…" };
-        manage.Click += (_, _) => _vm.GoMultiTabCommand.Execute("Accounts");
-        menu.Items.Add(manage);
+        Add(menu, _vm.Accounts.Count > 0 ? "Manage accounts…" : "Add an account…", "\uE716", () => _vm.GoMultiTabCommand.Execute("Accounts"));
+        Add(menu, "Check all sign-ins", "\uE72C", () => _vm.CheckAllCommand.Execute(null));
+        Add(menu, "Accounts & security", "\uE72E", () => _vm.GoSectionCommand.Execute("Accounts"));
+        Add(menu, _vm.Settings.Theme == "Light" ? "Dark mode" : "Light mode", "\uE706", () => _vm.ToggleThemeCommand.Execute(null));
         menu.IsOpen = true;
+    }
+
+    /// <summary>The bell top right: what is waiting, and the notification settings.</summary>
+    private void BellBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = BellBtn,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom
+        };
+        Add(menu, _vm.RequestCount switch { 0 => "No friend requests", 1 => "1 friend request", var n => $"{n} friend requests" },
+            "\uE8FA", () => _vm.OpenNotification("Requests"));
+        Add(menu, _vm.InboundCount switch { 0 => "No trades waiting", 1 => "1 trade waiting", var n => $"{n} trades waiting" },
+            "\uE8AB", () => _vm.OpenNotification("Trades"));
+        menu.Items.Add(new System.Windows.Controls.Separator());
+        Add(menu, "Notification settings…", "\uE713", () => _vm.GoSectionCommand.Execute("Notifications"));
+        menu.IsOpen = true;
+    }
+
+    /// <summary>The Robux pill: the Marketplace.</summary>
+    private void Robux_Click(object sender, RoutedEventArgs e) => _vm.Page = "Marketplace";
+
+    private static void Add(System.Windows.Controls.ContextMenu menu, string text, string glyph, Action click)
+    {
+        var item = new System.Windows.Controls.MenuItem
+        {
+            Header = text,
+            Icon = new System.Windows.Controls.TextBlock { Text = glyph, FontFamily = (System.Windows.Media.FontFamily)Application.Current.FindResource("Icons"), FontSize = 13 }
+        };
+        item.Click += (_, _) => click();
+        menu.Items.Add(item);
     }
 
     private void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

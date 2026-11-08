@@ -36,7 +36,7 @@ public class RapTip : ToolTip
         Content = Build(t, null, "Loading sales…");
         try
         {
-            var points = await RobloxTrades.GetPriceHistoryAsync(t.AssetId, CancellationToken.None);
+            var points = await RobloxTrades.GetPriceHistoryAsync(t.AssetId, CancellationToken.None, t.IsBundle);
             if (_shownFor != t.AssetId) return;
             Content = Build(t, points, points.Count < 2 ? "No sales history." : null);
         }

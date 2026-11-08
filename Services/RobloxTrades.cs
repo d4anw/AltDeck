@@ -99,8 +99,9 @@ public static class RobloxTrades
     {
         var target = i.TryGetProperty("itemTarget", out var tt) ? tt : default;
         long assetId = long.TryParse(Str(target, "targetId"), out var id) ? id : Long(target, "targetId");
+        bool bundle = string.Equals(Str(target, "itemType"), "Bundle", StringComparison.OrdinalIgnoreCase);
         return LimitedTile.From(assetId, Str(i, "itemName"), Long(i, "recentAveragePrice"), Long(i, "serialNumber"),
-                                Str(i, "collectibleItemInstanceId"), i.TryGetProperty("isOnHold", out var h) && h.ValueKind == JsonValueKind.True);
+                                Str(i, "collectibleItemInstanceId"), i.TryGetProperty("isOnHold", out var h) && h.ValueKind == JsonValueKind.True, bundle);
     }
 
     // ------------------------------------------------------------------ acting on trades
@@ -199,9 +200,13 @@ public static class RobloxTrades
     /// The item page's numbers: type, copies, best price, RAP and sales from Roblox; acronym, value, demand and trend from
     /// the values list.
     /// </summary>
-    public static async Task<ItemStats> GetItemStatsAsync(long assetId, CancellationToken ct)
+    public static async Task<ItemStats> GetItemStatsAsync(long assetId, bool bundle, CancellationToken ct)
     {
-        using var det = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct);
+        if (bundle) return await GetBundleStatsAsync(assetId, ct);
+        JsonDocument det;
+        try { det = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct); }
+        catch (RobloxException ex) when (!ex.TooMany && !ex.SignedOut) { return await GetBundleStatsAsync(assetId, ct); }   // not an asset: a bundle
+        using var _det = det;
         var d = det.RootElement;
         var cid = Str(d, "CollectibleItemId");
         if (cid.Length > 0) CollectibleIds[assetId] = cid;
@@ -247,6 +252,54 @@ public static class RobloxTrades
         };
     }
 
+    /// <summary>A limited bundle (a dynamic head, for one): the catalog has its numbers, the marketplace its sales.</summary>
+    static async Task<ItemStats> GetBundleStatsAsync(long bundleId, CancellationToken ct)
+    {
+        using var det = await RobloxHttp.GetJsonAsync($"https://catalog.roblox.com/v1/catalog/items/{bundleId}/details?itemType=Bundle", null, ct);
+        var d = det.RootElement;
+        var cid = Str(d, "collectibleItemId");
+        if (cid.Length > 0) BundleCollectibleIds[bundleId] = cid;
+        var (rap, sold30, points) = cid.Length > 0 ? await ReadSalesAsync(cid, ct) : (0, 0, new List<(DateTime, long)>());
+        if (cid.Length > 0) BundleHistories[bundleId] = (DateTime.UtcNow, points);
+        bool lu = d.TryGetProperty("itemRestrictions", out var rs) && rs.ValueKind == JsonValueKind.Array
+                  && rs.EnumerateArray().Any(x => x.ValueKind == JsonValueKind.String && x.GetString() == "LimitedUnique");
+        long copies = Long(d, "totalQuantity");
+        long best = Long(d, "lowestResalePrice");
+        return new ItemStats
+        {
+            Type = Long(d, "bundleType") == 4 ? "Dynamic head" : "Bundle",
+            LimitedU = lu,
+            Copies = copies,
+            Made = copies,
+            BestPrice = best > 0 ? best : Long(d, "lowestPrice"),
+            Rap = rap,
+            Sold30 = sold30,
+            History = points
+        };
+    }
+
+    /// <summary>The marketplace's sales for a collectible: RAP, copies sold in the last 30 days, and the price per day.</summary>
+    static async Task<(long Rap, long Sold30, List<(DateTime, long)> Points)> ReadSalesAsync(string cid, CancellationToken ct)
+    {
+        using var rd = await RobloxHttp.GetJsonAsync($"https://apis.roblox.com/marketplace-sales/v1/item/{cid}/resale-data", null, ct);
+        var r = rd.RootElement;
+        long rap = r.TryGetProperty("recentAveragePrice", out var ra) && ra.ValueKind == JsonValueKind.Number ? (long)Math.Round(ra.GetDouble()) : 0;
+        var points = new List<(DateTime, long)>();
+        if (r.TryGetProperty("priceDataPoints", out var pd) && pd.ValueKind == JsonValueKind.Array)
+            foreach (var p in pd.EnumerateArray())
+                if (Date(p, "date") is { } day && day != default && Long(p, "value") > 0) points.Add((day, Long(p, "value")));
+        long sold30 = 0;
+        var since = DateTime.UtcNow.AddDays(-30);
+        if (r.TryGetProperty("volumeDataPoints", out var vd) && vd.ValueKind == JsonValueKind.Array)
+            foreach (var p in vd.EnumerateArray())
+                if (Date(p, "date") > since) sold30 += Long(p, "value");
+        points.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+        if (rap == 0 && points.Count > 0) rap = points[^1].Item2;
+        return (rap, sold30, points);
+    }
+
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> BundleCollectibleIds = new();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<(DateTime, long)> Points)> BundleHistories = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> CollectibleIds = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<(DateTime, long)> Points)> Histories = new();
 
@@ -254,13 +307,29 @@ public static class RobloxTrades
     /// The average sale price per day (what the RAP follows), oldest first, from Roblox's marketplace. Remembered for 15
     /// minutes, so hovering the same item again is instant.
     /// </summary>
-    public static async Task<List<(DateTime Day, long Price)>> GetPriceHistoryAsync(long assetId, CancellationToken ct)
+    public static async Task<List<(DateTime Day, long Price)>> GetPriceHistoryAsync(long assetId, CancellationToken ct, bool bundle = false)
     {
+        if (bundle)
+        {
+            if (BundleHistories.TryGetValue(assetId, out var kb) && DateTime.UtcNow - kb.At < TimeSpan.FromMinutes(15)) return kb.Points;
+            if (!BundleCollectibleIds.TryGetValue(assetId, out var bcid))
+            {
+                using var bd = await RobloxHttp.GetJsonAsync($"https://catalog.roblox.com/v1/catalog/items/{assetId}/details?itemType=Bundle", null, ct);
+                bcid = Str(bd.RootElement, "collectibleItemId");
+                BundleCollectibleIds[assetId] = bcid;
+            }
+            var pts = bcid.Length > 0 ? (await ReadSalesAsync(bcid, ct)).Points : new List<(DateTime, long)>();
+            if (BundleHistories.Count > 300) BundleHistories.Clear();
+            BundleHistories[assetId] = (DateTime.UtcNow, pts);
+            return pts;
+        }
         if (Histories.TryGetValue(assetId, out var known) && DateTime.UtcNow - known.At < TimeSpan.FromMinutes(15)) return known.Points;
         if (!CollectibleIds.TryGetValue(assetId, out var cid))
         {
-            using var det = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct);
-            cid = Str(det.RootElement, "CollectibleItemId");
+            JsonDocument det;
+            try { det = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct); }
+            catch (RobloxException ex) when (!ex.TooMany && !ex.SignedOut) { return await GetPriceHistoryAsync(assetId, ct, bundle: true); }
+            using (det) cid = Str(det.RootElement, "CollectibleItemId");
             CollectibleIds[assetId] = cid;
         }
         var points = new List<(DateTime, long)>();

@@ -30,6 +30,8 @@ public static class SmoothScroll
 
         // a dropdown list that is open has its own scrolling; leave it alone
         if (FindParent<Popup>(src) != null) return;
+        // the 3D avatar uses the wheel to zoom
+        if (FindParent<Controls.Avatar3DView>(src) != null) return;
 
         bool down = e.Delta < 0;
         for (var d = src; d != null; d = Parent(d))

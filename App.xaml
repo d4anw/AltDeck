@@ -777,9 +777,26 @@
         <Setter.Value>
           <ControlTemplate TargetType="MenuItem">
             <Border x:Name="b" Background="Transparent" CornerRadius="7" Padding="{TemplateBinding Padding}">
-              <ContentPresenter ContentSource="Header"/>
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <!-- an icon, or a tick for the chosen item (left out when the item has neither) -->
+                <Grid x:Name="side" Width="18" Margin="0,0,10,0" VerticalAlignment="Center">
+                  <ContentPresenter ContentSource="Icon" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  <TextBlock x:Name="tick" Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="12" Visibility="Collapsed"
+                             Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+                <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center"/>
+              </Grid>
             </Border>
             <ControlTemplate.Triggers>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="Icon" Value="{x:Null}"/>
+                  <Condition Property="IsCheckable" Value="False"/>
+                </MultiTrigger.Conditions>
+                <Setter TargetName="side" Property="Visibility" Value="Collapsed"/>
+              </MultiTrigger>
+              <Trigger Property="IsChecked" Value="True"><Setter TargetName="tick" Property="Visibility" Value="Visible"/></Trigger>
               <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>

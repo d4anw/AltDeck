@@ -21,7 +21,7 @@ public partial class MainViewModel
     public Loader TradesLoad { get; } = new();
     [ObservableProperty] private bool tradesHasMore;
     [ObservableProperty] private string canTradeNote = "";
-    [ObservableProperty] private int inboundCount;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(BellCount))] private int inboundCount;
     private string? _tradesNext;
     private Account? _tradesFor;
     private string _tradesTypeLoaded = "";
