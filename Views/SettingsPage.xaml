@@ -102,7 +102,7 @@
               <ctl:SettingRow Title="Sign-in check"
                               Description="Every this many minutes RoDeck quietly checks each account's sign-in and tells you when one has expired (a red badge on Accounts, and a tray balloon while hidden). 0 turns it off; the shortest is 5. A sign-in is also checked right before it launches.">
                 <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.HealthCheckMinutes}" Width="64" FontFamily="Consolas"/>
+                  <TextBox Text="{Binding Settings.HealthCheckMinutes}" Width="64" Style="{StaticResource NumBox}"/>
                   <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
@@ -134,7 +134,7 @@
               </ctl:SettingRow>
               <ctl:SettingRow Title="Launch delay" Description="Wait between two launches when several accounts launch at once.">
                 <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.LaunchDelay}" Width="64" FontFamily="Consolas"/>
+                  <TextBox Text="{Binding Settings.LaunchDelay}" Width="64" Style="{StaticResource NumBox}"/>
                   <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
@@ -155,7 +155,7 @@
               </ctl:SettingRow>
               <ctl:SettingRow Title="Close grace" Description="How long a client RoDeck closes gets to close by itself before it is ended.">
                 <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.CloseGrace}" Width="64" FontFamily="Consolas"/>
+                  <TextBox Text="{Binding Settings.CloseGrace}" Width="64" Style="{StaticResource NumBox}"/>
                   <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
@@ -196,7 +196,7 @@
                               Description="How far below it has to be. Projected items (pushed-up RAP) are never announced."
                               Visibility="{Binding Settings.NotifyDeals, Converter={StaticResource BoolVis}}">
                 <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.NotifyDealPercent}" Width="56" FontFamily="Consolas"/>
+                  <TextBox Text="{Binding Settings.NotifyDealPercent}" Width="56" Style="{StaticResource NumBox}"/>
                   <TextBlock Text="% below" VerticalAlignment="Center" Margin="8,0,0,0" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
@@ -217,7 +217,7 @@
                               Description="The most Robux one purchase may cost, on any account. RoDeck won't buy anything above it. 0 means no limit. Every purchase still asks first.">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="R$" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource MutedText}"/>
-                  <TextBox Text="{Binding Settings.MarketSpendLimit}" Width="90" FontFamily="Consolas"/>
+                  <TextBox Text="{Binding Settings.MarketSpendLimit}" Width="90" Style="{StaticResource NumBox}"/>
                 </StackPanel>
               </ctl:SettingRow>
             </StackPanel>

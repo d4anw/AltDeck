@@ -52,9 +52,9 @@
                   <ctl:SettingRow Title="Give up after"
                                   Description="Rejoins of one account within this time. Each waits twice as long as the one before (at most a minute); past the limit RoDeck slows down or leaves it (below). Time spent waiting for the internet doesn't count.">
                     <StackPanel Orientation="Horizontal">
-                      <TextBox Text="{Binding Settings.GiveUpTries}" Width="56" FontFamily="Consolas"/>
+                      <TextBox Text="{Binding Settings.GiveUpTries}" Width="56" Style="{StaticResource NumBox}"/>
                       <TextBlock Text="tries in" Margin="8,0,8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                      <TextBox Text="{Binding Settings.GiveUpMinutes}" Width="56" FontFamily="Consolas"/>
+                      <TextBox Text="{Binding Settings.GiveUpMinutes}" Width="56" Style="{StaticResource NumBox}"/>
                       <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                     </StackPanel>
                   </ctl:SettingRow>

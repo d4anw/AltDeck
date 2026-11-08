@@ -6,7 +6,7 @@
         WindowStartupLocation="CenterOwner">
   <StackPanel Margin="22">
     <TextBlock x:Name="Prompt" Margin="0,0,0,12" TextWrapping="Wrap"/>
-    <TextBox x:Name="Keys" IsReadOnly="True" FontFamily="Consolas" Padding="10,8"
+    <TextBox x:Name="Keys" IsReadOnly="True" FontFamily="Consolas" Padding="16,16"
              ToolTip="Click here, then press the keys" PreviewKeyDown="Keys_PreviewKeyDown"/>
     <TextBlock x:Name="ErrorText" Foreground="{DynamicResource Red}" TextWrapping="Wrap" Margin="0,10,0,0" Visibility="Collapsed"/>
     <Grid Margin="0,18,0,0">

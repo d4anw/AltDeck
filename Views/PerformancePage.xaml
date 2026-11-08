@@ -128,7 +128,7 @@
                       IsEnabled="{Binding Settings.UnlimitedFps, Converter={StaticResource Not}}"
                       Minimum="5" Maximum="240" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True"
                       Value="{Binding Settings.FpsCap, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"/>
-              <TextBox x:Name="FpsBox" Width="80" Height="44" Padding="10,0" FontFamily="Consolas" FontSize="16" FontWeight="SemiBold"
+              <TextBox x:Name="FpsBox" Width="80" Height="44" Padding="6,0" TextAlignment="Center" FontFamily="Consolas" FontSize="16" FontWeight="SemiBold"
                        Foreground="{DynamicResource Fg}" MaxLength="4" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
                        Text="{Binding Settings.FpsCap, Mode=OneWay}"
                        IsEnabled="{Binding Settings.UnlimitedFps, Converter={StaticResource Not}}"

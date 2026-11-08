@@ -767,7 +767,7 @@
                   </ItemsControl>
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="+ Robux" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,8,0"/>
-                    <TextBox Text="{Binding BuildGiveRobux, UpdateSourceTrigger=PropertyChanged}" Width="100" FontFamily="Consolas"/>
+                    <TextBox Text="{Binding BuildGiveRobux, UpdateSourceTrigger=PropertyChanged}" Width="100" Style="{StaticResource NumBox}"/>
                   </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="2">
@@ -784,7 +784,7 @@
                   </ItemsControl>
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="+ Robux" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,8,0"/>
-                    <TextBox Text="{Binding BuildGetRobux, UpdateSourceTrigger=PropertyChanged}" Width="100" FontFamily="Consolas"/>
+                    <TextBox Text="{Binding BuildGetRobux, UpdateSourceTrigger=PropertyChanged}" Width="100" Style="{StaticResource NumBox}"/>
                   </StackPanel>
                 </StackPanel>
               </Grid>

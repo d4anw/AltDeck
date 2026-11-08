@@ -4,8 +4,8 @@
              x:Name="Root">
   <!-- 🔍 + text + grey hint while empty + ✕ to clear. Enter runs SubmitCommand. Used on every page. -->
   <Grid>
-    <!-- RoDeck's text boxes apply Padding twice (template + Windows), so 17 here puts the text 34 px in: right after the icon -->
-    <TextBox x:Name="Box" Padding="17,9,17,9"
+    <!-- 34 px in: the text starts right after the search icon, and right of it there's room for the clear button -->
+    <TextBox x:Name="Box" Padding="34,18,34,18"
              Text="{Binding Text, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"
              KeyDown="Box_KeyDown"/>
     <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="13,0,0,0"

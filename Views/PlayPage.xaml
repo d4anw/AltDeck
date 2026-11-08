@@ -83,7 +83,7 @@
           </Grid>
           <TextBlock Text="Game link, private server, or place ID" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8"/>
           <Grid>
-            <TextBox Text="{Binding TargetText, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" Padding="14,12"/>
+            <TextBox Text="{Binding TargetText, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" Padding="20,24"/>
             <TextBlock Text="Paste it here" FontFamily="Consolas" Margin="16,0,0,0" VerticalAlignment="Center"
                        IsHitTestVisible="False" Foreground="{DynamicResource Muted}">
               <TextBlock.Style>
@@ -174,7 +174,7 @@
           <StackPanel x:Name="MoreOpts" Visibility="Collapsed" Margin="0,8,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
               <TextBlock Text="Wait between launches (s):" VerticalAlignment="Center" Margin="0,0,10,0"/>
-              <TextBox Text="{Binding Settings.LaunchDelay}" Width="70"/>
+              <TextBox Text="{Binding Settings.LaunchDelay}" Width="70" Style="{StaticResource NumBox}"/>
             </StackPanel>
           </StackPanel>
         </StackPanel>
