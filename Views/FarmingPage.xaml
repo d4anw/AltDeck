@@ -10,8 +10,7 @@
         <RowDefinition Height="*"/>
       </Grid.RowDefinitions>
       <StackPanel Margin="0,0,0,18">
-        <TextBlock Text="Farming" FontSize="28" FontWeight="Bold"/>
-        <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+        <TextBlock Margin="0" Style="{StaticResource MutedText}" TextWrapping="Wrap"
                    Text="Keep your alts in the game for hours: RoDeck brings them back when they get kicked, crash or freeze, keeps them from going idle, and stops everything when you want. This only applies to clients started from Multi-launch; a game you start from Home or Games closes normally."/>
       </StackPanel>
 

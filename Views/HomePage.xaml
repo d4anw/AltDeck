@@ -71,7 +71,7 @@
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <StackPanel>
-          <TextBlock Text="{Binding HomeTitle, Mode=OneWay}" FontSize="28" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+          <TextBlock Text="{Binding HomeTitle, Mode=OneWay}" FontSize="20" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
           <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
             <TextBlock Text="{Binding HomeSubtitle, Mode=OneWay}" VerticalAlignment="Center" Style="{StaticResource MutedText}"
                        TextTrimming="CharacterEllipsis" MaxWidth="420"/>
@@ -82,13 +82,12 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
           <TextBlock Text="Detailed view" VerticalAlignment="Center" Margin="0,0,10,0" Style="{StaticResource MutedText}"/>
           <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.DetailedView}" Margin="0,0,14,0"/>
-          <Button Content="Tile windows  &#x25BE;" Click="Tile_Click" ToolTip="Move the client windows to a screen and arrange them in a grid there"/>
-          <Button Content="Minimize all" Command="{Binding MinimizeAllCommand}" ToolTip="Minimize every client window"/>
-          <Button Content="Show all" Command="{Binding ShowAllCommand}" ToolTip="Bring every minimized client window back"/>
-          <Button Content="Save layout" Command="{Binding SaveLayoutCommand}" ToolTip="Remember where the client windows are"/>
-          <Button Content="Layouts  &#x25BE;" Click="Windows_Click" ToolTip="Restore or delete a saved layout"/>
-          <Button Content="&#xE712;" FontFamily="{StaticResource Icons}" Click="HomeMore_Click"/>
-          <Button Style="{StaticResource Primary}" Content="Play more" Command="{Binding GoPlayCommand}" Margin="0"/>
+          <Button Margin="0" Click="Windows_Click" ToolTip="Tile, minimize, show, and save or restore where the client windows are">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE737;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Windows  &#x25BE;"/>
+            </StackPanel>
+          </Button>
         </StackPanel>
       </Grid>
 

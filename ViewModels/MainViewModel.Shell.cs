@@ -19,11 +19,15 @@ public partial class MainViewModel
     public void GoMulti(string tab)
     {
         MultiTab = tab;
-        Page = "Multi";
+        _multiTabChosen = true;   // a tab asked for on purpose (e.g. Running right after launching) is kept
+        try { Page = "Multi"; } finally { _multiTabChosen = false; }
     }
+    private bool _multiTabChosen;
 
     partial void OnPageChanged(string value)
     {
+        // nothing running: Multi-launch opens where you start something, not on an empty Running tab
+        if (value == "Multi" && !_restoring && !_multiTabChosen && MultiTab == "Running" && RunningCount == 0) MultiTab = "Launch";
         RecordNav();
         MaybeLoadHome();
         MaybeLoadGames();

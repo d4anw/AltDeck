@@ -23,8 +23,7 @@
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <StackPanel>
-          <TextBlock Text="Accounts" FontSize="28" FontWeight="Bold"/>
-          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
             <TextBlock Text="{Binding AccountsSubtitle, Mode=OneWay}" Style="{StaticResource MutedText}"/>
             <TextBlock Text=" · " Style="{StaticResource MutedText}"
                        Visibility="{Binding NeedsSignInText, Converter={StaticResource EmptyCollapsed}}"/>
