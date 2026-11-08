@@ -238,18 +238,40 @@ public partial class MainViewModel
         if (Avatar3DShown is not { } shown || CurrentAccount is not { } a) { AdjustLiveNote = "Loading 3D…"; return; }
         if (_livePiecesFor == assetId && _adjustPieces.Count > 0) { UpdateLive(); return; }
         AdjustLiveNote = "Finding it on the 3D model…";
-        HashSet<string> textures;
-        try { textures = await RobloxAvatar3D.GetAssetTexturesAsync(a.Cookie, assetId, CancellationToken.None); }
-        catch (Exception) { textures = new(); }
+        RobloxAvatar3D.ItemSignature sig;
+        try { sig = await RobloxAvatar3D.GetItemSignatureAsync(a.Cookie, assetId, CancellationToken.None); }
+        catch (Exception ex) { sig = new(new(), new(), ex.Message); }
         if (AdjustItem?.Id != assetId || Avatar3DShown != shown) return;
+
+        // 1. the same texture
         var found = new List<int>();
         for (int i = 0; i < shown.Textures.Count && i < _livePieces.Count; i++)
-            if (shown.Textures[i] is { } t && textures.Contains(t)) found.Add(i);
+            if (shown.Textures[i] is { } t && sig.Textures.Contains(t)) found.Add(i);
+        string how = "texture";
+
+        // 2. the same shape: a piece with exactly as many triangles as the item (each of the item's pieces once)
+        if (found.Count == 0 && sig.Triangles.Count > 0)
+        {
+            var pieceTris = _livePieces.Select(h => h.Children[0] is GeometryModel3D g && g.Geometry is MeshGeometry3D m ? m.TriangleIndices.Count / 3 : -1).ToList();
+            foreach (var want in sig.Triangles)
+            {
+                var matches = Enumerable.Range(0, pieceTris.Count).Where(i => pieceTris[i] == want && !found.Contains(i)).ToList();
+                if (matches.Count == 1) found.Add(matches[0]);   // only when it's unambiguous
+            }
+            how = "shape";
+        }
+
         _adjustPieces = found;
         _livePiecesFor = assetId;
         AdjustLiveNote = found.Count > 0
             ? "Live: the 3D preview follows the sliders."
             : "This item can't be moved on the 3D model, so the preview updates a moment after you let go.";
+        Log(ActivityLog.Info, found.Count > 0
+            ? $"Live adjust: found {AdjustItem?.Name} on the 3D model by {how} ({found.Count} piece{(found.Count == 1 ? "" : "s")})."
+            : $"Live adjust: couldn't find {AdjustItem?.Name} on the 3D model. " +
+              (sig.Problem.Length > 0 ? sig.Problem + "." :
+               $"Item: {sig.Textures.Count} texture(s), triangles {string.Join("/", sig.Triangles)}; model: {_livePieces.Count} pieces, triangles " +
+               string.Join("/", _livePieces.Select(h => h.Children[0] is GeometryModel3D g && g.Geometry is MeshGeometry3D m ? m.TriangleIndices.Count / 3 : 0)) + "."));
         UpdateLive();
     }
 

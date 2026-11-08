@@ -107,38 +107,69 @@ public static class RobloxAvatar3D
         return text;
     }
 
-    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, HashSet<string>> AssetTextures = new();
+/// <summary>How to recognise one item on the avatar's 3D model: its textures, and the number of triangles of each of
+/// its pieces (that number doesn't change when the item is moved, turned or scaled onto an avatar).</summary>
+    public sealed record ItemSignature(HashSet<string> Textures, List<int> Triangles, string Problem);
+
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, ItemSignature> AssetSignatures = new();
 
     /// <summary>
-    /// The texture names of one item's own 3D model (thumbnails.roblox.com/v1/assets-thumbnail-3d, needs a sign-in).
-    /// The same textures appear on the avatar's model, so they tell which piece of the avatar is this item.
-    /// Empty when Roblox has no 3D model for it.
+    /// One item's own 3D model (thumbnails.roblox.com/v1/assets-thumbnail-3d, needs a sign-in), boiled down to what
+    /// recognises it on the avatar: texture names and triangles per piece. Problem says why it's empty, if it is.
     /// </summary>
-    public static async Task<HashSet<string>> GetAssetTexturesAsync(string cookie, long assetId, CancellationToken ct)
+    public static async Task<ItemSignature> GetItemSignatureAsync(string cookie, long assetId, CancellationToken ct)
     {
-        if (AssetTextures.TryGetValue(assetId, out var known)) return known;
-        string url = "";
+        if (AssetSignatures.TryGetValue(assetId, out var known)) return known;
+        string url = "", state = "";
         for (int i = 0; i < 8 && url.Length == 0; i++)
         {
             using var doc = await RobloxHttp.GetJsonAsync($"https://thumbnails.roblox.com/v1/assets-thumbnail-3d?assetId={assetId}", cookie, ct);
             var root = doc.RootElement;
-            if (root.TryGetProperty("state", out var st) && st.GetString() == "Completed"
-                && root.TryGetProperty("imageUrl", out var u) && u.ValueKind == JsonValueKind.String) url = u.GetString() ?? "";
+            state = root.TryGetProperty("state", out var st) ? st.GetString() ?? "" : "";
+            if (state == "Completed" && root.TryGetProperty("imageUrl", out var u) && u.ValueKind == JsonValueKind.String) url = u.GetString() ?? "";
+            else if (state is "Blocked" or "Error") break;
             else await Task.Delay(1000, ct);
         }
-        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (url.Length > 0)
+        var textures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var triangles = new List<int>();
+        if (url.Length == 0)
         {
-            using var meta = JsonDocument.Parse(await RobloxApi.Http.GetStringAsync(url, ct));
+            var none = new ItemSignature(textures, triangles, $"Roblox has no 3D model for it ({(state.Length > 0 ? state : "no answer")})");
+            if (state is "Blocked" or "Error") AssetSignatures[assetId] = none;
+            return none;
+        }
+        using (var meta = JsonDocument.Parse(await RobloxApi.Http.GetStringAsync(url, ct)))
+        {
             var r = meta.RootElement;
             if (r.TryGetProperty("textures", out var tx) && tx.ValueKind == JsonValueKind.Array)
-                foreach (var t in tx.EnumerateArray()) if (t.GetString() is { Length: > 0 } name) set.Add(name);
+                foreach (var t in tx.EnumerateArray()) if (t.GetString() is { Length: > 0 } name) textures.Add(name);
             if (r.TryGetProperty("mtl", out var mtl) && mtl.GetString() is { Length: > 0 } mtlHash)
                 foreach (var m in ParseMtl(await CachedTextAsync(mtlHash, ct)).Values)
-                    if (m.Texture != null) set.Add(m.Texture);
+                    if (m.Texture != null) textures.Add(m.Texture);
+            if (r.TryGetProperty("obj", out var objEl) && objEl.GetString() is { Length: > 0 } objHash)
+                triangles = CountTriangles(await CachedTextAsync(objHash, ct));
         }
-        AssetTextures[assetId] = set;
-        return set;
+        var sig = new ItemSignature(textures, triangles, "");
+        AssetSignatures[assetId] = sig;
+        return sig;
+    }
+
+    /// <summary>Triangles per material in an OBJ, counted the way the model is built (a face of n corners = n − 2).</summary>
+    static List<int> CountTriangles(string obj)
+    {
+        var per = new Dictionary<string, int>();
+        string mat = "";
+        foreach (var raw in obj.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line.StartsWith("usemtl ")) mat = line[7..].Trim();
+            else if (line.StartsWith("f "))
+            {
+                int corners = line.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length - 1;
+                if (corners >= 3) per[mat] = per.GetValueOrDefault(mat) + corners - 2;
+            }
+        }
+        return per.Values.Where(n => n > 0).ToList();
     }
 
     // ------------------------------------------------------------------ OBJ / MTL
