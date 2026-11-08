@@ -13,53 +13,158 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="32,26,32,32">
 
-      <!-- greeting -->
-      <Border Style="{StaticResource CardBox}" Padding="26,22">
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-          </Grid.ColumnDefinitions>
-          <ctl:AvatarView Width="64" Height="64" Url="{Binding CurrentAccount.AvatarUrl}" Initials="{Binding CurrentAccount.Initials}"/>
-          <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
-            <TextBlock FontSize="26" FontWeight="Bold" TextTrimming="CharacterEllipsis">
-              <Run Text="Hi,"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue=there, TargetNullValue=there}"/>
-            </TextBlock>
-            <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}"
-                       Text="{Binding CurrentAccount.Username, Mode=OneWay, StringFormat='@{0}', FallbackValue='Add an account to get started.'}"/>
-          </StackPanel>
-          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-            <StackPanel VerticalAlignment="Center" Margin="0,0,18,0"
-                        Visibility="{Binding CurrentAccount.RobuxText, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">
-              <TextBlock Text="Robux" Style="{StaticResource MutedText}" FontSize="12" HorizontalAlignment="Right"/>
-              <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay}" FontSize="20" FontWeight="Bold"
-                         Foreground="{DynamicResource Accent}" HorizontalAlignment="Right"/>
-            </StackPanel>
-            <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh Home" Margin="0"
-                    Command="{Binding RefreshHomeCommand}"
-                    Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}"/>
-          </StackPanel>
+      <!-- ================= greeting ================= -->
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid Width="60" Height="60">
+          <Ellipse Fill="{DynamicResource AccentSoft}" Stroke="{DynamicResource Accent}" StrokeThickness="2"/>
+          <ctl:AvatarView Width="52" Height="52" Url="{Binding CurrentAccount.AvatarUrl}" Initials="{Binding CurrentAccount.Initials}"/>
         </Grid>
-      </Border>
+        <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+          <TextBlock FontSize="28" FontWeight="Bold" TextTrimming="CharacterEllipsis">
+            <Run Text="{Binding Greeting, Mode=OneWay}"/><Run Text=","/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue=there, TargetNullValue=there}"/>
+          </TextBlock>
+          <TextBlock Margin="0,2,0,0" Style="{StaticResource MutedText}"
+                     Text="{Binding CurrentAccount.Username, Mode=OneWay, StringFormat='@{0}', FallbackValue='Add an account to get started.'}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Padding="14,8" CornerRadius="12" Background="{DynamicResource AccentSoft}" Margin="0,0,10,0"
+                  Visibility="{Binding CurrentAccount.RobuxText, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">
+            <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
+          </Border>
+          <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh Home" Margin="0"
+                  Command="{Binding RefreshHomeCommand}"
+                  Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}"/>
+        </StackPanel>
+      </Grid>
 
       <!-- no account yet -->
-      <Border Style="{StaticResource CardBox}" Margin="0,16,0,0"
+      <Border Style="{StaticResource CardBox}" Margin="0,22,0,0" Padding="28,26"
               Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVisInv}}">
         <StackPanel>
-          <TextBlock Text="Add your first account" FontSize="16" FontWeight="SemiBold"/>
-          <TextBlock Margin="0,4,0,14" Style="{StaticResource MutedText}" TextWrapping="Wrap"
-                     Text="Sign in through a browser window, paste cookies, or import a file. Everything stays encrypted on this PC."/>
-          <Button Content="Go to Accounts" Style="{StaticResource Primary}" HorizontalAlignment="Left" Margin="0"
+          <TextBlock Text="Welcome to RoDeck" FontSize="22" FontWeight="Bold"/>
+          <TextBlock Margin="0,6,0,16" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                     Text="Add your first Roblox account to see your friends, games, avatar and trades here. Sign in through a browser window, paste cookies, or import a file. Everything stays encrypted on this PC."/>
+          <Button Content="Add an account" Style="{StaticResource Primary}" HorizontalAlignment="Left" Margin="0" Padding="20,11"
                   Command="{Binding GoMultiTabCommand}" CommandParameter="Accounts"/>
         </StackPanel>
       </Border>
+
+      <!-- ================= banner + live numbers ================= -->
+      <Grid Margin="0,22,0,0" Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="1.6*"/>
+          <ColumnDefinition Width="16"/>
+          <ColumnDefinition Width="*" MinWidth="300"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- the last game you played, big, with Play right on it -->
+        <Border CornerRadius="18" MinHeight="236" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1">
+          <Grid>
+            <ctl:RemoteImage Url="{Binding HeroImage}" CornerRadius="17"/>
+            <!-- darker towards the bottom left, so the text stays readable on any picture -->
+            <Border CornerRadius="17">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,1" EndPoint="0.9,0">
+                  <GradientStop Color="#F00B0C0E" Offset="0"/>
+                  <GradientStop Color="#990B0C0E" Offset="0.5"/>
+                  <GradientStop Color="#100B0C0E" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
+            </Border>
+            <StackPanel VerticalAlignment="Bottom" Margin="26,0,26,24" Visibility="{Binding HasHeroGame, Converter={StaticResource BoolVis}}">
+              <TextBlock Text="{Binding HeroCaption}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Accent}"/>
+              <TextBlock Text="{Binding HeroGame.Name}" FontSize="28" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Margin="0,4,0,2"/>
+              <TextBlock Text="{Binding HeroGame.PlayingText}" Foreground="#CCFFFFFF" FontSize="12"/>
+              <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                <Button Style="{StaticResource Primary}" Padding="22,11" Command="{Binding PlayGameCommand}" CommandParameter="{Binding HeroGame}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Play"/>
+                  </StackPanel>
+                </Button>
+                <Button Content="Game page" Margin="0" Command="{Binding OpenGameCommand}" CommandParameter="{Binding HeroGame}"/>
+              </StackPanel>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Visibility="{Binding HasHeroGame, Converter={StaticResource BoolVisInv}}">
+              <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Icons}" FontSize="28" HorizontalAlignment="Center" Foreground="{DynamicResource Muted}"/>
+              <TextBlock Text="Your games show up here" Margin="0,10,0,10" HorizontalAlignment="Center" Style="{StaticResource MutedText}"/>
+              <Button Content="Browse games" HorizontalAlignment="Center" Margin="0" Command="{Binding GoPageCommand}" CommandParameter="Games"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- live numbers; each opens its page -->
+        <UniformGrid Grid.Column="2" Columns="2" Rows="2">
+          <Button Margin="0,0,10,10" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Friends">
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding OnlineFriends.Count, Mode=OneWay}"/>
+                <TextBlock Text="Friends online" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                <TextBlock Text="Who is playing now" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
+                <TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Border>
+            </Grid>
+          </Button>
+          <Button Margin="0,0,0,10" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Requests">
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding RequestCount, Mode=OneWay}"/>
+                <TextBlock Text="Friend requests" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                <TextBlock Text="Accept or decline" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
+                <TextBlock Text="&#xE8FA;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Border>
+            </Grid>
+          </Button>
+          <Button Margin="0,0,10,0" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Trades">
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding InboundCount, Mode=OneWay}"/>
+                <TextBlock Text="Trades waiting" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                <TextBlock Text="Sent to this account" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
+                <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Border>
+            </Grid>
+          </Button>
+          <Button Margin="0" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Multi">
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding RunningCount, Mode=OneWay}"/>
+                <TextBlock Text="Clients running" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                <TextBlock Text="Multi-launch" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
+                <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Border>
+            </Grid>
+          </Button>
+        </UniformGrid>
+      </Grid>
 
       <StackPanel Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}">
 
         <!-- friends online -->
         <Grid Margin="2,26,0,10">
-          <TextBlock Text="{Binding FriendsTitle}" FontSize="18" FontWeight="Bold"/>
+          <TextBlock Text="{Binding FriendsTitle}" FontSize="20" FontWeight="Bold"/>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=FriendsRow}"/>
             <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=FriendsRow}"/>
@@ -118,7 +223,7 @@
 
         <!-- continue playing -->
         <Grid Margin="2,26,0,10" Visibility="{Binding ContinueGames.Count, Converter={StaticResource CountVis}}">
-          <TextBlock Text="Continue playing" FontSize="18" FontWeight="Bold"/>
+          <TextBlock Text="Continue playing" FontSize="20" FontWeight="Bold"/>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=ContinueRow}"/>
             <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=ContinueRow}"/>
@@ -133,7 +238,7 @@
 
         <!-- recommended -->
         <Grid Margin="2,26,0,10">
-          <TextBlock Text="Recommended for you" FontSize="18" FontWeight="Bold"/>
+          <TextBlock Text="Recommended for you" FontSize="20" FontWeight="Bold"/>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=RecRow}"/>
             <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=RecRow}"/>
@@ -149,37 +254,6 @@
         </ctl:StateView>
       </StackPanel>
 
-      <!-- shortcuts -->
-      <UniformGrid Columns="3" Margin="0,28,0,0">
-        <Button Margin="0,0,12,0" HorizontalContentAlignment="Left" Padding="20,18"
-                Command="{Binding GoMultiTabCommand}" CommandParameter="Running">
-          <StackPanel>
-            <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource Icons}" FontSize="20" Foreground="{DynamicResource Accent}"/>
-            <TextBlock Margin="0,10,0,2" FontSize="22" FontWeight="Bold">
-              <Run Text="{Binding RunningCount, Mode=OneWay}"/><Run Text=" running" FontSize="14" FontWeight="Normal"/>
-            </TextBlock>
-            <TextBlock Text="Multi-launch: your alts and clients" Style="{StaticResource MutedText}" FontSize="12"/>
-          </StackPanel>
-        </Button>
-        <Button Margin="0,0,12,0" HorizontalContentAlignment="Left" Padding="20,18"
-                Command="{Binding GoMultiTabCommand}" CommandParameter="Accounts">
-          <StackPanel>
-            <TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="20" Foreground="{DynamicResource Accent}"/>
-            <TextBlock Margin="0,10,0,2" FontSize="22" FontWeight="Bold">
-              <Run Text="{Binding AccountCount, Mode=OneWay}"/><Run Text=" accounts" FontSize="14" FontWeight="Normal"/>
-            </TextBlock>
-            <TextBlock Text="{Binding AccountsSubtitle, Mode=OneWay}" Style="{StaticResource MutedText}" FontSize="12" TextTrimming="CharacterEllipsis"/>
-          </StackPanel>
-        </Button>
-        <Button Margin="0" HorizontalContentAlignment="Left" Padding="20,18"
-                Command="{Binding GoPageCommand}" CommandParameter="Performance">
-          <StackPanel>
-            <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Icons}" FontSize="20" Foreground="{DynamicResource Accent}"/>
-            <TextBlock Text="FPS &amp; FastFlags" Margin="0,10,0,2" FontSize="18" FontWeight="Bold"/>
-            <TextBlock Text="FPS cap, graphics and performance" Style="{StaticResource MutedText}" FontSize="12"/>
-          </StackPanel>
-        </Button>
-      </UniformGrid>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

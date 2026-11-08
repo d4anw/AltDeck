@@ -19,6 +19,47 @@ public partial class MainViewModel
 
     [ObservableProperty] private string friendsTitle = "Friends online";
 
+    /// <summary>The big banner: the game you played last (or Roblox's top pick), with a wide picture of it.</summary>
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasHeroGame))] private GameTile? heroGame;
+    [ObservableProperty] private string heroImage = "";
+    [ObservableProperty] private string heroCaption = "Jump back in";
+    public bool HasHeroGame => HeroGame != null;
+
+    /// <summary>"Good morning", "Good afternoon", "Good evening" or "Good night", by the PC's clock.</summary>
+    public string Greeting => DateTime.Now.Hour switch
+    {
+        >= 5 and < 12 => "Good morning",
+        >= 12 and < 18 => "Good afternoon",
+        >= 18 and < 23 => "Good evening",
+        _ => "Good night"
+    };
+
+    /// <summary>A game's first screenshot, wide (768 × 432), for the banner. "" when Roblox has none.</summary>
+    private static async Task<string> GetWidePictureAsync(long universeId)
+    {
+        try
+        {
+            using var doc = await RobloxHttp.GetJsonAsync(
+                $"https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds={universeId}&countPerUniverse=1&size=768x432&format=Png");
+            foreach (var g in doc.RootElement.GetProperty("data").EnumerateArray())
+                foreach (var t in g.GetProperty("thumbnails").EnumerateArray())
+                    if (t.TryGetProperty("state", out var st) && st.GetString() == "Completed" && t.TryGetProperty("imageUrl", out var u))
+                        return u.GetString() ?? "";
+        }
+        catch (RobloxException) { }
+        catch (System.Text.Json.JsonException) { }
+        catch (KeyNotFoundException) { }
+        return "";
+    }
+
+    /// <summary>A stat card on Home: Friends, Requests, Trades or Multi.</summary>
+    [RelayCommand]
+    private void OpenHomeCard(string? where)
+    {
+        if (where == "Multi") GoMulti(RunningCount > 0 ? "Running" : "Launch");
+        else if (where != null) OpenNotification(where);
+    }
+
     private DateTime _homeLoadedAt = DateTime.MinValue;
     private Account? _homeLoadedFor;
 
@@ -42,6 +83,11 @@ public partial class MainViewModel
         ContinueGames.Clear();
         RecommendedGames.Clear();
         FriendsTitle = "Friends online";
+        OnPropertyChanged(nameof(Greeting));
+        HeroGame = null;
+        HeroImage = "";
+        _ = RefreshInboundCountAsync();   // the "trades waiting" card
+        _ = RefreshRequestCountAsync();
         if (a == null || a.UserId == 0 || string.IsNullOrEmpty(a.Cookie))
         {
             FriendsLoad.State = LoadState.Empty;
@@ -66,6 +112,15 @@ public partial class MainViewModel
             if (ct.IsCancellationRequested || a != CurrentAccount) return false;
             foreach (var g in cont) ContinueGames.Add(g);
             foreach (var g in rec) RecommendedGames.Add(g);
+            HeroGame = cont.FirstOrDefault() ?? rec.FirstOrDefault();
+            HeroCaption = cont.Count > 0 ? "Jump back in" : "Recommended for you";
+            if (HeroGame is { } hero)
+                _ = Task.Run(async () =>
+                {
+                    var url = await GetWidePictureAsync(hero.UniverseId);
+                    if (url.Length > 0)
+                        System.Windows.Application.Current.Dispatcher.Invoke(() => { if (HeroGame == hero) HeroImage = url; });
+                });
             return cont.Count + rec.Count > 0;
         }, "Loading games…");
 
