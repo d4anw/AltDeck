@@ -40,6 +40,7 @@
     <local:LogKindBrushConverter x:Key="LogBrush"/>
     <local:CountToVisibilityConverter x:Key="CountVis"/>
     <local:HexBrushConverter x:Key="HexBrush"/>
+    <local:HexGlowConverter x:Key="HexGlow"/>
 
     <!-- ===== text + containers ===== -->
     <!-- Every piece of text, 1 px up. Windows' font (Segoe UI) keeps room under the letters for descenders (g, y, p),

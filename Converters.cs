@@ -132,3 +132,21 @@ public class HexBrushConverter : IValueConverter
     }
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
+
+/// <summary>"#22C55E" → a soft round glow of that colour, strongest in the middle (parameter: strength 0–255, default 70).</summary>
+public class HexGlowConverter : IValueConverter
+{
+    public object Convert(object? v, Type t, object? p, CultureInfo c)
+    {
+        System.Windows.Media.Color col;
+        try { col = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#" + (v as string ?? "").Trim().TrimStart('#')); }
+        catch { col = System.Windows.Media.Colors.Gray; }
+        byte a = byte.TryParse(p as string, out var x) ? x : (byte)70;
+        var g = new System.Windows.Media.RadialGradientBrush { Center = new System.Windows.Point(0.5, 0.4), GradientOrigin = new System.Windows.Point(0.5, 0.4), RadiusX = 0.6, RadiusY = 0.6 };
+        g.GradientStops.Add(new System.Windows.Media.GradientStop(System.Windows.Media.Color.FromArgb(a, col.R, col.G, col.B), 0));
+        g.GradientStops.Add(new System.Windows.Media.GradientStop(System.Windows.Media.Color.FromArgb(0, col.R, col.G, col.B), 1));
+        g.Freeze();
+        return g;
+    }
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}

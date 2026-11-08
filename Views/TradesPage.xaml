@@ -122,21 +122,21 @@
 
     <!-- a request tag (Any, Upgrade…): RoDeck's own tile, its colour with a soft shine, a big icon and a bold name -->
     <DataTemplate x:Key="AdTagTile">
+      <!-- the app's own card look: dark card, the tag's colour as a soft glow behind a coloured icon, a coloured bar -->
       <Grid Width="104" Height="104">
-        <Border CornerRadius="14" Background="{Binding Top, Converter={StaticResource HexBrush}}"/>
-        <Border CornerRadius="14">
-          <Border.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-              <GradientStop Color="#33FFFFFF" Offset="0"/>
-              <GradientStop Color="#00FFFFFF" Offset="0.45"/>
-              <GradientStop Color="#55000000" Offset="1"/>
-            </LinearGradientBrush>
-          </Border.Background>
+        <Border CornerRadius="14" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"/>
+        <Border CornerRadius="14" Background="{Binding Top, Converter={StaticResource HexGlow}, ConverterParameter=85}"/>
+        <Border Width="46" Height="46" CornerRadius="23" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,16,0,0"
+                Background="{Binding Top, Converter={StaticResource HexGlow}, ConverterParameter=60}"
+                BorderBrush="{Binding Top, Converter={StaticResource HexBrush}}" BorderThickness="1.5">
+          <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Icons}" FontSize="20"
+                     Foreground="{Binding Top, Converter={StaticResource HexBrush}}"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
-        <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Icons}" FontSize="34" Foreground="White"
-                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,18" Opacity="0.95"/>
-        <TextBlock Text="{Binding Upper}" FontSize="13" FontWeight="Black" Foreground="White" HorizontalAlignment="Center"
-                   VerticalAlignment="Bottom" Margin="0,0,0,12"/>
+        <TextBlock Text="{Binding Upper}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Center"
+                   VerticalAlignment="Bottom" Margin="0,0,0,17"/>
+        <Border Width="26" Height="3" CornerRadius="1.5" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,9"
+                Background="{Binding Top, Converter={StaticResource HexBrush}}"/>
       </Grid>
     </DataTemplate>
 
