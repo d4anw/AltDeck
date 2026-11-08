@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
@@ -69,6 +70,9 @@ public static class RobloxAvatar3D
         // materials: colour and texture per name; textures are fetched in parallel
         var materials = ParseMtl(mtlText);
         var textureNames = materials.Values.Select(m => m.Texture).Where(t => t != null).Distinct().ToList();
+        // a model with no textures at all is one Roblox handed out before skin and face were put on it: it would show
+        // grey, so treat it like missing textures (the caller keeps the picture and tries again)
+        if (textureNames.Count == 0 && materials.Count > 0) throw new MissingTexturesException(materials.Count, materials.Count);
         var textures = new Dictionary<string, BitmapImage>();
         int failed = 0;
         await Task.WhenAll(textureNames.Select(async name =>
@@ -77,7 +81,7 @@ public static class RobloxAvatar3D
             {
                 if (!TextureCache.TryGetValue(name!, out var img))
                 {
-                    var bytes = await GetBytesAsync(name!, ct);
+                    var bytes = DiskRead(name!) is { } saved ? saved : DiskWrite(name!, await GetBytesAsync(name!, ct));
                     img = new BitmapImage();
                     using (var ms = new MemoryStream(bytes)) { img.BeginInit(); img.CacheOption = BitmapCacheOption.OnLoad; img.StreamSource = ms; img.EndInit(); }
                     img.Freeze();
@@ -98,10 +102,42 @@ public static class RobloxAvatar3D
     static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> TextCache = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<string, BitmapImage> TextureCache = new();
 
+    // ...and kept on disk too, so after restarting RoDeck the 3D avatar comes from this PC instead of the internet
+    static readonly string DiskDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoDeck", "cache", "3d");
+
+    static byte[]? DiskRead(string hash)
+    {
+        try
+        {
+            var f = Path.Combine(DiskDir, Safe(hash));
+            if (!File.Exists(f)) return null;
+            File.SetLastAccessTimeUtc(f, DateTime.UtcNow);
+            return File.ReadAllBytes(f);
+        }
+        catch { return null; }
+    }
+
+    static byte[] DiskWrite(string hash, byte[] bytes)
+    {
+        try
+        {
+            Directory.CreateDirectory(DiskDir);
+            File.WriteAllBytes(Path.Combine(DiskDir, Safe(hash)), bytes);
+            var files = new DirectoryInfo(DiskDir).GetFiles();
+            if (files.Length > 400)   // keep it small: the oldest go first
+                foreach (var old in files.OrderBy(f => f.LastAccessTimeUtc).Take(files.Length - 300)) old.Delete();
+        }
+        catch { }
+        return bytes;
+    }
+
+    static string Safe(string hash) => string.Concat(hash.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_'));
+
     static async Task<string> CachedTextAsync(string hash, CancellationToken ct)
     {
         if (TextCache.TryGetValue(hash, out var known)) return known;
-        var text = await GetTextAsync(hash, ct);
+        var text = DiskRead(hash) is { } saved ? System.Text.Encoding.UTF8.GetString(saved)
+                 : System.Text.Encoding.UTF8.GetString(DiskWrite(hash, System.Text.Encoding.UTF8.GetBytes(await GetTextAsync(hash, ct))));
         if (TextCache.Count > 20) TextCache.Clear();
         TextCache[hash] = text;
         return text;

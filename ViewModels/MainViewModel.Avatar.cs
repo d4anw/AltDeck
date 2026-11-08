@@ -1,3 +1,4 @@
+using System.IO;
 using System.Collections.ObjectModel;
 using System.Windows;
 using RoDeck.Controls;
@@ -51,6 +52,48 @@ public partial class MainViewModel
     [RelayCommand]
     private Task RefreshAvatar() => LoadAvatarAsync();
 
+    // ---- what each account's avatar looked like last time: the page opens with it at once, then checks for changes.
+    // Kept in memory (with the 3D model) and on disk (look and picture link), so it's instant after a restart too.
+    public sealed class AvatarSnapshot
+    {
+        public AvatarState? Look { get; set; }
+        public string Picture { get; set; } = "";
+        [System.Text.Json.Serialization.JsonIgnore] public Avatar3D? Model { get; set; }
+        [System.Text.Json.Serialization.JsonIgnore] public Dictionary<long, (System.Windows.Media.Media3D.Vector3D, System.Windows.Media.Media3D.Vector3D, System.Windows.Media.Media3D.Vector3D)>? Baseline { get; set; }
+    }
+    private readonly Dictionary<string, AvatarSnapshot> _avatarSnaps = new();
+    private static string SnapFile(long userId) =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoDeck", "cache", $"avatar-{userId}.json");
+
+    private AvatarSnapshot? GetSnap(Account a)
+    {
+        if (_avatarSnaps.TryGetValue(a.Id, out var s)) return s;
+        try
+        {
+            var f = SnapFile(a.UserId);
+            if (File.Exists(f) && System.Text.Json.JsonSerializer.Deserialize<AvatarSnapshot>(File.ReadAllText(f)) is { Look: not null } disk)
+                return _avatarSnaps[a.Id] = disk;
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>Remembers what's on screen for this account (called whenever the look, picture or 3D model changes).</summary>
+    private void SaveSnap()
+    {
+        if (CurrentAccount is not { } a || _avatarLoadedFor != a || AvatarLook == null) return;
+        var s = _avatarSnaps.TryGetValue(a.Id, out var known) ? known : _avatarSnaps[a.Id] = new AvatarSnapshot();
+        s.Look = AvatarLook;
+        if (AvatarPicture.Length > 0) s.Picture = AvatarPicture;
+        if (Avatar3DModel != null) { s.Model = Avatar3DModel; s.Baseline = _modelBaseline; }
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(SnapFile(a.UserId))!);
+            File.WriteAllText(SnapFile(a.UserId), System.Text.Json.JsonSerializer.Serialize(s));
+        }
+        catch { }
+    }
+
     private async Task LoadAvatarAsync()
     {
         var a = CurrentAccount;
@@ -58,23 +101,63 @@ public partial class MainViewModel
         _avatarLoadedAt = DateTime.Now;
         _previewGeneration++;
         AdjustItem = null;
-        AvatarLook = null;
-        AvatarPicture = "";
-        Avatar3DModel = null;
         PictureIsNewer = false;
         Preview3DNote = "";
-        WornItems.Clear();
         WardrobeItems.Clear();
         _wardrobeAll = new();
         Outfits.Clear();
         _outfitsLoadedFor = null;
-        if (a == null || a.UserId == 0) { AvatarLoad.State = LoadState.Empty; return; }
+        if (a == null || a.UserId == 0)
+        {
+            AvatarLook = null; AvatarPicture = ""; Avatar3DModel = null; WornItems.Clear();
+            AvatarLoad.State = LoadState.Empty;
+            return;
+        }
+
+        // what we saw last time for this account: on screen right away, no spinner
+        var snap = GetSnap(a);
+        if (snap?.Look != null)
+        {
+            AvatarLook = snap.Look;
+            ShowLook(snap.Look);
+            AvatarPicture = snap.Picture;
+            if (snap.Model != null) { _modelBaseline = snap.Baseline ?? new(); Avatar3DModel = snap.Model; }
+            else Avatar3DModel = null;
+            AvatarLoad.State = LoadState.Ready;
+        }
+        else
+        {
+            AvatarLook = null; AvatarPicture = ""; Avatar3DModel = null; WornItems.Clear();
+        }
 
         // the wardrobe, outfits and picture don't need the look first: start them now, side by side
         if (AvatarTab == "Outfits") _ = LoadOutfitsAsync(); else _ = LoadWardrobeAsync();
         _ = LoadPictureAsync(a);
-        _model3DStale = true;
-        if (Show3D) _ = Open3DAsync();
+        string before = LookKey(AvatarLook);
+        _model3DStale = Avatar3DModel == null;
+        if (Show3D && _model3DStale) _ = Open3DAsync();
+
+        if (snap?.Look != null)
+        {
+            // already on screen: check Roblox in the background, update only what changed
+            try
+            {
+                _rules ??= await RobloxAvatar.GetRulesAsync(CancellationToken.None);
+                NotifyRules();
+                var fresh = await RobloxAvatar.GetAvatarAsync(a.UserId, CancellationToken.None);
+                if (a != CurrentAccount) return;
+                if (LookKey(fresh) != before)
+                {
+                    AvatarLook = fresh;
+                    ShowLook(fresh);
+                    _model3DStale = true;
+                    if (Show3D) _ = Open3DAsync();
+                }
+                SaveSnap();
+            }
+            catch (RobloxException) { }   // what's on screen stays; the next visit tries again
+            return;
+        }
 
         await AvatarLoad.RunAsync(async ct =>
         {
@@ -88,9 +171,16 @@ public partial class MainViewModel
             if (a != CurrentAccount) return false;
             AvatarLook = look;
             ShowLook(look);
+            SaveSnap();
             return true;
         }, "Loading avatar…");
     }
+
+    /// <summary>A short fingerprint of a look (type, scales, colours, items and their adjustments), to notice changes.</summary>
+    private static string LookKey(AvatarState? l) => l == null ? "" :
+        l.Type + "|" + string.Join(",", l.Scales.OrderBy(k => k.Key).Select(k => $"{k.Key}={k.Value:0.###}"))
+        + "|" + string.Join(",", l.Colors.OrderBy(k => k.Key).Select(k => k.Key + "=" + k.Value))
+        + "|" + string.Join(",", l.Assets.OrderBy(x => x.Id).Select(x => x.Id + (x.Meta?.ToJsonString() ?? "")));
 
     /// <summary>Puts a look on screen: worn items (with pictures), body colours and scales.</summary>
     private void ShowLook(AvatarState look)
@@ -150,6 +240,7 @@ public partial class MainViewModel
         PictureIsNewer = false;
         OnPropertyChanged(nameof(Showing3D));
         MakeLiveModel(value);
+        if (value != null) SaveSnap();
     }
     partial void OnShow3DChanged(bool value)
     {
@@ -163,7 +254,7 @@ public partial class MainViewModel
         try
         {
             var url = await RobloxAvatar.GetPictureAsync(a.UserId, false, CancellationToken.None);
-            if (a == CurrentAccount && url.Length > 0) AvatarPicture = url;
+            if (a == CurrentAccount && url.Length > 0) { AvatarPicture = url; SaveSnap(); }
         }
         catch { }   // the page works without it; the next change brings a fresh one
     }
@@ -242,6 +333,7 @@ public partial class MainViewModel
             if (generation == _previewGeneration && a == CurrentAccount && url.Length > 0 && url != AvatarPicture)
             {
                 AvatarPicture = url;
+                SaveSnap();
                 // the 3D model is still the old look: show the new picture meanwhile
                 if (Avatar3DModel == oldModel && Show3D) PictureIsNewer = true;
             }
