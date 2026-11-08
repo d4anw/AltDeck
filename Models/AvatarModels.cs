@@ -34,6 +34,8 @@ public partial class WardrobeItem : ObservableObject
     [ObservableProperty] private string thumbUrl = "";
     [ObservableProperty] private bool isWorn;
     [ObservableProperty] private bool isBusy;
+    /// <summary>Its adjust panel is open (the tile in Wearing gets the accent).</summary>
+    [ObservableProperty] private bool isBeingAdjusted;
 }
 
 /// <summary>A saved outfit.</summary>

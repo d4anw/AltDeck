@@ -399,6 +399,58 @@
     </Style>
 
     <!-- Thin outlined track with a round thumb -->
+    <!-- fine adjustments (accessory position / rotation / size): thin track, a mark at "normal" in the middle, accent thumb, click to jump.
+         No fill: these go both ways from the middle, so a fill from the left edge would read wrong. -->
+    <Style x:Key="FineSlider" TargetType="Slider">
+      <Setter Property="Height" Value="26"/>
+      <Setter Property="IsMoveToPointEnabled" Value="True"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Slider">
+            <Grid Background="Transparent" Height="26">
+              <Border Height="4" CornerRadius="2" VerticalAlignment="Center" Margin="8,0" Background="{DynamicResource Line}"/>
+              <!-- where "normal" is (the middle of the range) -->
+              <Border Width="2" Height="10" CornerRadius="1" HorizontalAlignment="Center" VerticalAlignment="Center" Background="{DynamicResource Muted}" Opacity="0.6"/>
+              <Track x:Name="PART_Track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{TemplateBinding Value}">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+                    <RepeatButton.Template>
+                      <ControlTemplate TargetType="RepeatButton">
+                        <Grid Background="Transparent"/>
+                      </ControlTemplate>
+                    </RepeatButton.Template>
+                  </RepeatButton>
+                </Track.DecreaseRepeatButton>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+                    <RepeatButton.Template>
+                      <ControlTemplate TargetType="RepeatButton"><Grid Background="Transparent"/></ControlTemplate>
+                    </RepeatButton.Template>
+                  </RepeatButton>
+                </Track.IncreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb Width="18" Height="18" Focusable="False" Cursor="Hand">
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Grid>
+                          <Ellipse x:Name="halo" Width="26" Height="26" Margin="-4" Fill="{DynamicResource AccentSoft}" Visibility="Collapsed"/>
+                          <Ellipse Fill="{DynamicResource Fg}" Stroke="{DynamicResource Accent}" StrokeThickness="3"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="halo" Property="Visibility" Value="Visible"/></Trigger>
+                          <Trigger Property="IsDragging" Value="True"><Setter TargetName="halo" Property="Visibility" Value="Visible"/></Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+              </Track>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <Style x:Key="PerfSlider" TargetType="Slider">
       <Setter Property="Height" Value="28"/>
       <Setter Property="FocusVisualStyle" Value="{x:Null}"/>

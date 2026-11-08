@@ -13,9 +13,50 @@ namespace RoDeck.ViewModels;
 public partial class MainViewModel
 {
     /// <summary>The worn accessory being adjusted (null: the panel is closed).</summary>
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsAdjusting))]
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsAdjusting), nameof(AdjustThumb))]
     private WornAsset? adjustItem;
     public bool IsAdjusting => AdjustItem != null;
+    /// <summary>The picture of the item being adjusted, for the panel's header.</summary>
+    public string AdjustThumb => AdjustItem is { } a ? WornItems.FirstOrDefault(w => w.AssetId == a.Id)?.ThumbUrl ?? "" : "";
+
+    partial void OnAdjustItemChanged(WornAsset? value)
+    {
+        foreach (var w in WornItems) w.IsBeingAdjusted = value != null && w.AssetId == value.Id;
+    }
+
+    /// <summary>The ⚙ on a worn hat / face / neck / shoulder / front / back item: open (or close) its adjust panel.</summary>
+    [RelayCommand]
+    private void AdjustWorn(WardrobeItem? item)
+    {
+        if (item == null || AvatarLook is not { } look) return;
+        var worn = look.Assets.FirstOrDefault(w => w.Id == item.AssetId);
+        if (worn == null || !CanAdjust(worn.TypeId)) return;
+        if (AdjustItem?.Id == worn.Id) { AdjustItem = null; return; }
+        OpenAdjust(worn);
+    }
+
+    /// <summary>Clicking a worn item takes it off (closing its adjust panel if that was open).</summary>
+    [RelayCommand]
+    private void TakeOffWorn(WardrobeItem? item)
+    {
+        if (item == null) return;
+        if (AdjustItem?.Id == item.AssetId) AdjustItem = null;
+        ToggleWear(item);
+    }
+
+    [RelayCommand]
+    private void ResetAdjustGroup(string? group)
+    {
+        _adjLoading = true;
+        switch (group)
+        {
+            case "Position": AdjPosX = AdjPosY = AdjPosZ = 0; break;
+            case "Rotation": AdjRotX = AdjRotY = AdjRotZ = 0; break;
+            case "Size": AdjScaleX = AdjScaleY = AdjScaleZ = 1; break;
+        }
+        _adjLoading = false;
+        ApplyAdjust();
+    }
 
     // position (studs), rotation (degrees), scale (1 = normal), per axis
     [ObservableProperty] private double adjPosX, adjPosY, adjPosZ;
