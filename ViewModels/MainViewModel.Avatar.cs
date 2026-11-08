@@ -304,6 +304,7 @@ public partial class MainViewModel
     partial void OnWardrobeFilterChanged(string value) => ShowWardrobe();
     partial void OnAvatarTabChanged(string value)
     {
+        if (Page == "Avatar") RecordNav();
         if (value == "Outfits" && _outfitsLoadedFor != CurrentAccount) _ = LoadOutfitsAsync();
     }
 

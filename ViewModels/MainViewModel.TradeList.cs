@@ -29,7 +29,11 @@ public partial class MainViewModel
     private readonly Dictionary<long, TradeDetail> _tradeDetails = new();
     private int _tradeGen;
 
-    partial void OnTradeTypeChanged(string value) => _ = LoadTradeListAsync();
+    partial void OnTradeTypeChanged(string value)
+    {
+        _ = LoadTradeListAsync();
+        if (Page == "Trades") RecordNav();
+    }
 
     private void MaybeLoadTradeList()
     {

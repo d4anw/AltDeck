@@ -336,15 +336,8 @@ public partial class MainViewModel
     [RelayCommand]
     private void CloseLimited()
     {
-        if (_limitedFrom.Length > 0)
-        {
-            // one step in the back / forward history: from the item page straight to where it was opened from
-            _restoring = true;
-            OpenLimited = null;
-            _restoring = false;
-            TradesTab = _limitedFrom;
-        }
-        else OpenLimited = null;
+        OpenLimited = null;
+        if (_limitedFrom.Length > 0) TradesTab = _limitedFrom;
         _limitedFrom = "";
         OnPropertyChanged(nameof(LimitedBackText));
     }
@@ -365,9 +358,7 @@ public partial class MainViewModel
         if (t == null) return Task.CompletedTask;
         _limitedFrom = TradesTab == "Limiteds" ? "" : TradesTab;
         OnPropertyChanged(nameof(LimitedBackText));
-        _restoring = true;   // the tab switch and the item page are one step in the history
-        TradesTab = "Limiteds";
-        _restoring = false;
+        TradesTab = "Limiteds";   // the tab switch and the item page become one step in the history
         return OpenLimitedTile(t);
     }
 

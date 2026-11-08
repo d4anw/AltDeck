@@ -76,6 +76,7 @@ public partial class MainViewModel
         ImageCache.Prune();
         CurrentAccount = Accounts.FirstOrDefault(a => a.Id == Settings.CurrentAccountId) ?? DefaultAccount();
         Accounts.CollectionChanged += OnAccountsChangedForShell;
+        RecordNav();   // the first page is a step too, so back from the next page returns to it
     }
 
     private Account? DefaultAccount() =>

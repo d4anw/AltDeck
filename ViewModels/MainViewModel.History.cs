@@ -1,101 +1,169 @@
+using System.Windows.Threading;
 using AltDeck.Models;
+using AltDeck.Services;
 
 namespace AltDeck.ViewModels;
 
 /// <summary>
-/// Back / forward like a browser: the mouse's side buttons and Alt+← / Alt+→ move through the pages, Multi-launch tabs
-/// game pages, profiles and Marketplace items you visited.
+/// Back / forward like a browser, on every page: the mouse's side buttons and Alt+← / Alt+→.
+///
+/// How it works: a "place" is the page plus what's open on it (tab, game, profile, item, trade…), identified by IDs.
+/// Every change during one click is collected and saved as ONE step once the click is done (so "switch tab and open an
+/// item" is one step, not two). Back goes to the previous different place and opens it again exactly. If a confirm card
+/// or the trade maker is open, back closes that first.
 /// </summary>
 public partial class MainViewModel
 {
-    private sealed record NavState(string Page, string MultiTab, GameTile? Game, long Profile = 0, MarketItem? Item = null,
-                                   string TradesTab = "", LimitedTile? Limited = null, TradeRow? Trade = null);
+    private sealed record NavState(
+        string Key, string Page, string MultiTab, string FriendsTab, string AvatarTab, string TradesTab, string TradeType,
+        GameTile? Game, long ProfileId, MarketItem? Item, LimitedTile? Limited, TradeRow? Trade);
 
-    private readonly Stack<NavState> _back = new();
-    private readonly Stack<NavState> _forward = new();
-    private NavState? _here;
-    private bool _restoring;
+    private readonly NavHistory<NavState> _history = new(s => s.Key);
+    private bool _restoring, _commitPending;
 
-    /// <summary>Called whenever the page, tab or open game changes.</summary>
-    private void RecordNav()
+    /// <summary>The place on screen right now.</summary>
+    private NavState CaptureNav()
     {
-        if (_restoring) return;
-        var now = new NavState(Page, MultiTab, IsGameOpen && Page == "Games" ? _lastOpened : null,
-                               IsProfileOpen && Page == "Friends" ? _lastProfileId : 0,
-                               IsMarketItemOpen && Page == "Marketplace" ? _lastMarketItem : null,
-                               Page == "Trades" ? TradesTab : "",
-                               Page == "Trades" && TradesTab == "Limiteds" ? OpenLimited : null,
-                               Page == "Trades" && TradesTab == "Trades" ? OpenTradeRow : null);
-        if (_here == now) return;
-        if (_here != null)
+        var game = Page == "Games" && IsGameOpen ? _lastOpened : null;
+        long profile = Page == "Friends" && IsProfileOpen ? _lastProfileId : 0;
+        var item = Page == "Marketplace" && IsMarketItemOpen ? _lastMarketItem : null;
+        var limited = Page == "Trades" && TradesTab == "Limiteds" ? OpenLimited : null;
+        var trade = Page == "Trades" && TradesTab == "Trades" ? OpenTradeRow : null;
+
+        string sub = Page switch
         {
-            _back.Push(_here);
-            if (_back.Count > 50) TrimBack();
-        }
-        _forward.Clear();
-        _here = now;
+            "Multi" => MultiTab,
+            "Games" => game != null ? $"game {game.UniverseId}" : "",
+            "Friends" => FriendsTab + (profile > 0 ? $" profile {profile}" : ""),
+            "Avatar" => AvatarTab,
+            "Marketplace" => item != null ? $"item {item.ItemType} {item.Id}" : "",
+            "Trades" => TradesTab
+                        + (limited != null ? $" limited {limited.AssetId}" : "")
+                        + (TradesTab == "Trades" ? $" {TradeType}" + (trade != null ? $" trade {trade.Id}" : "") : ""),
+            _ => ""
+        };
+        return new NavState($"{Page}|{sub}", Page, MultiTab, FriendsTab, AvatarTab, TradesTab, TradeType,
+                            game, profile, item, limited, trade);
     }
 
+    /// <summary>
+    /// Something navigational changed (page, tab, something opened or closed). Saved as one step once the current
+    /// click / key press is fully handled, so a click that changes several things is one step.
+    /// </summary>
+    private void RecordNav()
+    {
+        if (_restoring || _commitPending) return;
+        _commitPending = true;
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(CommitNav));
+    }
+
+    private void CommitNav()
+    {
+        _commitPending = false;
+        if (_restoring) return;
+        _history.Record(CaptureNav());
+    }
+
+    // the things that count as moving somewhere
     partial void OnMultiTabChanged(string value) { if (Page == "Multi") RecordNav(); }
     partial void OnIsGameOpenChanged(bool value) => RecordNav();
     partial void OnIsProfileOpenChanged(bool value) => RecordNav();
+    partial void OnFriendsTabChanged(string value) { if (Page == "Friends") RecordNav(); }
 
-    public void GoBack()
+    public void GoBack() => Go(back: true);
+    public void GoForward() => Go(back: false);
+
+    private void Go(bool back)
     {
-        if (_back.Count == 0) return;
-        if (_here != null) _forward.Push(_here);
-        Restore(_back.Pop());
+        // a card or panel on top: back closes it (it's what you're looking at), forward does nothing
+        if (back && CloseOverlay()) return;
+
+        if (_restoring) FinishRestore();          // pressed again quickly: the last step is done, carry on from it
+        _commitPending = false;                   // CaptureNav below sees the latest state anyway
+        var now = CaptureNav();
+        var target = back ? _history.Back(now) : _history.Forward(now);
+        if (target != null) Restore(target);
     }
 
-    public void GoForward()
+    /// <summary>Closes a confirm card or the trade maker. True when something was closed.</summary>
+    private bool CloseOverlay()
     {
-        if (_forward.Count == 0) return;
-        if (_here != null) _back.Push(_here);
-        Restore(_forward.Pop());
+        if (ShowTradeConfirm) { if (!TradeBusy) ShowTradeConfirm = false; return true; }
+        if (ShowBuyConfirm) { if (!BuyBusy) ShowBuyConfirm = false; return true; }
+        if (IsBuildingTrade && Page == "Trades") { IsBuildingTrade = false; return true; }
+        return false;
     }
 
     private void Restore(NavState s)
     {
         _restoring = true;
-        try
+        ShowBuyConfirm = false;
+        if (!TradeBusy) ShowTradeConfirm = false;
+        IsBuildingTrade = false;
+
+        Page = s.Page;
+        switch (s.Page)
         {
-            MultiTab = s.MultiTab;
-            Page = s.Page;
-            if (s.Game != null)
-            {
-                if (!IsGameOpen || _lastOpened != s.Game) _ = OpenGameAsync(s.Game);
-            }
-            else if (IsGameOpen && s.Page == "Games") CloseGame();
-            if (s.Profile > 0)
-            {
-                if (!IsProfileOpen || _lastProfileId != s.Profile) _ = OpenProfileAsync(s.Profile);
-            }
-            else if (IsProfileOpen && s.Page == "Friends") CloseProfile();
-            if (s.Item != null)
-            {
-                if (!IsMarketItemOpen || _lastMarketItem != s.Item) _ = OpenMarketItemAsync(s.Item);
-            }
-            else if (IsMarketItemOpen && s.Page == "Marketplace") CloseMarketItem();
-            if (s.Page == "Trades")
-            {
-                if (s.TradesTab.Length > 0) TradesTab = s.TradesTab;
-                if (s.Limited != null) { if (OpenLimited != s.Limited) _ = OpenLimitedTile(s.Limited); }
-                else if (OpenLimited != null) { OpenLimited = null; _limitedFrom = ""; OnPropertyChanged(nameof(LimitedBackText)); }
-                if (s.Trade != null) { if (OpenTradeRow != s.Trade && TradeRows.Contains(s.Trade)) _ = OpenTradeRowItem(s.Trade); }
-                else if (s.TradesTab == "Trades" && OpenTradeRow != null) CloseTrade();
-            }
+            case "Multi":
+                MultiTab = s.MultiTab;
+                break;
+
+            case "Games":
+                if (s.Game != null) { if (!IsGameOpen || _lastOpened?.UniverseId != s.Game.UniverseId) _ = OpenGameAsync(s.Game); }
+                else if (IsGameOpen) CloseGame();
+                break;
+
+            case "Friends":
+                FriendsTab = s.FriendsTab;
+                if (s.ProfileId > 0) { if (!IsProfileOpen || _lastProfileId != s.ProfileId) _ = OpenProfileAsync(s.ProfileId); }
+                else if (IsProfileOpen) CloseProfile();
+                break;
+
+            case "Avatar":
+                AvatarTab = s.AvatarTab;
+                break;
+
+            case "Marketplace":
+                if (s.Item != null)
+                {
+                    if (!IsMarketItemOpen || _lastMarketItem?.Id != s.Item.Id || _lastMarketItem.ItemType != s.Item.ItemType)
+                        _ = OpenMarketItemAsync(s.Item);
+                }
+                else if (IsMarketItemOpen) CloseMarketItem();
+                break;
+
+            case "Trades":
+                TradesTab = s.TradesTab;
+                if (s.TradesTab == "Limiteds")
+                {
+                    if (s.Limited != null) { if (OpenLimited?.AssetId != s.Limited.AssetId) _ = OpenLimitedTile(s.Limited); }
+                    else if (OpenLimited != null) OpenLimited = null;
+                }
+                if (s.TradesTab == "Trades")
+                {
+                    if (TradeType != s.TradeType) TradeType = s.TradeType;   // reloads that list
+                    if (s.Trade != null)
+                    {
+                        if (OpenTradeRow?.Id != s.Trade.Id)
+                            _ = OpenTradeRowItem(TradeRows.FirstOrDefault(r => r.Id == s.Trade.Id) ?? s.Trade);
+                    }
+                    else if (OpenTradeRow != null) CloseTrade();
+                }
+                // the item page's own "Back to …" button follows the history from here on
+                _limitedFrom = "";
+                OnPropertyChanged(nameof(LimitedBackText));
+                break;
         }
-        finally
-        {
-            _restoring = false;
-            _here = s;
-        }
+
+        // let everything the step started settle, then note where we really are
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(FinishRestore));
     }
 
-    private void TrimBack()
+    private void FinishRestore()
     {
-        var keep = _back.Take(40).Reverse().ToList();
-        _back.Clear();
-        foreach (var k in keep) _back.Push(k);
+        if (!_restoring) return;
+        _restoring = false;
+        _commitPending = false;
+        _history.Settle(CaptureNav());
     }
 }
