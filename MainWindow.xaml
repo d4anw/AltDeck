@@ -193,9 +193,7 @@
           <Grid>
             <views:StartPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Home}"/>
             <views:GamesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Games}"/>
-            <views:ComingSoonPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Avatar}"
-                                  Icon="&#xE77B;" Title="Avatar" Version="0.8"
-                                  Body="Change what any of your accounts wears: inventory by category, body colours, scales, R6 / R15 and outfits. Copy one account's look to another alt in one click."/>
+            <views:AvatarPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Avatar}"/>
             <views:ComingSoonPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Marketplace}"
                                   Icon="&#xE719;" Title="Marketplace" Version="0.9"
                                   Body="Browse avatar items by category, search, sort and price, try them on, and get free items in one click. Buying always shows the item, price and account first."/>

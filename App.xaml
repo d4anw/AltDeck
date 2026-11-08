@@ -31,6 +31,7 @@
     <local:QueueStateBrushConverter x:Key="QueueBrush"/>
     <local:LogKindBrushConverter x:Key="LogBrush"/>
     <local:CountToVisibilityConverter x:Key="CountVis"/>
+    <local:HexBrushConverter x:Key="HexBrush"/>
 
     <!-- ===== text + containers ===== -->
     <Style x:Key="MutedText" TargetType="TextBlock">

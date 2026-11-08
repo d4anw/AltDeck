@@ -43,12 +43,12 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 - [x] Player search and profiles
 
 ## Phase 4: 🧍 Avatar editor → 0.8
-- [ ] Avatar picture and what it's wearing
-- [ ] Inventory by category, with search
-- [ ] Wear / take off items (Roblox re-renders the picture)
-- [ ] Body colours, scales, R6 / R15
-- [ ] Outfits: wear, save, rename, delete
-- [ ] Copy a look to another alt
+- [x] Avatar picture and what it's wearing
+- [x] Inventory by category, with search
+- [x] Wear / take off items (Roblox re-renders the picture)
+- [x] Body colours, scales, R6 / R15
+- [x] Outfits: wear, save, rename, delete
+- [x] Copy a look to another alt
 
 ## Phase 5: 🛒 Marketplace → 0.9
 - [ ] Browse avatar items: categories, search, sort, price filter, free items

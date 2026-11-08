@@ -120,3 +120,15 @@ public class CountToVisibilityConverter : IValueConverter
     }
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
+
+/// <summary>"RRGGBB" (or "#RRGGBB") to a brush, for colour swatches.</summary>
+public class HexBrushConverter : IValueConverter
+{
+    public object Convert(object? v, Type t, object? p, CultureInfo c)
+    {
+        var hex = (v as string ?? "").Trim().TrimStart('#');
+        try { return new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#" + hex)); }
+        catch { return System.Windows.Media.Brushes.Gray; }
+    }
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
