@@ -186,14 +186,43 @@ public static class RobloxTrades
     /// <summary>Roblox's resale numbers for a limited (public).</summary>
     public static async Task<ResaleData> GetResaleDataAsync(long assetId, CancellationToken ct)
     {
+        var historyTask = GetPriceHistoryAsync(assetId, ct);
         using var doc = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v1/assets/{assetId}/resale-data", null, ct);
         var r = doc.RootElement;
-        var points = new List<(DateTime, long)>();
-        if (r.TryGetProperty("priceDataPoints", out var pd) && pd.ValueKind == JsonValueKind.Array)
-            foreach (var p in pd.EnumerateArray())
-                if (Date(p, "date") is { } d && d != default) points.Add((d, Long(p, "value")));
-        points.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+        List<(DateTime, long)> points;
+        try { points = await historyTask; }
+        catch (RobloxException) { points = new(); }
         return new ResaleData(Long(r, "recentAveragePrice"), Long(r, "sales"), Long(r, "assetStock"), Long(r, "numberRemaining"), points);
+    }
+
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> CollectibleIds = new();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<(DateTime, long)> Points)> Histories = new();
+
+    /// <summary>
+    /// The average sale price per day (what the RAP follows), oldest first, from Roblox's marketplace. Remembered for 15
+    /// minutes, so hovering the same item again is instant.
+    /// </summary>
+    public static async Task<List<(DateTime Day, long Price)>> GetPriceHistoryAsync(long assetId, CancellationToken ct)
+    {
+        if (Histories.TryGetValue(assetId, out var known) && DateTime.UtcNow - known.At < TimeSpan.FromMinutes(15)) return known.Points;
+        if (!CollectibleIds.TryGetValue(assetId, out var cid))
+        {
+            using var det = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct);
+            cid = Str(det.RootElement, "CollectibleItemId");
+            CollectibleIds[assetId] = cid;
+        }
+        var points = new List<(DateTime, long)>();
+        if (cid.Length > 0)
+        {
+            using var doc = await RobloxHttp.GetJsonAsync($"https://apis.roblox.com/marketplace-sales/v1/item/{cid}/resale-data", null, ct);
+            if (doc.RootElement.TryGetProperty("priceDataPoints", out var pd) && pd.ValueKind == JsonValueKind.Array)
+                foreach (var p in pd.EnumerateArray())
+                    if (Date(p, "date") is { } d && d != default && Long(p, "value") > 0) points.Add((d, Long(p, "value")));
+        }
+        points.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+        if (Histories.Count > 300) Histories.Clear();
+        Histories[assetId] = (DateTime.UtcNow, points);
+        return points;
     }
 
     // ------------------------------------------------------------------ helpers
