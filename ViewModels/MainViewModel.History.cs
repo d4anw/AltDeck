@@ -16,7 +16,7 @@ public partial class MainViewModel
 {
     private sealed record NavState(
         string Key, string Page, string MultiTab, string FriendsTab, string AvatarTab, string TradesTab, string TradeType,
-        GameTile? Game, long ProfileId, MarketItem? Item, LimitedTile? Limited, TradeRow? Trade);
+        GameTile? Game, long ProfileId, MarketItem? Item, LimitedTile? Limited, TradeRow? Trade, string SettingsSection = "");
 
     private readonly NavHistory<NavState> _history = new(s => s.Key);
     private bool _restoring, _commitPending;
@@ -36,6 +36,7 @@ public partial class MainViewModel
             "Games" => game != null ? $"game {game.UniverseId}" : "",
             "Friends" => FriendsTab + (profile > 0 ? $" profile {profile}" : ""),
             "Avatar" => AvatarTab,
+            "Settings" => SettingsSection,
             "Marketplace" => item != null ? $"item {item.ItemType} {item.Id}" : "",
             "Trades" => TradesTab
                         + (limited != null ? $" limited {limited.AssetId}" : "")
@@ -43,7 +44,7 @@ public partial class MainViewModel
             _ => ""
         };
         return new NavState($"{Page}|{sub}", Page, MultiTab, FriendsTab, AvatarTab, TradesTab, TradeType,
-                            game, profile, item, limited, trade);
+                            game, profile, item, limited, trade, SettingsSection);
     }
 
     /// <summary>
@@ -121,6 +122,10 @@ public partial class MainViewModel
 
             case "Avatar":
                 AvatarTab = s.AvatarTab;
+                break;
+
+            case "Settings":
+                if (s.SettingsSection.Length > 0) SettingsSection = s.SettingsSection;
                 break;
 
             case "Marketplace":

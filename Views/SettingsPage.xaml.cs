@@ -7,37 +7,7 @@ namespace RoDeck.Views;
 
 public partial class SettingsPage : UserControl
 {
-    public SettingsPage()
-    {
-        InitializeComponent();
-        Loaded += (_, _) =>
-        {
-            if (DataContext is MainViewModel vm)
-            {
-                vm.ScrollToSection -= OnScrollTo;
-                vm.ScrollToSection += OnScrollTo;
-            }
-        };
-    }
-
-    private void OnScrollTo(string section)
-    {
-        FrameworkElement? target = section switch
-        {
-            "General" => SecGeneral,
-            "Automation" => SecAutomation,
-            "Marketplace" => SecMarket,
-            "Notifications" => SecNotify,
-            "Security" => SecSecurity,
-            "Data" => SecData,
-            "About" => SecAbout,
-            "Launching" => SecLaunching,
-            "Shortcuts" => SecShortcuts,
-            _ => null
-        };
-        // let the page become visible first, then scroll
-        Dispatcher.BeginInvoke(new Action(() => target?.BringIntoView()), System.Windows.Threading.DispatcherPriority.Loaded);
-    }
+    public SettingsPage() { InitializeComponent(); }
 
     /// <summary>The hotkey box records the keys you press instead of letting you type, so typos can't happen.</summary>
     private void Hotkey_PreviewKeyDown(object sender, KeyEventArgs e)

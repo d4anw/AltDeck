@@ -55,7 +55,9 @@ public partial class MainViewModel : ObservableObject
     public string RobloxVersion { get; } = FindRobloxVersion();
     public string VersionText => AppVersion;
 
-    public event Action<string>? ScrollToSection;
+    /// <summary>The Settings category on screen: General, Appearance, Notifications, Launching, Accounts, Trading, Shortcuts, Backup, About.</summary>
+    [ObservableProperty] private string settingsSection = "General";
+    partial void OnSettingsSectionChanged(string value) { if (Page == "Settings") RecordNav(); }
 
     /// <summary>Something happened that deserves a tray balloon when the window is hidden (stop timer, panic hotkey).</summary>
     public event Action<string>? Notify;
@@ -691,11 +693,20 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private void GoPerformance() => Page = "Performance";
     [RelayCommand] private void Soon(string? what) => StatusMessage = (what ?? "That") + " is coming in a later version.";
 
+    /// <summary>Opens Settings on a category (older names still work: Security, Data, Marketplace, Automation).</summary>
     [RelayCommand]
     private void GoSection(string? section)
     {
+        SettingsSection = section switch
+        {
+            "Security" => "Accounts",
+            "Data" => "Backup",
+            "Marketplace" => "Trading",
+            "Automation" => "Shortcuts",
+            null or "" => "General",
+            _ => section
+        };
         Page = "Settings";
-        ScrollToSection?.Invoke(section ?? "General");
     }
 
     [RelayCommand]

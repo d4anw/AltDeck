@@ -350,7 +350,7 @@
                      Visibility="{Binding BuyNotEnough, Converter={StaticResource BoolVis}}"/>
           <TextBlock Foreground="{DynamicResource Red}" Margin="0,12,0,0" TextWrapping="Wrap"
                      Visibility="{Binding BuyOverLimit, Converter={StaticResource BoolVis}}">
-            <Run Text="This is over your spending limit of"/> <Run Text="{Binding Settings.MarketSpendLimit, Mode=OneWay, StringFormat='R$ {0:N0}'}"/><Run Text=". You can change it in Settings → Marketplace."/>
+            <Run Text="This is over your spending limit of"/> <Run Text="{Binding Settings.MarketSpendLimit, Mode=OneWay, StringFormat='R$ {0:N0}'}"/><Run Text=". You can change it in Settings → Marketplace &amp; trades."/>
           </TextBlock>
           <TextBlock Text="{Binding BuyError}" Foreground="{DynamicResource Red}" Margin="0,12,0,0" TextWrapping="Wrap"
                      Visibility="{Binding BuyError, Converter={StaticResource EmptyCollapsed}}"/>

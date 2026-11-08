@@ -89,8 +89,8 @@
           <Rectangle Width="1" Height="18" Fill="{DynamicResource Line}" Margin="0,0,6,0"/>
           <Button Style="{StaticResource TitleBtn}" Content="&#xE72C;" ToolTip="Check all sign-ins" Command="{Binding CheckAllCommand}"/>
           <Button Style="{StaticResource TitleBtn}" Content="&#xE706;" ToolTip="Switch light / dark" Command="{Binding ToggleThemeCommand}"/>
-          <Button Style="{StaticResource TitleBtn}" Content="&#xE72E;" ToolTip="Security: vault and master password"
-                  Command="{Binding GoSectionCommand}" CommandParameter="Security"/>
+          <Button Style="{StaticResource TitleBtn}" Content="&#xE72E;" ToolTip="Accounts &amp; security: vault and master password"
+                  Command="{Binding GoSectionCommand}" CommandParameter="Accounts"/>
           <Rectangle Width="1" Height="18" Fill="{DynamicResource Line}" Margin="6,0"/>
           <Button Style="{StaticResource TitleBtn}" Content="&#xE921;" Click="Min_Click"/>
           <Button x:Name="MaxBtn" Style="{StaticResource TitleBtn}" Content="&#xE922;" Click="Max_Click"/>
@@ -164,18 +164,6 @@
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Performance, Mode=TwoWay}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE713;" GroupName="nav" Content="Settings"
                            IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Settings, Mode=TwoWay}"/>
-              <StackPanel Margin="40,2,0,0"
-                          Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Settings}">
-                <Button Style="{StaticResource Subtle}" Content="General" Command="{Binding GoSectionCommand}" CommandParameter="General"/>
-                <Button Style="{StaticResource Subtle}" Content="Automation" Command="{Binding GoSectionCommand}" CommandParameter="Automation"/>
-                <Button Style="{StaticResource Subtle}" Content="Shortcuts" Command="{Binding GoSectionCommand}" CommandParameter="Shortcuts"/>
-                <Button Style="{StaticResource Subtle}" Content="Launching" Command="{Binding GoSectionCommand}" CommandParameter="Launching"/>
-                <Button Style="{StaticResource Subtle}" Content="Notifications" Command="{Binding GoSectionCommand}" CommandParameter="Notifications"/>
-                <Button Style="{StaticResource Subtle}" Content="Marketplace" Command="{Binding GoSectionCommand}" CommandParameter="Marketplace"/>
-                <Button Style="{StaticResource Subtle}" Content="Security" Command="{Binding GoSectionCommand}" CommandParameter="Security"/>
-                <Button Style="{StaticResource Subtle}" Content="Data" Command="{Binding GoSectionCommand}" CommandParameter="Data"/>
-                <Button Style="{StaticResource Subtle}" Content="About" Command="{Binding GoSectionCommand}" CommandParameter="About"/>
-              </StackPanel>
               <TextBlock Text="{Binding LockBadge, Mode=OneWay}" Margin="14,18,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
             </StackPanel>
           </ScrollViewer>

@@ -2,35 +2,94 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctl="clr-namespace:RoDeck.Controls">
-  <ScrollViewer x:Name="Scroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <Grid Margin="32,26,32,40">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*"/>
-        <ColumnDefinition Width="24"/>
-        <ColumnDefinition Width="*"/>
-      </Grid.ColumnDefinitions>
+  <UserControl.Resources>
+    <!-- a category's heading and one line on what's in it -->
+    <Style x:Key="SecTitle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="22"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+    </Style>
+    <Style x:Key="SecSub" TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+      <Setter Property="Margin" Value="0,4,0,20"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <!-- a small caption above a group of settings inside a category -->
+    <Style x:Key="GroupTitle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+      <Setter Property="Margin" Value="4,0,0,8"/>
+    </Style>
+    <Style x:Key="Group" TargetType="Border" BasedOn="{StaticResource CardBox}">
+      <Setter Property="Padding" Value="24,4"/>
+      <Setter Property="Margin" Value="0,0,0,22"/>
+    </Style>
+  </UserControl.Resources>
 
-      <Border HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="2" Style="{StaticResource CardBox}"
-              Padding="16,10" CornerRadius="12">
-        <StackPanel>
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Text="RoDeck" Width="64" FontSize="12" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding VersionText}" FontFamily="Consolas" FontSize="12"/>
-          </StackPanel>
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Roblox" Width="64" FontSize="12" Style="{StaticResource MutedText}"/>
-            <TextBlock Text="{Binding RobloxVersion}" FontFamily="Consolas" FontSize="12"/>
-          </StackPanel>
+  <Grid Margin="32,26,0,0">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="230"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <TextBlock Text="Settings" FontSize="28" FontWeight="Bold" Margin="0,0,0,18"/>
+
+    <!-- ================= categories ================= -->
+    <StackPanel Grid.Row="1" Margin="0,0,0,24">
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE713;" Content="General"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=General, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE790;" Content="Appearance"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=Appearance, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xEA8F;" Content="Notifications"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=Notifications, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE768;" Content="Playing &amp; clients"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=Launching, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE72E;" Content="Accounts &amp; security"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=Accounts, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE719;" Content="Marketplace &amp; trades"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=Trading, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE765;" Content="Shortcuts"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=Shortcuts, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE74E;" Content="Backup &amp; data"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=Backup, Mode=TwoWay}"/>
+      <RadioButton Style="{StaticResource Nav}" GroupName="settingscat" Tag="&#xE946;" Content="About"
+                   IsChecked="{Binding SettingsSection, Converter={StaticResource Eq}, ConverterParameter=About, Mode=TwoWay}"/>
+    </StackPanel>
+
+    <!-- ================= the chosen category ================= -->
+    <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <Grid Margin="28,0,32,32" MaxWidth="820" HorizontalAlignment="Left">
+
+        <!-- ===== General ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=General}">
+          <TextBlock Text="General" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="How RoDeck starts, closes and shows up outside the app." Style="{StaticResource SecSub}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="Close to tray" Description="Closing the window hides it next to the clock. Running clients and auto-rejoin keep working.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.CloseToTray}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Skip splash screen" Description="Opens RoDeck right away, without the start-up animation.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.SkipSplash}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Show on Discord" Description="{Binding DiscordDescription, Mode=OneWay}">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.ShowOnDiscord}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Ask about updates" Description="{Binding UpdateDescription, Mode=OneWay}">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoUpdate}"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
         </StackPanel>
-      </Border>
 
-      <TextBlock Text="Settings" FontSize="28" FontWeight="Bold"/>
-
-      <!-- ================= left column ================= -->
-      <StackPanel Grid.Row="0" Margin="0,70,0,0">
-        <StackPanel x:Name="SecGeneral">
-          <TextBlock Text="General" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
+        <!-- ===== Appearance ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=Appearance}">
+          <TextBlock Text="Appearance" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="Colours, background and how dense lists are." Style="{StaticResource SecSub}"/>
+          <Border Style="{StaticResource Group}">
             <StackPanel>
               <ctl:SettingRow Title="Theme" Description="System follows Windows (dark or light).">
                 <StackPanel Orientation="Horizontal">
@@ -47,7 +106,7 @@
                   <TextBlock Text="Accent colour" FontWeight="SemiBold"/>
                   <TextBlock Text="Buttons, switches and highlights. Pick a preset or any colour." FontSize="12" Margin="0,3,0,12"
                              Style="{StaticResource MutedText}"/>
-                  <StackPanel Orientation="Horizontal">
+                  <WrapPanel>
                     <RadioButton Style="{StaticResource Swatch}" Background="#FF8A1F" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FF8A1F, Mode=TwoWay}"/>
                     <RadioButton Style="{StaticResource Swatch}" Background="#FF5A5F" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FF5A5F, Mode=TwoWay}"/>
                     <RadioButton Style="{StaticResource Swatch}" Background="#FF5CA8" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#FF5CA8, Mode=TwoWay}"/>
@@ -58,7 +117,7 @@
                     <RadioButton Style="{StaticResource Swatch}" Background="#4DA3FF" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#4DA3FF, Mode=TwoWay}"/>
                     <RadioButton Style="{StaticResource Swatch}" Background="#A78BFA" GroupName="accent" IsChecked="{Binding Settings.Accent, Converter={StaticResource Eq}, ConverterParameter=#A78BFA, Mode=TwoWay}"/>
                     <Button Style="{StaticResource Subtle}" Content="Custom…" Command="{Binding PromptAccentCommand}" Margin="6,0,0,0"/>
-                  </StackPanel>
+                  </WrapPanel>
                 </StackPanel>
               </Border>
               <ctl:SettingRow Title="Background image" Description="Your own picture behind the app (PNG, JPEG, WebP or GIF).">
@@ -67,7 +126,7 @@
                   <Button Content="Clear" Click="ClearBg_Click" Margin="0"/>
                 </StackPanel>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Density" Description="Row height in the accounts list.">
+              <ctl:SettingRow Title="Accounts list" Description="Row height on Multi-launch → Accounts.">
                 <StackPanel Orientation="Horizontal">
                   <RadioButton Style="{StaticResource Seg}" Content="Detailed" GroupName="density"
                                IsChecked="{Binding Settings.Density, Converter={StaticResource Eq}, ConverterParameter=Detailed, Mode=TwoWay}"/>
@@ -75,121 +134,39 @@
                                IsChecked="{Binding Settings.Density, Converter={StaticResource Eq}, ConverterParameter=Compact, Mode=TwoWay}"/>
                 </StackPanel>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Show on Discord" Description="{Binding DiscordDescription, Mode=OneWay}">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.ShowOnDiscord}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Close to tray" Description="The window hides; running clients and auto-rejoin keep working.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.CloseToTray}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Skip splash screen" Description="Opens RoDeck right away, without the start-up animation.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.SkipSplash}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Ask about updates" Description="{Binding UpdateDescription, Mode=OneWay}">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.AutoUpdate}"/>
-              </ctl:SettingRow>
             </StackPanel>
           </Border>
         </StackPanel>
 
-        <StackPanel x:Name="SecAutomation" Margin="0,28,0,0">
-          <TextBlock Text="Automation" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
+        <!-- ===== Notifications ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=Notifications}">
+          <TextBlock Text="Notifications" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="Windows notifications for the account selected top right. All off until you turn them on; they keep working while RoDeck is in the tray."
+                     Style="{StaticResource SecSub}"/>
+          <TextBlock Text="Friends" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
             <StackPanel>
-              <ctl:SettingRow Title="Panic hotkey" Description="{Binding PanicHotkeyDescription, Mode=OneWay}">
-                <TextBox Text="{Binding Settings.PanicHotkey, Mode=OneWay}" Width="170" FontFamily="Consolas" IsReadOnly="True"
-                         ToolTip="Click here, then press the keys" PreviewKeyDown="Hotkey_PreviewKeyDown"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Sign-in check"
-                              Description="Every this many minutes RoDeck quietly checks each account's sign-in and tells you when one has expired (a red badge on Accounts, and a tray balloon while hidden). 0 turns it off; the shortest is 5. A sign-in is also checked right before it launches.">
-                <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.HealthCheckMinutes}" Width="64" Style="{StaticResource NumBox}"/>
-                  <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                </StackPanel>
-              </ctl:SettingRow>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-
-        <StackPanel x:Name="SecShortcuts" Margin="0,28,0,0">
-          <TextBlock Text="Shortcuts" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
-            <StackPanel>
-              <ctl:SettingRow Title="Hold to stop all" Description="On the Multi-launch page, press and hold the red button top right for one second."/>
-              <ctl:SettingRow Title="Right-click a favourite" Description="On the Play page, right-click a favourite chip to remove it."/>
-              <ctl:SettingRow Title="Preset hotkeys" Description="On the Play page, right-click a preset and pick Set hotkey. It launches that preset from any app, even with RoDeck in the tray."/>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-      </StackPanel>
-
-      <!-- ================= right column ================= -->
-      <StackPanel Grid.Column="2" Margin="0,70,0,0">
-        <StackPanel x:Name="SecLaunching">
-          <TextBlock Text="Launching" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
-            <StackPanel>
-              <ctl:SettingRow Title="Multi-instance"
-                              Description="RoDeck holds Roblox's single-instance lock while it runs, so each account gets its own client. Turn it on before the first client starts.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.MultiInstance}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Launch delay" Description="Wait between two launches when several accounts launch at once.">
-                <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.LaunchDelay}" Width="64" Style="{StaticResource NumBox}"/>
-                  <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                </StackPanel>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Window layout" Description="Where new clients appear: next to each other, or all in the same spot on top of each other. Applies to clients RoDeck starts.">
-                <StackPanel Orientation="Horizontal">
-                  <RadioButton Style="{StaticResource Seg}" Content="Side by side" GroupName="winlayout"
-                               IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='Side by side', Mode=TwoWay}"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="On top" GroupName="winlayout" Margin="0"
-                               ToolTip="On top of each other"
-                               IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='On top of each other', Mode=TwoWay}"/>
-                </StackPanel>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="FPS &amp; FastFlags" Description="FPS cap, graphics flags, CPU and memory settings have their own page.">
-                <Button Content="Open FPS &amp; FastFlags" Margin="0" Command="{Binding GoPerformanceCommand}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Farming" Description="Auto-rejoin, auto-restart, anti-AFK, give-up limits and the stop timer are in Multi-launch → Farming.">
-                <Button Content="Open Farming" Margin="0" Command="{Binding GoMultiTabCommand}" CommandParameter="Farming"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Close grace" Description="How long a client RoDeck closes gets to close by itself before it is ended.">
-                <StackPanel Orientation="Horizontal">
-                  <TextBox Text="{Binding Settings.CloseGrace}" Width="64" Style="{StaticResource NumBox}"/>
-                  <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                </StackPanel>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Launch arguments"
-                              Description="Extra words for every client, after its launch link. An account can have its own in its details. With arguments set, RoDeck starts Roblox's launcher directly instead of opening the link.">
-                <TextBox Text="{Binding Settings.LaunchArgs}" Width="200" FontFamily="Consolas"/>
-              </ctl:SettingRow>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-
-        <StackPanel x:Name="SecNotify" Margin="0,28,0,0">
-          <TextBlock Text="Notifications" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
-            <StackPanel>
-              <ctl:SettingRow Title="Friend comes online"
-                              Description="A Windows notification when a friend of the account top right comes online. Checked once a minute.">
+              <ctl:SettingRow Title="Friend comes online" Description="Checked once a minute.">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyFriendOnline}"/>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Only starred friends"
-                              Description="Only for friends you starred on the Friends page, so a big friend list doesn't flood you."
+                              Description="Only friends you starred on the Friends page, so a big friend list doesn't flood you."
                               Visibility="{Binding Settings.NotifyFriendOnline, Converter={StaticResource BoolVis}}">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyFavouritesOnly}"/>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Trade received"
-                              Description="When someone sends the account a trade, with what you'd give and get. Checked once a minute.">
-                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyTrades}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Friend request"
-                              Description="When someone sends the account a friend request. Checked once a minute.">
+              <ctl:SettingRow Title="Friend request" Description="Someone sends the account a friend request. Checked once a minute.">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyFriendRequests}"/>
               </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Trading" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="Trade received" Description="Someone sends the account a trade: what you'd give and get. Checked once a minute.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyTrades}"/>
+              </ctl:SettingRow>
               <ctl:SettingRow Title="Limited deals"
-                              Description="When a limited is listed far below its RAP (or value, as picked on Trades → Deals). Checked every few seconds, even when RoDeck is in the tray.">
+                              Description="A limited is listed far below its RAP (or value, as picked on Trades → Deals). Checked every few seconds.">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyDeals}"/>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Deal at least"
@@ -200,8 +177,7 @@
                   <TextBlock Text="% below" VerticalAlignment="Center" Margin="8,0,0,0" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Only deals I can afford"
-                              Description="Skip deals that cost more Robux than the account top right has."
+              <ctl:SettingRow Title="Only deals I can afford" Description="Skip deals that cost more Robux than the account has."
                               Visibility="{Binding Settings.NotifyDeals, Converter={StaticResource BoolVis}}">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyDealsAffordable}"/>
               </ctl:SettingRow>
@@ -209,28 +185,72 @@
           </Border>
         </StackPanel>
 
-        <StackPanel x:Name="SecMarket" Margin="0,28,0,0">
-          <TextBlock Text="Marketplace" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
+        <!-- ===== Playing & clients ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=Launching}">
+          <TextBlock Text="Playing &amp; clients" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="How Roblox clients start, where their windows go and how they close." Style="{StaticResource SecSub}"/>
+          <TextBlock Text="Starting clients" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
             <StackPanel>
-              <ctl:SettingRow Title="Spending limit"
-                              Description="The most Robux one purchase may cost, on any account. RoDeck won't buy anything above it. 0 means no limit. Every purchase still asks first.">
+              <ctl:SettingRow Title="Multi-instance"
+                              Description="Lets every account run its own Roblox at the same time (RoDeck holds Roblox's one-at-a-time lock). Turn it on before the first client starts.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.MultiInstance}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Launch delay" Description="Wait between two launches when several accounts launch at once.">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="R$" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource MutedText}"/>
-                  <TextBox Text="{Binding Settings.MarketSpendLimit}" Width="90" Style="{StaticResource NumBox}"/>
+                  <TextBox Text="{Binding Settings.LaunchDelay}" Width="64" Style="{StaticResource NumBox}"/>
+                  <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                 </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Window layout" Description="Where new client windows appear: next to each other, or all in the same spot.">
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton Style="{StaticResource Seg}" Content="Side by side" GroupName="winlayout"
+                               IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='Side by side', Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="On top" GroupName="winlayout" Margin="0"
+                               ToolTip="On top of each other"
+                               IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='On top of each other', Mode=TwoWay}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Close grace" Description="How long a client RoDeck closes gets to close by itself before it's ended.">
+                <StackPanel Orientation="Horizontal">
+                  <TextBox Text="{Binding Settings.CloseGrace}" Width="64" Style="{StaticResource NumBox}"/>
+                  <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Advanced" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="Launch arguments"
+                              Description="Extra words for every client, after its launch link. An account can have its own in its details. With arguments set, RoDeck starts Roblox's launcher directly.">
+                <TextBox Text="{Binding Settings.LaunchArgs}" Width="200" FontFamily="Consolas"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="On their own pages" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="FPS &amp; FastFlags" Description="FPS cap, graphics, CPU and memory for the clients RoDeck starts.">
+                <Button Content="Open" Margin="0" Command="{Binding GoPerformanceCommand}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Farming" Description="Auto-rejoin, auto-restart, anti-AFK, give-up limits and the stop timer.">
+                <Button Content="Open" Margin="0" Command="{Binding GoMultiTabCommand}" CommandParameter="Farming"/>
               </ctl:SettingRow>
             </StackPanel>
           </Border>
         </StackPanel>
 
-        <StackPanel x:Name="SecSecurity" Margin="0,28,0,0">
-          <TextBlock Text="Security" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
+        <!-- ===== Accounts & security ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=Accounts}">
+          <TextBlock Text="Accounts &amp; security" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="How your sign-ins are kept and checked." Style="{StaticResource SecSub}"/>
+          <TextBlock Text="Vault" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
             <StackPanel>
-              <ctl:SettingRow Title="Vault encryption" Description="Accounts are encrypted on this PC with Windows DPAPI for your Windows user, or with your master password if you set one. They never leave this PC except to Roblox."/>
+              <ctl:SettingRow Title="Encryption" Description="Your accounts are encrypted on this PC with Windows (for your Windows user), or with your master password if you set one. They never leave this PC except to Roblox."/>
               <ctl:SettingRow Title="Master password"
-                              Description="Lock the vault with your own password (PBKDF2-SHA256 + AES-256-GCM). RoDeck asks for it once each time it starts. It can't be recovered if you forget it.">
+                              Description="Lock the vault with your own password (PBKDF2-SHA256 + AES-256-GCM). RoDeck asks for it each time it starts. It can't be recovered if you forget it.">
                 <StackPanel Orientation="Horizontal">
                   <Button Content="Set up" Margin="0" Command="{Binding SetMasterPasswordCommand}"
                           Visibility="{Binding HasMasterPassword, Converter={StaticResource BoolVisInv}}"/>
@@ -242,42 +262,103 @@
               </ctl:SettingRow>
             </StackPanel>
           </Border>
-        </StackPanel>
-
-        <StackPanel x:Name="SecData" Margin="0,28,0,0">
-          <TextBlock Text="Data" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
+          <TextBlock Text="Sign-ins" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
             <StackPanel>
-              <ctl:SettingRow Title="Data folder" Description="Where RoDeck keeps its vault, settings and activity logs.">
-                <Button Content="Open folder" Margin="0" Command="{Binding OpenDataFolderCommand}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Export backup"
-                              Description="Saves every account (with its sign-in), favourites, presets and window layouts into one file locked with a password you choose. Unlike the vault, it works on another PC or after reinstalling Windows. Keep the file private.">
-                <Button Content="Export…" Margin="0" Command="{Binding ExportBackupCommand}"/>
-              </ctl:SettingRow>
-              <ctl:SettingRow Title="Import backup"
-                              Description="Adds the accounts, favourites, presets and layouts from a backup file. Nothing you already have is replaced; a signed-out account gets the backup's sign-in.">
-                <Button Content="Import…" Margin="0" Command="{Binding ImportBackupCommand}"/>
-              </ctl:SettingRow>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-
-        <StackPanel x:Name="SecAbout" Margin="0,28,0,0">
-          <TextBlock Text="About" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-          <Border Style="{StaticResource CardBox}" Padding="24,4">
-            <StackPanel>
-              <ctl:SettingRow Title="{Binding AboutTitle, Mode=OneWay}" Description="All your Roblox in one app: accounts, games, friends, avatar, marketplace and trades. Formerly AltDeck. Not affiliated with or endorsed by Roblox Corporation.">
+              <ctl:SettingRow Title="Sign-in check"
+                              Description="Every this many minutes RoDeck quietly checks each account's sign-in and tells you when one has expired. 0 turns it off; the shortest is 5. A sign-in is also checked right before it launches.">
                 <StackPanel Orientation="Horizontal">
-                  <Button Content="Report a bug" Command="{Binding ReportBugCommand}"
-                          ToolTip="Opens a bug report on GitHub (needs a free GitHub account)"/>
-                  <Button Content="Check for updates" Margin="0" Command="{Binding CheckForUpdatesCommand}"/>
+                  <TextBox Text="{Binding Settings.HealthCheckMinutes}" Width="64" Style="{StaticResource NumBox}"/>
+                  <TextBlock Text="min" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
             </StackPanel>
           </Border>
         </StackPanel>
-      </StackPanel>
-    </Grid>
-  </ScrollViewer>
+
+        <!-- ===== Marketplace & trades ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=Trading}">
+          <TextBlock Text="Marketplace &amp; trades" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="Limits on spending. Every purchase and trade still asks first." Style="{StaticResource SecSub}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="Spending limit"
+                              Description="The most Robux one purchase may cost, on any account. RoDeck won't buy anything above it. 0 means no limit.">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="R$" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource MutedText}"/>
+                  <TextBox Text="{Binding Settings.MarketSpendLimit}" Width="90" Style="{StaticResource NumBox}"/>
+                </StackPanel>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Limited values" Description="Values, demand and trend come from Rolimons and are estimates. Choose RAP or value for deals on Trades → Deals."/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ===== Shortcuts ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=Shortcuts}">
+          <TextBlock Text="Shortcuts" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="Keys and quick moves that save clicks." Style="{StaticResource SecSub}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="Panic hotkey" Description="{Binding PanicHotkeyDescription, Mode=OneWay}">
+                <TextBox Text="{Binding Settings.PanicHotkey, Mode=OneWay}" Width="170" FontFamily="Consolas" IsReadOnly="True"
+                         ToolTip="Click here, then press the keys" PreviewKeyDown="Hotkey_PreviewKeyDown"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Good to know" Style="{StaticResource GroupTitle}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="Back and forward" Description="The side buttons on your mouse, or Alt + ← / Alt + →, move through the pages you visited."/>
+              <ctl:SettingRow Title="Hold to stop all" Description="On Multi-launch, press and hold the red button top right for one second."/>
+              <ctl:SettingRow Title="Preset hotkeys" Description="On Multi-launch → Launch, right-click a preset and pick Set hotkey. It launches that preset from any app, even with RoDeck in the tray."/>
+              <ctl:SettingRow Title="Favourites" Description="On Multi-launch → Launch, right-click a favourite chip to remove it."/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ===== Backup & data ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=Backup}">
+          <TextBlock Text="Backup &amp; data" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="Take your accounts to another PC, or keep a copy somewhere safe." Style="{StaticResource SecSub}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="Export backup"
+                              Description="Every account (with its sign-in), favourites, presets and window layouts in one file, locked with a password you choose. Works on another PC or after reinstalling Windows. Keep the file private.">
+                <Button Content="Export…" Margin="0" Command="{Binding ExportBackupCommand}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Import backup"
+                              Description="Adds what's in a backup file (.rodeck, or .altdeck from before the rename). Nothing you already have is replaced; a signed-out account gets the backup's sign-in.">
+                <Button Content="Import…" Margin="0" Command="{Binding ImportBackupCommand}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Data folder" Description="Where RoDeck keeps its vault, settings and activity logs.">
+                <Button Content="Open folder" Margin="0" Command="{Binding OpenDataFolderCommand}"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ===== About ===== -->
+        <StackPanel Visibility="{Binding SettingsSection, Converter={StaticResource PageVis}, ConverterParameter=About}">
+          <TextBlock Text="About" Style="{StaticResource SecTitle}"/>
+          <TextBlock Text="All your Roblox in one app: accounts, games, friends, avatar, marketplace and trades. Formerly AltDeck."
+                     Style="{StaticResource SecSub}"/>
+          <Border Style="{StaticResource Group}">
+            <StackPanel>
+              <ctl:SettingRow Title="{Binding AboutTitle, Mode=OneWay}" Description="{Binding UpdateStatus, Mode=OneWay, TargetNullValue='', FallbackValue=''}">
+                <Button Content="Check for updates" Margin="0" Command="{Binding CheckForUpdatesCommand}"/>
+              </ctl:SettingRow>
+              <ctl:SettingRow Title="Roblox version" Description="{Binding RobloxVersion}"/>
+              <ctl:SettingRow Title="Something not working?" Description="Opens a bug report on GitHub with your versions filled in, and copies your Activity log to paste in.">
+                <Button Content="Report a bug" Margin="0" Command="{Binding ReportBugCommand}"
+                        ToolTip="Needs a free GitHub account"/>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+          <TextBlock TextWrapping="Wrap" FontSize="12" Style="{StaticResource MutedText}" Margin="4,0,0,0"
+                     Text="RoDeck is an independent, open-source project (MIT license). It is not affiliated with or endorsed by Roblox Corporation."/>
+        </StackPanel>
+      </Grid>
+    </ScrollViewer>
+  </Grid>
 </UserControl>
