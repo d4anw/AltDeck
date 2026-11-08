@@ -296,7 +296,12 @@ public partial class MainViewModel
     private List<WornAsset>? _lastSavedAssets;
     private bool _wearTimerHooked;
 
-    /// <summary>Click on an item: put it on, or take it off if it's worn. Respects Roblox's limits (3 hats, 1 hair…).</summary>
+    /// <summary>Hats, hair, face, neck, shoulder, front, back and waist accessories: worn in any mix, 10 at most in total
+    /// (Roblox's own limit; its per-type numbers are only what its editor suggests).</summary>
+    private static readonly HashSet<int> AccessoryTypes = new() { 8, 41, 42, 43, 44, 45, 46, 47 };
+    private const int MaxAccessories = 10;
+
+    /// <summary>Click on an item: put it on, or take it off if it's worn. Accessories in any mix up to 10, other things one per kind.</summary>
     [RelayCommand]
     private void ToggleWear(WardrobeItem? item)
     {
@@ -310,9 +315,19 @@ public partial class MainViewModel
         }
         else
         {
-            int max = _rules != null && _rules.Wearable.TryGetValue(item.TypeId, out var r) ? Math.Max(1, r.Max) : 1;
-            var same = list.Where(w => w.TypeId == item.TypeId).ToList();
-            while (same.Count >= max) { list.Remove(same[0]); same.RemoveAt(0); }   // the oldest of that kind makes room
+            if (AccessoryTypes.Contains(item.TypeId))
+            {
+                // accessories: any mix (several hairs, several face items…), up to Roblox's 10 in total
+                var acc = list.Where(w => AccessoryTypes.Contains(w.TypeId)).ToList();
+                while (acc.Count >= MaxAccessories) { list.Remove(acc[0]); acc.RemoveAt(0); }   // the oldest accessory makes room
+            }
+            else
+            {
+                // everything else: one of a kind (a second shirt or walk animation can't be worn)
+                int max = _rules != null && _rules.Wearable.TryGetValue(item.TypeId, out var r) ? Math.Max(1, r.Max) : 1;
+                var same = list.Where(w => w.TypeId == item.TypeId).ToList();
+                while (same.Count >= max) { list.Remove(same[0]); same.RemoveAt(0); }
+            }
             list.Add(new WornAsset { Id = item.AssetId, Name = item.Name, TypeId = item.TypeId });
             StatusMessage = $"Put on {item.Name}.";
         }
