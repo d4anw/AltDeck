@@ -194,9 +194,7 @@
             <views:StartPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Home}"/>
             <views:GamesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Games}"/>
             <views:AvatarPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Avatar}"/>
-            <views:ComingSoonPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Marketplace}"
-                                  Icon="&#xE719;" Title="Marketplace" Version="0.9"
-                                  Body="Browse avatar items by category, search, sort and price, try them on, and get free items in one click. Buying always shows the item, price and account first."/>
+            <views:MarketplacePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Marketplace}"/>
             <views:ComingSoonPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Trades}"
                                   Icon="&#xE8AB;" Title="Trades" Version="0.10"
                                   Body="Limiteds with RAP and values, each account's inventory value, and your trades: inbound, outbound and completed, with the value of each side and a win or loss indicator."/>

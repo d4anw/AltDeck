@@ -51,10 +51,10 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 - [x] Copy a look to another alt
 
 ## Phase 5: 🛒 Marketplace → 0.9
-- [ ] Browse avatar items: categories, search, sort, price filter, free items
-- [ ] Item page with "Try on" for the current account
-- [ ] Get free items in one click
-- [ ] Buy with Robux, always behind a confirm screen (item, price, account) and an optional spending limit
+- [x] Browse avatar items: categories, search, sort, price filter, free items
+- [x] Item page with "Try on" for the current account
+- [x] Get free items in one click
+- [x] Buy with Robux, always behind a confirm screen (item, price, account) and an optional spending limit
 
 ## Phase 6: 💎 Catalog, trades & values → 0.10
 - [ ] Limiteds catalog: RAP, recent sales, owners

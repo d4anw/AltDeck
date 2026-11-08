@@ -29,6 +29,7 @@ public partial class MainViewModel
         MaybeLoadGames();
         MaybeLoadFriends();
         MaybeLoadAvatar();
+        MaybeLoadMarket();
     }
 
     [RelayCommand] private void GoPage(string? page) => Page = string.IsNullOrEmpty(page) ? "Home" : page;
@@ -55,6 +56,7 @@ public partial class MainViewModel
         if (IsProfileOpen) CloseProfile();   // a profile is seen through one account; don't mix
         MaybeLoadFriends();
         MaybeLoadAvatar();
+        MarketAccountChanged();
         _ = RefreshRequestCountAsync();
     }
 

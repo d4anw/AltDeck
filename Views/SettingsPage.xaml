@@ -167,6 +167,21 @@
           </Border>
         </StackPanel>
 
+        <StackPanel x:Name="SecMarket" Margin="0,28,0,0">
+          <TextBlock Text="Marketplace" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+          <Border Style="{StaticResource CardBox}" Padding="24,4">
+            <StackPanel>
+              <ctl:SettingRow Title="Spending limit"
+                              Description="The most Robux one purchase may cost, on any account. AltDeck won't buy anything above it. 0 means no limit. Every purchase still asks first.">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="R$" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource MutedText}"/>
+                  <TextBox Text="{Binding Settings.MarketSpendLimit}" Width="90" FontFamily="Consolas"/>
+                </StackPanel>
+              </ctl:SettingRow>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
         <StackPanel x:Name="SecSecurity" Margin="0,28,0,0">
           <TextBlock Text="Security" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
           <Border Style="{StaticResource CardBox}" Padding="24,4">

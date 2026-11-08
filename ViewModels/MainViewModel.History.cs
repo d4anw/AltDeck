@@ -4,11 +4,11 @@ namespace AltDeck.ViewModels;
 
 /// <summary>
 /// Back / forward like a browser: the mouse's side buttons and Alt+← / Alt+→ move through the pages, Multi-launch tabs
-/// and game pages you visited.
+/// game pages, profiles and Marketplace items you visited.
 /// </summary>
 public partial class MainViewModel
 {
-    private sealed record NavState(string Page, string MultiTab, GameTile? Game, long Profile = 0);
+    private sealed record NavState(string Page, string MultiTab, GameTile? Game, long Profile = 0, MarketItem? Item = null);
 
     private readonly Stack<NavState> _back = new();
     private readonly Stack<NavState> _forward = new();
@@ -20,7 +20,8 @@ public partial class MainViewModel
     {
         if (_restoring) return;
         var now = new NavState(Page, MultiTab, IsGameOpen && Page == "Games" ? _lastOpened : null,
-                               IsProfileOpen && Page == "Friends" ? _lastProfileId : 0);
+                               IsProfileOpen && Page == "Friends" ? _lastProfileId : 0,
+                               IsMarketItemOpen && Page == "Marketplace" ? _lastMarketItem : null);
         if (_here == now) return;
         if (_here != null)
         {
@@ -66,6 +67,11 @@ public partial class MainViewModel
                 if (!IsProfileOpen || _lastProfileId != s.Profile) _ = OpenProfileAsync(s.Profile);
             }
             else if (IsProfileOpen && s.Page == "Friends") CloseProfile();
+            if (s.Item != null)
+            {
+                if (!IsMarketItemOpen || _lastMarketItem != s.Item) _ = OpenMarketItemAsync(s.Item);
+            }
+            else if (IsMarketItemOpen && s.Page == "Marketplace") CloseMarketItem();
         }
         finally
         {

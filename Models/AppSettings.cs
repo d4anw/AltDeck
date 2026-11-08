@@ -55,6 +55,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool minimizeOnLaunch = true;
     [ObservableProperty] private int backgroundCpuLimit = 25;   // % of the whole CPU per background client, 0 = no limit
     [ObservableProperty] private bool muteOnStart;
+    /// <summary>Marketplace: the most Robux one purchase may cost (0 = no limit). Above it, AltDeck won't buy.</summary>
+    [ObservableProperty] private long marketSpendLimit;
     [ObservableProperty] private bool lowestGraphics = true;
     [ObservableProperty] private bool lighterRendering = true;
     [ObservableProperty] private string msaa = "x1";
@@ -83,8 +85,8 @@ public partial class AppSettings : ObservableObject
     public ObservableCollection<Favourite> Favourites { get; set; } = new();
     public ObservableCollection<FastFlag> CustomFlags { get; set; } = new();   // FPS & FastFlags page
     public List<SavedGame> FavouriteGames { get; set; } = new();                // Games page: starred games
-    public List<SavedGame> RecentGames { get; set; } = new();
-    public List<long> FavouriteFriends { get; set; } = new();                    // Roblox user IDs: shown first, with a star                   // Games page: newest first, at most 30
+    public List<SavedGame> RecentGames { get; set; } = new();                  // Games page: newest first, at most 30
+    public List<long> FavouriteFriends { get; set; } = new();                    // Roblox user IDs: shown first, with a star
     public ObservableCollection<LaunchPreset> Presets { get; set; } = new();
     public ObservableCollection<LayoutProfile> Layouts { get; set; } = new();
 }
