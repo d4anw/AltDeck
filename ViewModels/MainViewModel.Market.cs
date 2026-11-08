@@ -169,6 +169,8 @@ public partial class MainViewModel
         NotifyBuy();
     }
     private long _sellersFor;
+    /// <summary>Set by a deal's Buy: when this item's sellers arrive, open the cheapest one's confirm card.</summary>
+    private long _autoBuyFor;
 
     [RelayCommand]
     private Task OpenMarket(MarketItem? item) => item == null ? Task.CompletedTask : OpenMarketItemAsync(item);
@@ -224,6 +226,13 @@ public partial class MainViewModel
             _sellersNext = next;
             SellersHasMore = next != null;
             if (MarketSellers.Count == 0) SellersNote = "Nobody is reselling this right now.";
+            // opened from a deal: go straight to the cheapest copy's confirm card (it shows the price as it is now)
+            if (_autoBuyFor == item.Id && cursor == null)
+            {
+                _autoBuyFor = 0;
+                if (CheapestSeller is { } cheapest && CurrentAccount != null) { BuySeller = cheapest; ShowBuyConfirm = true; }
+                else if (MarketSellers.Count == 0) SellersNote = "That copy was already sold. Nobody is reselling this right now.";
+            }
         }
         catch (RobloxException ex)
         {

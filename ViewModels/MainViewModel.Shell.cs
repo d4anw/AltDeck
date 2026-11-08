@@ -30,6 +30,7 @@ public partial class MainViewModel
         MaybeLoadFriends();
         MaybeLoadAvatar();
         MaybeLoadMarket();
+        MaybeLoadTrades();
     }
 
     [RelayCommand] private void GoPage(string? page) => Page = string.IsNullOrEmpty(page) ? "Home" : page;
@@ -57,6 +58,7 @@ public partial class MainViewModel
         MaybeLoadFriends();
         MaybeLoadAvatar();
         MarketAccountChanged();
+        TradesAccountChanged();
         _ = RefreshRequestCountAsync();
     }
 

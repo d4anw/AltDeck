@@ -57,11 +57,12 @@ Work happens on the `next` branch; `main` only gets a phase once it's finished, 
 - [x] Buy with Robux, always behind a confirm screen (item, price, account) and an optional spending limit
 
 ## Phase 6: 💎 Catalog, trades & values → 0.10
-- [ ] Limiteds catalog: RAP, recent sales, owners
-- [ ] Values and demand from a public values source, on items, inventories and trades
-- [ ] Total inventory value per account
-- [ ] Trades: inbound, outbound, completed; value per side and a win / loss indicator
-- [ ] Send, accept, decline and counter trades, always with a confirm screen (trading needs Premium)
+- [x] Limiteds catalog: RAP, value, demand, trend, sales, copies and RAP history (Roblox doesn't publish owner lists)
+- [x] Values and demand from a public values source (Rolimons), on items, inventories and trades
+- [x] Total inventory value per account
+- [x] Deals: live new listings plus every limited's best price, below value or RAP, buy behind the confirm card
+- [x] Trades: inbound, outbound, completed; value per side and a win / loss indicator
+- [x] Send, accept, decline and counter trades, always with a confirm screen (trading needs Premium)
 
 ## Phase 7: Polish → 1.0
 - [ ] Notifications: friend online, trade received, friend request

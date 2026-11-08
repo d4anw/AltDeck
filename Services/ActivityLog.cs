@@ -28,7 +28,7 @@ public sealed class ActivityLog
 
     public const string Launch = "Launch", Rejoin = "Rejoin", Drop = "Drop", GiveUp = "Give up", Frozen = "Frozen",
                         Stop = "Stop", SignIn = "Sign-in", Error = "Error", Info = "Info", Backup = "Backup",
-                        Preset = "Preset", Layout = "Layout", Purchase = "Purchase";
+                        Preset = "Preset", Layout = "Layout", Purchase = "Purchase", Trade = "Trade";
     public static readonly HashSet<string> ProblemKinds = new() { Drop, GiveUp, Frozen, SignIn, Error };
 
     const int MaxEntries = 1000;

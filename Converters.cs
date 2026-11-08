@@ -114,7 +114,7 @@ public class CountToVisibilityConverter : IValueConverter
 {
     public object Convert(object? v, Type t, object? p, CultureInfo c)
     {
-        bool any = v is int n && n > 0;
+        bool any = v switch { int n => n > 0, long l => l > 0, _ => false };
         if (string.Equals(p as string, "Inverse", StringComparison.OrdinalIgnoreCase)) any = !any;
         return any ? Visibility.Visible : Visibility.Collapsed;
     }

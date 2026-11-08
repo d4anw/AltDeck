@@ -123,7 +123,7 @@ public static class RobloxHttp
             _ => JsonSerializer.Serialize(body)
         };
         bool changes = method != HttpMethod.Get && method != HttpMethod.Head;
-        string? key = cookie != null ? Key(cookie) : null;
+        string? key = cookie != null ? Key(cookie) : "(signed out)";   // signed out still gets a CSRF token for POSTs
 
         var gate = Gates.GetOrAdd(GateKey(url), _ => new HostGate());
 

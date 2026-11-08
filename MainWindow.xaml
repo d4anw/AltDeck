@@ -195,9 +195,7 @@
             <views:GamesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Games}"/>
             <views:AvatarPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Avatar}"/>
             <views:MarketplacePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Marketplace}"/>
-            <views:ComingSoonPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Trades}"
-                                  Icon="&#xE8AB;" Title="Trades" Version="0.10"
-                                  Body="Limiteds with RAP and values, each account's inventory value, and your trades: inbound, outbound and completed, with the value of each side and a win or loss indicator."/>
+            <views:TradesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Trades}"/>
             <views:FriendsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Friends}"/>
             <views:MultiLaunchPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Multi}"/>
             <views:PerformancePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Performance}"/>
