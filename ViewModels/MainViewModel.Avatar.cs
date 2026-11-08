@@ -134,9 +134,13 @@ public partial class MainViewModel
     [ObservableProperty] private bool previewUpdating;
     private int _previewGeneration;
 
-    public bool Showing3D => Show3D && Avatar3DModel != null;
-    partial void OnAvatar3DModelChanged(Avatar3D? value) => OnPropertyChanged(nameof(Showing3D));
+    /// <summary>The new picture arrived before the new 3D model: show the picture until the model catches up.</summary>
+    [ObservableProperty] private bool pictureIsNewer;
+
+    public bool Showing3D => Show3D && Avatar3DModel != null && !PictureIsNewer;
+    partial void OnAvatar3DModelChanged(Avatar3D? value) { PictureIsNewer = false; OnPropertyChanged(nameof(Showing3D)); }
     partial void OnShow3DChanged(bool value) => OnPropertyChanged(nameof(Showing3D));
+    partial void OnPictureIsNewerChanged(bool value) => OnPropertyChanged(nameof(Showing3D));
 
     private async Task Load3DAsync(Account a, string? previous, int generation)
     {
@@ -182,17 +186,37 @@ public partial class MainViewModel
     {
         int generation = ++_previewGeneration;
         PreviewUpdating = true;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        double pictureAt = -1, modelAt = -1;
         try
         {
             _ = RobloxAvatar.RedrawAsync(a.Cookie);   // a nudge; Roblox redraws after a change anyway, so don't wait for it
+            var oldModel = Avatar3DModel;
             var pic = RobloxAvatar.WaitForNewPictureAsync(a.UserId, AvatarPicture, CancellationToken.None);
-            var model = Load3DAsync(a, Avatar3DModel?.SourceUrl, generation);
+            var model = Load3DAsync(a, oldModel?.SourceUrl, generation);
+
             var url = await pic;
-            if (generation == _previewGeneration && a == CurrentAccount && url.Length > 0) AvatarPicture = url;
+            pictureAt = clock.Elapsed.TotalSeconds;
+            if (generation == _previewGeneration && a == CurrentAccount && url.Length > 0 && url != AvatarPicture)
+            {
+                AvatarPicture = url;
+                // the 3D model is still the old look: show the new picture meanwhile
+                if (Avatar3DModel == oldModel && Show3D) PictureIsNewer = true;
+            }
             await model;
+            if (Avatar3DModel != oldModel) modelAt = clock.Elapsed.TotalSeconds;
         }
         catch { }
-        finally { if (generation == _previewGeneration) PreviewUpdating = false; }
+        finally
+        {
+            if (generation == _previewGeneration)
+            {
+                PreviewUpdating = false;
+                PictureIsNewer = false;
+                Log(ActivityLog.Info, "Avatar preview: picture after " + (pictureAt < 0 ? "–" : $"{pictureAt:0.0} s")
+                                      + ", 3D after " + (modelAt < 0 ? "– (kept the last one)" : $"{modelAt:0.0} s") + ".");
+            }
+        }
     }
 
     [RelayCommand]
@@ -290,8 +314,8 @@ public partial class MainViewModel
         _ = FillItemPicturesAsync(WardrobeItems.ToList());
     }
 
-    // Clicks change the look on screen at once; the save to Roblox waits 0.5 s for more clicks, then sends them together.
-    private readonly System.Windows.Threading.DispatcherTimer _wearSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    // Clicks change the look on screen at once; the save to Roblox waits 0.25 s for more clicks, then sends them together.
+    private readonly System.Windows.Threading.DispatcherTimer _wearSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
     private readonly SemaphoreSlim _wearSaveGate = new(1);
     private List<WornAsset>? _lastSavedAssets;
     private bool _wearTimerHooked;

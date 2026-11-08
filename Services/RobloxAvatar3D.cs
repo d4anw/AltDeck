@@ -55,8 +55,8 @@ public static class RobloxAvatar3D
         string objHash = root.GetProperty("obj").GetString()!;
         string mtlHash = root.GetProperty("mtl").GetString()!;
 
-        var objTask = GetTextAsync(objHash, ct);
-        var mtlTask = GetTextAsync(mtlHash, ct);
+        var objTask = CachedTextAsync(objHash, ct);
+        var mtlTask = CachedTextAsync(mtlHash, ct);
         var objText = await objTask;
         var mtlText = await mtlTask;
 
@@ -69,10 +69,15 @@ public static class RobloxAvatar3D
         {
             try
             {
-                var bytes = await GetBytesAsync(name!, ct);
-                var img = new BitmapImage();
-                using (var ms = new MemoryStream(bytes)) { img.BeginInit(); img.CacheOption = BitmapCacheOption.OnLoad; img.StreamSource = ms; img.EndInit(); }
-                img.Freeze();
+                if (!TextureCache.TryGetValue(name!, out var img))
+                {
+                    var bytes = await GetBytesAsync(name!, ct);
+                    img = new BitmapImage();
+                    using (var ms = new MemoryStream(bytes)) { img.BeginInit(); img.CacheOption = BitmapCacheOption.OnLoad; img.StreamSource = ms; img.EndInit(); }
+                    img.Freeze();
+                    if (TextureCache.Count > 80) TextureCache.Clear();
+                    TextureCache[name!] = img;
+                }
                 lock (textures) textures[name!] = img;
             }
             catch { Interlocked.Increment(ref failed); }
@@ -80,6 +85,20 @@ public static class RobloxAvatar3D
         if (failed > 0) throw new MissingTexturesException(failed, textureNames.Count);
 
         return await Task.Run(() => BuildModel(objText, materials, textures, metaUrl), ct);
+    }
+
+    // Files are named by their content (a hash), so a remembered one is always the right one: skin, face and clothes that
+    // didn't change aren't downloaded again after the next change.
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> TextCache = new();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, BitmapImage> TextureCache = new();
+
+    static async Task<string> CachedTextAsync(string hash, CancellationToken ct)
+    {
+        if (TextCache.TryGetValue(hash, out var known)) return known;
+        var text = await GetTextAsync(hash, ct);
+        if (TextCache.Count > 20) TextCache.Clear();
+        TextCache[hash] = text;
+        return text;
     }
 
     // ------------------------------------------------------------------ OBJ / MTL
