@@ -170,7 +170,7 @@ public partial class MainWindow : Window
 
     private void ShowTrayPanel()
     {
-        if (_flyout != null) { _flyout.Close(); _flyout = null; return; }   // a second click closes it
+        if (_flyout != null) { _flyout.SafeClose(); _flyout = null; return; }   // a second click closes it
         _flyout = new TrayFlyout { DataContext = _vm };
         _flyout.Closed += (_, _) => _flyout = null;
         _flyout.OpenRequested += ShowFromTray;

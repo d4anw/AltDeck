@@ -12,11 +12,22 @@ public partial class TrayFlyout : Window
     public event Action? QuitRequested;
     public event Action? StopAllRequested;
 
+    private bool _closing;
+
     public TrayFlyout()
     {
         InitializeComponent();
-        Deactivated += (_, _) => Close();
-        KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) Close(); };
+        Deactivated += (_, _) => SafeClose();
+        KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) SafeClose(); };
+        Closing += (_, _) => _closing = true;
+    }
+
+    /// <summary>Closes once. Opening RoDeck from here also takes the focus away, which would ask it to close a second time.</summary>
+    public void SafeClose()
+    {
+        if (_closing) return;
+        _closing = true;
+        Close();
     }
 
     /// <summary>Opens next to the tray: above the taskbar, right-aligned with where the icon was clicked.</summary>
@@ -36,7 +47,8 @@ public partial class TrayFlyout : Window
         Activate();
     }
 
-    private void Open_Click(object sender, RoutedEventArgs e) { Close(); OpenRequested?.Invoke(); }
-    private void Quit_Click(object sender, RoutedEventArgs e) { Close(); QuitRequested?.Invoke(); }
+    // close first, then act once the panel is gone (so the main window coming up can't touch a closing panel)
+    private void Open_Click(object sender, RoutedEventArgs e) { SafeClose(); Dispatcher.BeginInvoke(new Action(() => OpenRequested?.Invoke())); }
+    private void Quit_Click(object sender, RoutedEventArgs e) { SafeClose(); Dispatcher.BeginInvoke(new Action(() => QuitRequested?.Invoke())); }
     private void StopAll_Click(object sender, RoutedEventArgs e) => StopAllRequested?.Invoke();
 }
