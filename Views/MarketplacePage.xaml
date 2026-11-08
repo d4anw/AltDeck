@@ -43,20 +43,24 @@
           <StackPanel Margin="10,9,10,10">
             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
             <TextBlock Text="{Binding CreatorName}" FontSize="11" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
-            <TextBlock Text="{Binding PriceText}" FontWeight="SemiBold" Margin="0,5,0,0" TextTrimming="CharacterEllipsis">
+            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+            <TextBlock Text="{Binding PriceText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
               <TextBlock.Style>
                 <Style TargetType="TextBlock">
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding IsFree}" Value="True">
                       <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                     </DataTrigger>
-                    <DataTrigger Binding="{Binding ForSale}" Value="False">
+                    <DataTrigger Binding="{Binding Buyable}" Value="False">
                       <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
               </TextBlock.Style>
             </TextBlock>
+            <TextBlock Text="{Binding PriceNote}" FontSize="11" Style="{StaticResource MutedText}" Margin="6,0,0,0" VerticalAlignment="Center"
+                       Visibility="{Binding PriceNote, Converter={StaticResource EmptyCollapsed}}"/>
+            </StackPanel>
           </StackPanel>
         </StackPanel>
       </Button>
@@ -200,7 +204,10 @@
               <TextBlock Text="{Binding MarketItemMeta}" Margin="0,4,0,0" FontSize="12" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
 
               <Grid Margin="0,20,0,14">
-                <TextBlock Text="{Binding OpenMarketItem.PriceText}" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding OpenMarketItem.PriceText}" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+                  <TextBlock Text="{Binding OpenMarketItem.PriceNote}" Style="{StaticResource MutedText}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
                 <Border HorizontalAlignment="Right" VerticalAlignment="Center" Padding="10,4" CornerRadius="9"
                         Background="{DynamicResource Card2}" BorderBrush="{DynamicResource Accent}" BorderThickness="1"
                         Visibility="{Binding OpenMarketItem.IsOwned, Converter={StaticResource BoolVis}}">
@@ -240,6 +247,52 @@
               </UniformGrid>
 
               <TextBlock Margin="2,12,0,0" FontSize="12" Style="{StaticResource MutedText}" TextWrapping="Wrap" Text="{Binding MarketAsText}"/>
+
+              <!-- limiteds: everyone reselling a copy, cheapest first -->
+              <StackPanel Margin="0,22,0,0" Visibility="{Binding ShowSellers, Converter={StaticResource BoolVis}}">
+                <Grid Margin="0,0,0,8">
+                  <TextBlock FontWeight="SemiBold" VerticalAlignment="Center">
+                    <Run Text="Sellers"/> <Run Text="{Binding MarketSellers.Count, Mode=OneWay, StringFormat='({0})'}" Foreground="{DynamicResource Muted}"/>
+                  </TextBlock>
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh sellers" Margin="0" HorizontalAlignment="Right"
+                          Command="{Binding ReloadSellersCommand}"/>
+                </Grid>
+                <Border Style="{StaticResource CardBox}" Padding="6"
+                        Visibility="{Binding MarketSellers.Count, Converter={StaticResource CountVis}}">
+                  <ItemsControl ItemsSource="{Binding MarketSellers}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="8,5">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                          </Grid.ColumnDefinitions>
+                          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" MaxWidth="170"/>
+                            <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="10" Margin="5,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource Blue}" Visibility="{Binding Verified, Converter={StaticResource BoolVis}}"/>
+                            <TextBlock Text="{Binding SerialText}" Style="{StaticResource MutedText}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="your account" Foreground="{DynamicResource Accent}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"
+                                       Visibility="{Binding IsYours, Converter={StaticResource BoolVis}}"/>
+                          </StackPanel>
+                          <TextBlock Grid.Column="1" Text="{Binding PriceText}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,12,0"/>
+                          <Button Grid.Column="2" Content="Buy" Margin="0" Padding="16,6" Focusable="False"
+                                  IsEnabled="{Binding IsYours, Converter={StaticResource Not}}"
+                                  Command="{Binding DataContext.BuyFromSellerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  CommandParameter="{Binding}"/>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Border>
+                <TextBlock Text="Loading sellers…" Style="{StaticResource MutedText}" Margin="2,6,0,0"
+                           Visibility="{Binding SellersLoading, Converter={StaticResource BoolVis}}"/>
+                <TextBlock Text="{Binding SellersNote}" Style="{StaticResource MutedText}" Margin="2,6,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding SellersNote, Converter={StaticResource EmptyCollapsed}}"/>
+                <Button Content="More sellers" HorizontalAlignment="Center" Margin="0,8,0,0" Command="{Binding LoadMoreSellersCommand}"
+                        Visibility="{Binding SellersHasMore, Converter={StaticResource BoolVis}}"/>
+              </StackPanel>
 
               <TextBlock Text="Includes" FontWeight="SemiBold" Margin="0,22,0,6"
                          Visibility="{Binding OpenMarketItem.Parts.Count, Converter={StaticResource CountVis}}"/>
@@ -281,7 +334,7 @@
 
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-            <Grid.RowDefinitions><RowDefinition Height="28"/><RowDefinition Height="28"/><RowDefinition Height="28"/></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="28"/><RowDefinition Height="28"/><RowDefinition Height="28"/><RowDefinition Height="28"/></Grid.RowDefinitions>
             <TextBlock Text="Price" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="{Binding BuyPrice, StringFormat='R$ {0:N0}'}" FontWeight="Bold" VerticalAlignment="Center"/>
             <TextBlock Grid.Row="1" Text="Account" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
@@ -289,6 +342,8 @@
                        TextTrimming="CharacterEllipsis"/>
             <TextBlock Grid.Row="2" Text="Robux" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BuyAfterText}" VerticalAlignment="Center" FontFamily="Consolas"/>
+            <TextBlock Grid.Row="3" Text="Seller" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding BuySellerText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
           </Grid>
 
           <TextBlock Text="This account doesn't have enough Robux." Foreground="{DynamicResource Red}" Margin="0,12,0,0" TextWrapping="Wrap"
@@ -305,7 +360,7 @@
             <Button Margin="0" Command="{Binding ConfirmBuyCommand}" IsEnabled="{Binding CanConfirmBuy}">
               <Button.Style>
                 <Style TargetType="Button" BasedOn="{StaticResource Primary}">
-                  <Setter Property="Content" Value="{Binding BuyButtonText}"/>
+                  <Setter Property="Content" Value="{Binding ConfirmBuyText}"/>
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding BuyBusy}" Value="True">
                       <Setter Property="Content" Value="Buying…"/>

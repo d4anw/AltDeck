@@ -160,7 +160,15 @@ public partial class MainViewModel
     [ObservableProperty] private string marketItemPicture = "";
     private MarketItem? _lastMarketItem;
 
-    partial void OnOpenMarketItemChanged(MarketItem? value) { RecordNav(); NotifyBuy(); }
+    partial void OnOpenMarketItemChanged(MarketItem? value)
+    {
+        RecordNav();
+        if (value == null || value.Id != _sellersFor) { MarketSellers.Clear(); SellersNote = ""; SellersHasMore = false; }
+        _sellersFor = value?.Id ?? 0;
+        OnPropertyChanged(nameof(ShowSellers));
+        NotifyBuy();
+    }
+    private long _sellersFor;
 
     [RelayCommand]
     private Task OpenMarket(MarketItem? item) => item == null ? Task.CompletedTask : OpenMarketItemAsync(item);
@@ -183,8 +191,65 @@ public partial class MainViewModel
                 ? await Thumbnails.GetAsync("BundleThumbnail", new[] { full.Id }, "420x420", ct)
                 : await Thumbnails.GetAsync("Asset", new[] { full.Id }, "420x420", ct);
             if (big.TryGetValue(full.Id, out var url) && OpenMarketItem == full) MarketItemPicture = url;
+            if (full.IsLimited && full.CollectibleItemId.Length > 0) _ = LoadSellersAsync(full, null);
             return true;
         }, "Loading item…");
+    }
+
+    // ---- resellers (limiteds)
+
+    public ObservableCollection<MarketSeller> MarketSellers { get; } = new();
+    [ObservableProperty] private bool sellersLoading;
+    [ObservableProperty] private bool sellersHasMore;
+    [ObservableProperty] private string sellersNote = "";
+    private string? _sellersNext;
+    public bool ShowSellers => OpenMarketItem is { IsLimited: true };
+
+    private async Task LoadSellersAsync(MarketItem item, string? cursor)
+    {
+        if (cursor == null) { MarketSellers.Clear(); _sellersNext = null; SellersHasMore = false; }
+        SellersLoading = true;
+        SellersNote = "";
+        NotifyBuy();
+        try
+        {
+            var (list, next) = await RobloxMarket.GetResellersAsync(item.CollectibleItemId, cursor, CancellationToken.None);
+            if (OpenMarketItem != item) return;
+            var mine = Accounts.Select(a => a.UserId).ToHashSet();
+            foreach (var s in list)
+            {
+                s.IsYours = s.SellerType == "User" && mine.Contains(s.SellerId);
+                MarketSellers.Add(s);
+            }
+            _sellersNext = next;
+            SellersHasMore = next != null;
+            if (MarketSellers.Count == 0) SellersNote = "Nobody is reselling this right now.";
+        }
+        catch (RobloxException ex)
+        {
+            if (OpenMarketItem == item) SellersNote = ex.TooMany ? "Roblox is busy. Try again in a moment." : ex.Message;
+        }
+        finally
+        {
+            if (OpenMarketItem == item) { SellersLoading = false; NotifyBuy(); }
+        }
+    }
+
+    [RelayCommand]
+    private Task LoadMoreSellers() => OpenMarketItem is { } i && _sellersNext != null && !SellersLoading
+        ? LoadSellersAsync(i, _sellersNext) : Task.CompletedTask;
+
+    [RelayCommand]
+    private Task ReloadSellers() => OpenMarketItem is { } i ? LoadSellersAsync(i, null) : Task.CompletedTask;
+
+    /// <summary>"Buy" on one seller's row: the confirm card for that copy.</summary>
+    [RelayCommand]
+    private void BuyFromSeller(MarketSeller? s)
+    {
+        if (s == null || s.IsYours || CurrentAccount == null || BuyBusy) return;
+        BuySeller = s;
+        ShowBuyConfirm = true;
+        NotifyBuy();
     }
 
     [RelayCommand]
@@ -315,15 +380,23 @@ public partial class MainViewModel
     // ================================================================== getting and buying
 
     [ObservableProperty] private bool showBuyConfirm;
+    /// <summary>Buying a reseller's copy (null: buying new from Roblox / the creator).</summary>
+    [ObservableProperty] private MarketSeller? buySeller;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(CanConfirmBuy))] private bool buyBusy;
     [ObservableProperty] private string buyError = "";
 
-    partial void OnShowBuyConfirmChanged(bool value) { BuyError = ""; NotifyBuy(); }
+    partial void OnShowBuyConfirmChanged(bool value)
+    {
+        BuyError = "";
+        if (!value) BuySeller = null;
+        NotifyBuy();
+    }
 
     private void NotifyBuy()
     {
         foreach (var n in new[] { nameof(BuyPrice), nameof(BuyAfterText), nameof(BuyNotEnough), nameof(BuyOverLimit),
-                                  nameof(CanConfirmBuy), nameof(BuyButtonText), nameof(MarketItemMeta), nameof(CanGetOrBuy), nameof(MarketAsText) })
+                                  nameof(CanConfirmBuy), nameof(BuyButtonText), nameof(MarketItemMeta), nameof(CanGetOrBuy), nameof(MarketAsText),
+                                  nameof(ConfirmBuyText), nameof(BuySellerText) })
             OnPropertyChanged(n);
     }
 
@@ -331,32 +404,44 @@ public partial class MainViewModel
     public string MarketAsText => CurrentAccount is not { } a ? "Add an account to get or buy items."
         : $"As {a.Label}{(a.Robux is long r ? $" · R$ {r:N0}" : "")}. Switch accounts top right.";
 
-    public long BuyPrice => OpenMarketItem?.Price ?? 0;
+    public long BuyPrice => BuySeller?.Price ?? OpenMarketItem?.Price ?? 0;
+    private MarketSeller? CheapestSeller => MarketSellers.Where(s => !s.IsYours).OrderBy(s => s.Price).FirstOrDefault();
+    public string ConfirmBuyText => $"Buy for R$ {BuyPrice:N0}";
+    /// <summary>The confirm card's "Seller" row: "pleastea3 · copy #12" or "Roblox (new)".</summary>
+    public string BuySellerText => BuySeller is { } s ? s.Name + (s.Serial > 0 ? $"  ·  copy #{s.Serial:N0}" : "")
+        : (OpenMarketItem?.CreatorName ?? "") + " (new)";
     public string BuyAfterText => CurrentAccount?.Robux is long r
         ? $"R$ {r:N0}  →  R$ {Math.Max(0, r - BuyPrice):N0}"
         : "Unknown (Roblox didn't say)";
     public bool BuyNotEnough => CurrentAccount?.Robux is long r && r < BuyPrice;
     public bool BuyOverLimit => Settings.MarketSpendLimit > 0 && BuyPrice > Settings.MarketSpendLimit;
-    public bool CanConfirmBuy => !BuyBusy && !BuyNotEnough && !BuyOverLimit && OpenMarketItem is { ForSale: true, IsOwned: false };
+    /// <summary>A limited's copy can be bought even when you own one already; new items only once.</summary>
+    public bool CanConfirmBuy => !BuyBusy && !BuyNotEnough && !BuyOverLimit
+        && (BuySeller != null ? !BuySeller.IsYours : OpenMarketItem is { ForSale: true, IsOwned: false });
 
-    /// <summary>"Get for free", "Buy for R$ 95", "Owned", "Off sale".</summary>
+    /// <summary>"Get for free", "Buy for R$ 95", "Buy for R$ 193 (lowest)", "Owned", "Not for sale".</summary>
     public string BuyButtonText => OpenMarketItem switch
     {
         null => "",
-        { IsOwned: true } => "Owned",
+        { ForSale: true, IsOwned: true } => "Owned",
         { IsFree: true } => "Get for free",
         { Price: long p } => $"Buy for R$ {p:N0}",
+        _ when CheapestSeller is { } s => $"Buy for R$ {s.Price:N0} (lowest)",
+        { IsResaleOnly: true } when SellersLoading => "Loading sellers…",
         _ => "Not for sale"
     };
-    public bool CanGetOrBuy => OpenMarketItem is { ForSale: true, IsOwned: false } && CurrentAccount != null && !BuyBusy;
+    public bool CanGetOrBuy => CurrentAccount != null && !BuyBusy
+        && (OpenMarketItem is { ForSale: true, IsOwned: false } || (OpenMarketItem is { ForSale: false } && CheapestSeller != null));
 
-    /// <summary>Free: get it at once. Robux: open the confirm card first, never buy on one click.</summary>
+    /// <summary>Free: get it at once. Robux: open the confirm card first, never buy on one click. Resale only: the cheapest copy.</summary>
     [RelayCommand]
     private async Task GetOrBuy()
     {
         if (!CanGetOrBuy || OpenMarketItem is not { } item) return;
         if (item.IsFree) { await DoBuyAsync(item, 0); return; }
+        BuySeller = item.ForSale ? null : CheapestSeller;
         ShowBuyConfirm = true;
+        NotifyBuy();
     }
 
     [RelayCommand] private void CancelBuy() => ShowBuyConfirm = false;
@@ -364,8 +449,8 @@ public partial class MainViewModel
     [RelayCommand]
     private async Task ConfirmBuy()
     {
-        if (!CanConfirmBuy || OpenMarketItem is not { Price: long price } item) return;
-        await DoBuyAsync(item, price);
+        if (!CanConfirmBuy || OpenMarketItem is not { } item) return;
+        await DoBuyAsync(item, BuyPrice);
     }
 
     private async Task DoBuyAsync(MarketItem item, long price)
@@ -377,13 +462,18 @@ public partial class MainViewModel
         NotifyBuy();
         try
         {
-            var result = await RobloxMarket.BuyAsync(a.Cookie, a.UserId, item, price, CancellationToken.None);
+            var seller = BuySeller;
+            var result = seller != null
+                ? await RobloxMarket.BuyResaleAsync(a.Cookie, a.UserId, item, seller, CancellationToken.None)
+                : await RobloxMarket.BuyAsync(a.Cookie, a.UserId, item, price, CancellationToken.None);
             if (result.Ok)
             {
                 item.Owned = true;
+                if (seller != null) MarketSellers.Remove(seller);
                 ShowBuyConfirm = false;
-                StatusMessage = price == 0 ? $"{a.Label} got {item.Name}." : $"{a.Label} bought {item.Name} for R$ {price:N0}.";
-                Log(ActivityLog.Purchase, price == 0 ? $"{a.Label} got {item.Name} (free)." : $"{a.Label} bought {item.Name} for R$ {price:N0}.");
+                var from = seller != null ? $" from {seller.Name}" : "";
+                StatusMessage = price == 0 ? $"{a.Label} got {item.Name}." : $"{a.Label} bought {item.Name}{from} for R$ {price:N0}.";
+                Log(ActivityLog.Purchase, price == 0 ? $"{a.Label} got {item.Name} (free)." : $"{a.Label} bought {item.Name}{from} for R$ {price:N0}.");
                 _avatarLoadedAt = DateTime.MinValue;   // the Avatar page's wardrobe reloads with the new item
                 _wardrobeAll = new();
                 if (price > 0 && await RobloxApi.GetRobuxAsync(a.Cookie, a.UserId) is long r) a.Robux = r;
@@ -391,6 +481,7 @@ public partial class MainViewModel
             else
             {
                 if (result.Message.Contains("already owns")) item.Owned = true;
+                if (seller != null) _ = LoadSellersAsync(item, null);   // that copy may be gone: show the list as it is now
                 if (ShowBuyConfirm) BuyError = result.Message; else StatusMessage = result.Message;
             }
         }

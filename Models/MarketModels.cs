@@ -36,14 +36,21 @@ public partial class MarketItem : ObservableObject
     public bool IsBundle => ItemType == "Bundle";
     public bool IsFree => Price == 0;
     public bool ForSale => Price != null;
+    /// <summary>Not sold by Roblox / the creator anymore, only by players reselling theirs.</summary>
+    public bool IsResaleOnly => Price == null && LowestResale > 0;
+    /// <summary>Can be bought one way or another: new, or from a reseller.</summary>
+    public bool Buyable => ForSale || IsResaleOnly;
 
-    /// <summary>"Free", "R$ 95", "Resale from R$ 120" or "Off sale".</summary>
+    /// <summary>"Free", "R$ 95" (also the best resale price for resale-only limiteds) or "Off sale".</summary>
     public string PriceText => Price switch
     {
         0 => "Free",
         long p => $"R$ {p:N0}",
-        _ => LowestResale > 0 ? $"Resale from R$ {LowestResale:N0}" : "Off sale"
+        _ => LowestResale > 0 ? $"R$ {LowestResale:N0}" : "Off sale"
     };
+
+    /// <summary>Under the price on a tile: "Lowest resale" when the price is a reseller's.</summary>
+    public string PriceNote => IsResaleOnly ? "lowest resale" : "";
 
     public string KindText => IsBundle ? BundleKind(BundleType) : AssetKind(AssetType);
 
@@ -63,6 +70,25 @@ public partial class MarketItem : ObservableObject
         70 => "Left shoe", 71 => "Right shoe", 72 => "Dress / skirt", 78 => "Mood", 79 => "Head",
         _ => "Avatar item"
     };
+}
+
+/// <summary>A player selling their copy of a limited.</summary>
+public sealed class MarketSeller
+{
+    public string Name { get; init; } = "";
+    public long SellerId { get; init; }
+    public string SellerType { get; init; } = "User";
+    public bool Verified { get; init; }
+    public long Price { get; init; }
+    /// <summary>The copy's serial number (#12 of 500), for limited U items; 0 when it has none.</summary>
+    public long Serial { get; init; }
+    public string ProductId { get; init; } = "";
+    public string InstanceId { get; init; } = "";
+    /// <summary>One of your own accounts is selling it (you can't buy from yourself).</summary>
+    public bool IsYours { get; set; }
+
+    public string PriceText => $"R$ {Price:N0}";
+    public string SerialText => Serial > 0 ? $"#{Serial:N0}" : "";
 }
 
 /// <summary>One item inside a bundle.</summary>

@@ -80,7 +80,7 @@ public static class RobloxMarket
         if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
             foreach (var x in data.EnumerateArray())
                 if (Read(x) is { } it && items.All(i => i.Id != it.Id || i.ItemType != it.ItemType)
-                    && (q.MaxPrice == null || it.ForSale))   // a price filter means "things I can get for that": skip off-sale ones
+                    && (q.MaxPrice == null || it.Buyable))   // a price filter means "things I can get for that": skip off-sale ones
                     items.Add(it);
         var next = Str(doc.RootElement, "nextPageCursor");
         var result = (items, string.IsNullOrEmpty(next) ? null : next);
@@ -210,6 +210,56 @@ public static class RobloxMarket
         }
     }
 
+    /// <summary>Players reselling this limited, cheapest first (Roblox's order), one page of 30.</summary>
+    public static async Task<(List<MarketSeller> Sellers, string? Next)> GetResellersAsync(string collectibleItemId, string? cursor, CancellationToken ct)
+    {
+        var url = $"https://apis.roblox.com/marketplace-sales/v1/item/{collectibleItemId}/resellers?limit=30"
+                + (string.IsNullOrEmpty(cursor) ? "" : "&cursor=" + Uri.EscapeDataString(cursor));
+        using var doc = await RobloxHttp.GetJsonAsync(url, null, ct);
+        var list = new List<MarketSeller>();
+        if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            foreach (var x in data.EnumerateArray())
+            {
+                var s = x.TryGetProperty("seller", out var se) ? se : default;
+                list.Add(new MarketSeller
+                {
+                    Name = Str(s, "name"),
+                    SellerId = Long(s, "sellerId"),
+                    SellerType = Str(s, "sellerType") is { Length: > 0 } t ? t : "User",
+                    Verified = s.ValueKind == JsonValueKind.Object && s.TryGetProperty("hasVerifiedBadge", out var v) && v.ValueKind == JsonValueKind.True,
+                    Price = Long(x, "price"),
+                    Serial = Long(x, "serialNumber"),
+                    ProductId = Str(x, "collectibleProductId"),
+                    InstanceId = Str(x, "collectibleItemInstanceId")
+                });
+            }
+        var next = Str(doc.RootElement, "nextPageCursor");
+        return (list, string.IsNullOrEmpty(next) ? null : next);
+    }
+
+    /// <summary>Buys one reseller's copy at exactly its listed price (Roblox refuses if it changed or was sold meanwhile).</summary>
+    public static async Task<PurchaseResult> BuyResaleAsync(string cookie, long userId, MarketItem item, MarketSeller seller, CancellationToken ct)
+    {
+        var body = new JsonObject
+        {
+            ["collectibleItemId"] = item.CollectibleItemId,
+            ["collectibleItemInstanceId"] = seller.InstanceId,
+            ["collectibleProductId"] = seller.ProductId,
+            ["expectedCurrency"] = 1,
+            ["expectedPrice"] = seller.Price,
+            ["expectedPurchaserId"] = userId.ToString(),
+            ["expectedPurchaserType"] = "User",
+            ["expectedSellerId"] = seller.SellerId,
+            ["expectedSellerType"] = seller.SellerType,
+            ["idempotencyKey"] = Guid.NewGuid().ToString()
+        }.ToJsonString();
+        using var doc = await RobloxHttp.PostJsonAsync(
+            $"https://apis.roblox.com/marketplace-sales/v1/item/{item.CollectibleItemId}/purchase-resale", cookie, body, ct);
+        var r = doc.RootElement;
+        bool ok = r.TryGetProperty("purchased", out var p) && p.ValueKind == JsonValueKind.True;
+        return new(ok, ok ? "" : Reason(Str(r, "errorMessage") is { Length: > 0 } e ? e : Str(r, "purchaseResult")));
+    }
+
     static async Task<string> GetCollectibleProductIdAsync(MarketItem item, CancellationToken ct)
     {
         using var doc = await RobloxHttp.PostJsonAsync("https://apis.roblox.com/marketplace-items/v1/items/details", null,
@@ -245,6 +295,8 @@ public static class RobloxMarket
         long? price = x.TryGetProperty("price", out var pr) && pr.ValueKind == JsonValueKind.Number ? pr.GetInt64() : null;
         var status = Str(x, "priceStatus");
         if (status is "Off Sale" or "No Resellers") price = null;
+        // limiteds Roblox stopped selling come back as price 0 + isOffSale: they're not free, only resellers have them
+        if (x.TryGetProperty("isOffSale", out var off) && off.ValueKind == JsonValueKind.True) price = null;
         if (price == 0 && status != "Free" && x.TryGetProperty("isPurchasable", out var ip) && ip.ValueKind == JsonValueKind.False) price = null;
 
         var restrictions = new List<string>();
