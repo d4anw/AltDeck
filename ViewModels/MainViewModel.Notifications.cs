@@ -25,6 +25,20 @@ public partial class MainViewModel
 
     public bool AnyNotifications => Settings.NotifyFriendOnline || Settings.NotifyTrades || Settings.NotifyFriendRequests || Settings.NotifyDeals;
 
+    /// <summary>For the tray panel: which notifications are on.</summary>
+    public string TrayNotifyText
+    {
+        get
+        {
+            var on = new List<string>();
+            if (Settings.NotifyFriendOnline) on.Add("friends online");
+            if (Settings.NotifyTrades) on.Add("trades");
+            if (Settings.NotifyFriendRequests) on.Add("requests");
+            if (Settings.NotifyDeals) on.Add("deals");
+            return on.Count == 0 ? "Notifications are off" : "Notifying about " + string.Join(", ", on);
+        }
+    }
+
     /// <summary>Started once; does nothing while every notification is off.</summary>
     private void SetupNotifications()
     {
@@ -34,6 +48,7 @@ public partial class MainViewModel
         {
             if (e.PropertyName?.StartsWith("Notify") != true) return;
             OnPropertyChanged(nameof(AnyNotifications));
+            OnPropertyChanged(nameof(TrayNotifyText));
             // a switch turned on: start fresh, so what's already there isn't announced
             if (e.PropertyName == nameof(AppSettings.NotifyFriendOnline)) _friendPresence = null;
             if (e.PropertyName == nameof(AppSettings.NotifyTrades)) _seenTrades = null;

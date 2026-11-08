@@ -5,7 +5,8 @@ using Forms = System.Windows.Forms;
 
 namespace RoDeck.Services;
 
-/// <summary>The notification-area icon: open, stop all clients, quit. Only visible while "Close to tray" is on.</summary>
+/// <summary>The notification-area icon. A click opens RoDeck's tray panel; a double-click opens RoDeck.
+/// Visible while RoDeck can keep running there (Close to tray, notifications, or a trade ad posting).</summary>
 public sealed class TrayService : IDisposable
 {
     [DllImport("user32.dll")] private static extern bool DestroyIcon(IntPtr handle);
@@ -17,6 +18,8 @@ public sealed class TrayService : IDisposable
     public event Action? OpenRequested;
     public event Action? StopAllRequested;
     public event Action? QuitRequested;
+    /// <summary>The icon was clicked (left or right): show RoDeck's tray panel.</summary>
+    public event Action? PanelRequested;
     /// <summary>The last notification was clicked.</summary>
     public event Action? BalloonClicked;
 
@@ -36,16 +39,10 @@ public sealed class TrayService : IDisposable
         _handle = bmp.GetHicon();
         _image = Icon.FromHandle(_handle);
 
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Open RoDeck", null, (_, _) => OpenRequested?.Invoke());
-        menu.Items.Add("Stop all clients", null, (_, _) => StopAllRequested?.Invoke());
-        menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Quit RoDeck", null, (_, _) => QuitRequested?.Invoke());
-
-        _icon = new Forms.NotifyIcon { Icon = _image, Text = "RoDeck", ContextMenuStrip = menu, Visible = false };
+        _icon = new Forms.NotifyIcon { Icon = _image, Text = "RoDeck", Visible = false };
         _icon.DoubleClick += (_, _) => OpenRequested?.Invoke();
         _icon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke();
-        _icon.MouseClick += (_, e) => { if (e.Button == Forms.MouseButtons.Left) OpenRequested?.Invoke(); };
+        _icon.MouseClick += (_, e) => { if (e.Button is Forms.MouseButtons.Left or Forms.MouseButtons.Right) PanelRequested?.Invoke(); };
     }
 
     public bool Visible

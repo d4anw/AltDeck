@@ -31,7 +31,7 @@ public partial class MainWindow : Window
         _vm.Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == "BackgroundImage") ApplyBackground();
-            else if (e.PropertyName == "CloseToTray" || e.PropertyName?.StartsWith("Notify") == true) _tray.Visible = TrayWanted;
+            else if (e.PropertyName is "CloseToTray" or "TradeAdOn" || e.PropertyName?.StartsWith("Notify") == true) _tray.Visible = TrayWanted;
             else if (e.PropertyName == "PanicHotkey") ApplyHotkey();
         };
         ApplyBackground();
@@ -49,6 +49,7 @@ public partial class MainWindow : Window
             if (_lastNotificationPage.Length > 0) _vm.OpenNotification(_lastNotificationPage);
         });
         _tray.OpenRequested += ShowFromTray;
+        _tray.PanelRequested += () => Dispatcher.InvokeAsync(ShowTrayPanel);
         _tray.StopAllRequested += () =>
         {
             _vm.StopAllCommand.Execute(null);
@@ -87,13 +88,16 @@ public partial class MainWindow : Window
 
         Closing += (_, e) =>
         {
-            if (_reallyExit || !_vm.Settings.CloseToTray) return;
+            if (_reallyExit || !KeepRunningOnClose) return;
             e.Cancel = true;
+            _tray.Visible = true;
             Hide();
             if (!_trayTipShown)
             {
                 _trayTipShown = true;
-                _tray.Balloon("RoDeck is still running", "Clients and auto-rejoin keep working. Click the tray icon to open it, right-click to quit.");
+                _tray.Balloon("RoDeck is still running",
+                    _vm.AdRunning ? "Your trade ad keeps posting. Click the RoDeck icon by the clock to see it, stop it or quit."
+                                  : "Clients and auto-rejoin keep working. Click the RoDeck icon by the clock to open it or quit.");
             }
         };
 
@@ -159,7 +163,21 @@ public partial class MainWindow : Window
     }
 
     private string _lastNotificationPage = "";
-    private bool TrayWanted => _vm.Settings.CloseToTray || _vm.AnyNotifications;
+    private bool TrayWanted => _vm.Settings.CloseToTray || _vm.AnyNotifications || _vm.AdRunning;
+    /// <summary>Closing the window hides it instead: "Close to tray" is on, or a trade ad is posting (it needs RoDeck running).</summary>
+    private bool KeepRunningOnClose => _vm.Settings.CloseToTray || _vm.AdRunning;
+    private TrayFlyout? _flyout;
+
+    private void ShowTrayPanel()
+    {
+        if (_flyout != null) { _flyout.Close(); _flyout = null; return; }   // a second click closes it
+        _flyout = new TrayFlyout { DataContext = _vm };
+        _flyout.Closed += (_, _) => _flyout = null;
+        _flyout.OpenRequested += ShowFromTray;
+        _flyout.QuitRequested += () => { _reallyExit = true; Close(); };
+        _flyout.StopAllRequested += () => _vm.StopAllCommand.Execute(null);
+        _flyout.ShowNearTray();
+    }
 
     /// <summary>Shows the window (from the tray, minimized or behind other apps). Used when RoDeck is started a second time.</summary>
     public void BringToFront()
