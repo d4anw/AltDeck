@@ -29,6 +29,8 @@ public partial class WardrobeItem : ObservableObject
     public long AssetId { get; init; }
     public string Name { get; init; } = "";
     public int TypeId { get; init; }
+    /// <summary>Worn and Roblox allows moving / turning / resizing it (hats, face, neck, shoulder, front, back).</summary>
+    public bool IsAdjustable { get; init; }
     [ObservableProperty] private string thumbUrl = "";
     [ObservableProperty] private bool isWorn;
     [ObservableProperty] private bool isBusy;

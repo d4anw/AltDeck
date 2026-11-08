@@ -10,7 +10,12 @@ public sealed class AvatarRules
     public Dictionary<int, (string Name, int Max)> Wearable { get; } = new();
     public Dictionary<string, (double Min, double Max, double Step)> Scales { get; } = new();
     public List<PaletteColor> Palette { get; } = new();
+    /// <summary>Accessory adjustment limits per item type (8 hat, 42 face, 43 neck, 44 shoulder, 45 front, 46 back).</summary>
+    public Dictionary<int, RefineBounds> Refine { get; } = new();
 }
+
+/// <summary>How far an accessory may be moved (studs), turned (degrees) and resized, per axis X / Y / Z.</summary>
+public sealed record RefineBounds(double[] PosMin, double[] PosMax, double[] RotMin, double[] RotMax, double[] ScaleMin, double[] ScaleMax);
 
 /// <summary>Avatar editor data and actions. Reading is public; every change is made as the given account (its cookie).</summary>
 public static class RobloxAvatar
@@ -31,6 +36,16 @@ public static class RobloxAvatar
             r.Wearable[(int)Long(w, "id")] = (Str(w, "name"), (int)Long(w, "maxNumber"));
         foreach (var s in root.GetProperty("scales").EnumerateObject())
             r.Scales[s.Name] = (Dbl(s.Value, "min"), Dbl(s.Value, "max"), Dbl(s.Value, "increment"));
+        // accessory adjustment: limits are listed by type name; map them to the type IDs we use
+        var names = new Dictionary<string, int> { ["Hat"] = 8, ["FaceAccessory"] = 42, ["NeckAccessory"] = 43,
+                                                  ["ShoulderAccessory"] = 44, ["FrontAccessory"] = 45, ["BackAccessory"] = 46 };
+        if (root.TryGetProperty("accessoryRefinementLowerBounds", out var lo) && root.TryGetProperty("accessoryRefinementUpperBounds", out var hi))
+            foreach (var (name, id) in names)
+                if (lo.TryGetProperty(name, out var l) && hi.TryGetProperty(name, out var h))
+                    r.Refine[id] = new RefineBounds(
+                        Vec(l, "position", "Position"), Vec(h, "position", "Position"),
+                        Vec(l, "rotation", "Rotation"), Vec(h, "rotation", "Rotation"),
+                        Vec(l, "scale", "Scale"), Vec(h, "scale", "Scale"));
         if (root.TryGetProperty("bodyColorsPalette", out var pal))
             foreach (var c in pal.EnumerateArray())
                 r.Palette.Add(new PaletteColor(Str(c, "hexColor").TrimStart('#').ToUpperInvariant(), Str(c, "name")));
@@ -243,6 +258,13 @@ public static class RobloxAvatar
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
     static long Long(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out var l) ? l : 0;
+    /// <summary>{"position": {"xPosition":..,"yPosition":..,"zPosition":..}} → [x, y, z]</summary>
+    static double[] Vec(JsonElement e, string group, string suffix)
+    {
+        var g = e.TryGetProperty(group, out var x) ? x : default;
+        return new[] { Dbl(g, "x" + suffix), Dbl(g, "y" + suffix), Dbl(g, "z" + suffix) };
+    }
+
     static double Dbl(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble() : 0;
 }

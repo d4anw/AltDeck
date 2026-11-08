@@ -149,23 +149,46 @@
             </Grid>
 
             <TextBlock Text="Wearing" FontSize="15" FontWeight="SemiBold" Margin="0,20,0,4"/>
-            <TextBlock Text="Click an item to take it off." FontSize="12" Style="{StaticResource MutedText}" Margin="0,0,0,10"/>
+            <TextBlock Text="Click a hat, face, neck, shoulder, front or back accessory to adjust it. Click anything else to take it off."
+                       FontSize="12" Style="{StaticResource MutedText}" Margin="0,0,0,10" TextWrapping="Wrap"/>
             <ItemsControl ItemsSource="{Binding WornItems}">
               <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <Button Width="74" Height="74" Margin="0,0,8,8" Padding="0" Cursor="Hand" Focusable="False"
-                          ToolTip="{Binding Name, StringFormat='Take off {0}'}"
-                          Command="{Binding DataContext.TakeOffCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          Command="{Binding DataContext.AdjustOrTakeOffCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                           CommandParameter="{Binding}">
+                    <Button.ToolTip>
+                      <TextBlock>
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="{Binding Name, StringFormat='Take off {0}'}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsAdjustable}" Value="True">
+                                <Setter Property="Text" Value="{Binding Name, StringFormat='Adjust {0}'}"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Button.ToolTip>
                     <Button.Template>
                       <ControlTemplate TargetType="Button">
                         <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12">
                           <Grid>
                             <ContentPresenter/>
                             <Border x:Name="x" Background="#B0000000" CornerRadius="11" Visibility="Collapsed">
-                              <TextBlock Text="&#xE711;" FontFamily="{StaticResource Icons}" FontSize="14" Foreground="White"
-                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                              <TextBlock FontFamily="{StaticResource Icons}" FontSize="14" Foreground="White"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                  <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="&#xE711;"/>
+                                    <Style.Triggers>
+                                      <DataTrigger Binding="{Binding IsAdjustable}" Value="True"><Setter Property="Text" Value="&#xE713;"/></DataTrigger>
+                                    </Style.Triggers>
+                                  </Style>
+                                </TextBlock.Style>
+                              </TextBlock>
                             </Border>
                           </Grid>
                         </Border>
@@ -185,6 +208,104 @@
 
       <!-- ================= right: wardrobe / body / outfits ================= -->
       <StackPanel Grid.Column="2" Visibility="{Binding AvatarLook, Converter={StaticResource NullCollapsed}}">
+        <!-- adjusting one accessory: position, rotation, size within Roblox's limits -->
+        <Border Style="{StaticResource CardBox}" Padding="22,18" Margin="0,6,0,18" BorderBrush="{DynamicResource Accent}"
+                Visibility="{Binding IsAdjusting, Converter={StaticResource BoolVis}}">
+          <StackPanel>
+            <Grid>
+              <StackPanel>
+                <TextBlock FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
+                  <Run Text="Adjust"/> <Run Text="{Binding AdjustItem.Name, Mode=OneWay}"/>
+                </TextBlock>
+                <TextBlock Text="Move, turn and resize it a little. The preview updates shortly after you let go."
+                           FontSize="12" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
+              </StackPanel>
+              <Button Style="{StaticResource IconBtn}" Content="&#xE711;" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0"
+                      ToolTip="Close" Command="{Binding CloseAdjustCommand}"/>
+            </Grid>
+            <TextBlock Text="Position" FontWeight="SemiBold" Margin="0,14,0,4"/>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="60"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions><RowDefinition Height="36"/><RowDefinition Height="36"/><RowDefinition Height="36"/></Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Left / right" VerticalAlignment="Center"/>
+                <Slider Grid.Row="0" Grid.Column="1" Minimum="{Binding PosMin}" Maximum="{Binding PosMax}" Value="{Binding AdjPosX}"
+                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding AdjPosX, StringFormat='{}{0:+0.00;-0.00;0}'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+                <TextBlock Grid.Row="1" Text="Up / down" VerticalAlignment="Center"/>
+                <Slider Grid.Row="1" Grid.Column="1" Minimum="{Binding PosMin}" Maximum="{Binding PosMax}" Value="{Binding AdjPosY}"
+                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding AdjPosY, StringFormat='{}{0:+0.00;-0.00;0}'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+                <TextBlock Grid.Row="2" Text="Forward / back" VerticalAlignment="Center"/>
+                <Slider Grid.Row="2" Grid.Column="1" Minimum="{Binding PosMin}" Maximum="{Binding PosMax}" Value="{Binding AdjPosZ}"
+                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding AdjPosZ, StringFormat='{}{0:+0.00;-0.00;0}'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+            </Grid>
+            <TextBlock Text="Rotation" FontWeight="SemiBold" Margin="0,14,0,4"/>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="60"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions><RowDefinition Height="36"/><RowDefinition Height="36"/><RowDefinition Height="36"/></Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Tilt" VerticalAlignment="Center"/>
+                <Slider Grid.Row="0" Grid.Column="1" Minimum="{Binding RotXMin}" Maximum="{Binding RotXMax}" Value="{Binding AdjRotX}"
+                        VerticalAlignment="Center" SmallChange="1" LargeChange="5" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding AdjRotX, StringFormat='{}{0:+0;-0;0}°'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+                <TextBlock Grid.Row="1" Text="Turn" VerticalAlignment="Center"/>
+                <Slider Grid.Row="1" Grid.Column="1" Minimum="{Binding RotMin}" Maximum="{Binding RotMax}" Value="{Binding AdjRotY}"
+                        VerticalAlignment="Center" SmallChange="1" LargeChange="5" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding AdjRotY, StringFormat='{}{0:+0;-0;0}°'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+                <TextBlock Grid.Row="2" Text="Lean" VerticalAlignment="Center"/>
+                <Slider Grid.Row="2" Grid.Column="1" Minimum="{Binding RotMin}" Maximum="{Binding RotMax}" Value="{Binding AdjRotZ}"
+                        VerticalAlignment="Center" SmallChange="1" LargeChange="5" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding AdjRotZ, StringFormat='{}{0:+0;-0;0}°'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+            </Grid>
+            <Grid Margin="0,14,0,4">
+              <TextBlock Text="Size" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <CheckBox Content="Keep proportions" IsChecked="{Binding KeepProportions}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="60"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions><RowDefinition Height="36"/><RowDefinition Height="36"/><RowDefinition Height="36"/></Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Width" VerticalAlignment="Center"/>
+                <Slider Grid.Row="0" Grid.Column="1" Minimum="{Binding ScaleMin}" Maximum="{Binding ScaleMax}" Value="{Binding AdjScaleX}"
+                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding AdjScaleX, StringFormat='{}{0:P0}'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+                <TextBlock Grid.Row="1" Text="Height" VerticalAlignment="Center"/>
+                <Slider Grid.Row="1" Grid.Column="1" Minimum="{Binding ScaleMin}" Maximum="{Binding ScaleMax}" Value="{Binding AdjScaleY}"
+                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding AdjScaleY, StringFormat='{}{0:P0}'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+                <TextBlock Grid.Row="2" Text="Depth" VerticalAlignment="Center"/>
+                <Slider Grid.Row="2" Grid.Column="1" Minimum="{Binding ScaleMin}" Maximum="{Binding ScaleMax}" Value="{Binding AdjScaleZ}"
+                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource PerfSlider}"/>
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding AdjScaleZ, StringFormat='{}{0:P0}'}" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontFamily="Consolas"/>
+            </Grid>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+              <Button Content="Reset" Command="{Binding ResetAdjustCommand}" ToolTip="Back to how the item normally sits"/>
+              <Button Content="Take off" Command="{Binding TakeOffAdjustingCommand}"/>
+              <Button Content="Done" Style="{StaticResource Primary}" Margin="0" Command="{Binding CloseAdjustCommand}"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
         <StackPanel Orientation="Horizontal" Margin="0,6,0,18">
           <RadioButton Style="{StaticResource Seg}" Content="Wardrobe" GroupName="avatartab"
                        IsChecked="{Binding AvatarTab, Converter={StaticResource Eq}, ConverterParameter=Wardrobe, Mode=TwoWay}"/>

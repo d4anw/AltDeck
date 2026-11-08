@@ -57,6 +57,7 @@ public partial class MainViewModel
         _avatarLoadedFor = a;
         _avatarLoadedAt = DateTime.Now;
         _previewGeneration++;
+        AdjustItem = null;
         AvatarLook = null;
         AvatarPicture = "";
         Avatar3DModel = null;
@@ -96,7 +97,8 @@ public partial class MainViewModel
     {
         WornItems.Clear();
         foreach (var w in look.Assets.Where(w => w.TypeId != 61))   // emotes are a separate thing
-            WornItems.Add(new WardrobeItem { AssetId = w.Id, Name = w.Name, TypeId = w.TypeId, IsWorn = true });
+            WornItems.Add(new WardrobeItem { AssetId = w.Id, Name = w.Name, TypeId = w.TypeId, IsWorn = true, IsAdjustable = CanAdjust(w.TypeId) });
+        if (AdjustItem != null && !look.Assets.Any(x => x.Id == AdjustItem.Id)) AdjustItem = null;   // taken off: close its panel
         _ = FillItemPicturesAsync(WornItems.ToList());
         var worn = look.Assets.Select(w => w.Id).ToHashSet();
         foreach (var i in _wardrobeAll) i.IsWorn = worn.Contains(i.AssetId);   // all loaded items, also ones filtered out
