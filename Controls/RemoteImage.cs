@@ -41,10 +41,10 @@ public class RemoteImage : Border
     private async void Load()
     {
         int v = ++_version;
-        _img.Source = null;
+        // keep showing the old picture until the new one has downloaded (no blank flash in between)
         var bmp = await ImageCache.GetAsync(Url);
         if (v != _version) return;   // the link changed while this one loaded
-        _img.Source = bmp;
+        if (bmp != null || string.IsNullOrEmpty(Url)) _img.Source = bmp;
     }
 
     // Border's CornerRadius doesn't clip its child, so clip by hand.

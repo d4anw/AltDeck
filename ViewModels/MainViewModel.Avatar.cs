@@ -60,6 +60,7 @@ public partial class MainViewModel
         AvatarLook = null;
         AvatarPicture = "";
         Avatar3DModel = null;
+        PictureIsNewer = false;
         Preview3DNote = "";
         WornItems.Clear();
         WardrobeItems.Clear();
@@ -68,21 +69,24 @@ public partial class MainViewModel
         _outfitsLoadedFor = null;
         if (a == null || a.UserId == 0) { AvatarLoad.State = LoadState.Empty; return; }
 
-        // the wardrobe and outfits don't need the look first: start them now, side by side
+        // the wardrobe, outfits and picture don't need the look first: start them now, side by side
         if (AvatarTab == "Outfits") _ = LoadOutfitsAsync(); else _ = LoadWardrobeAsync();
-        _ = Load3DAsync(a, null, _previewGeneration);
+        _ = LoadPictureAsync(a);
+        _model3DStale = true;
+        if (Show3D) _ = Open3DAsync();
 
         await AvatarLoad.RunAsync(async ct =>
         {
             var rules = _rules == null ? RobloxAvatar.GetRulesAsync(ct) : Task.FromResult(_rules);
             var lookTask = RobloxAvatar.GetAvatarAsync(a.UserId, ct);
-            var picTask = RobloxAvatar.GetPictureAsync(a.UserId, false, ct);
+            var both = Task.WhenAll(rules, lookTask);
+            if (await Task.WhenAny(both, Task.Delay(TimeSpan.FromSeconds(20), ct)) != both)
+                throw new RobloxException("Roblox is taking too long to answer. Try again in a moment.");
             if (_rules == null) { _rules = await rules; NotifyRules(); }
             var look = await lookTask;
             if (a != CurrentAccount) return false;
             AvatarLook = look;
             ShowLook(look);
-            AvatarPicture = await picTask;
             return true;
         }, "Loading avatar…");
     }
@@ -127,8 +131,8 @@ public partial class MainViewModel
     // ---- the preview: a picture, or a 3D model you can turn
 
     [ObservableProperty] private Avatar3D? avatar3DModel;
-    /// <summary>Show the turnable 3D model (when it loaded) instead of the picture.</summary>
-    [ObservableProperty] private bool show3D = true;
+    /// <summary>Show the turnable 3D model instead of the picture. Off at first: the picture is fast, 3D loads when asked.</summary>
+    [ObservableProperty] private bool show3D;
     [ObservableProperty] private string preview3DNote = "";
     /// <summary>The look changed and Roblox is drawing the new one.</summary>
     [ObservableProperty] private bool previewUpdating;
@@ -139,8 +143,35 @@ public partial class MainViewModel
 
     public bool Showing3D => Show3D && Avatar3DModel != null && !PictureIsNewer;
     partial void OnAvatar3DModelChanged(Avatar3D? value) { PictureIsNewer = false; OnPropertyChanged(nameof(Showing3D)); }
-    partial void OnShow3DChanged(bool value) => OnPropertyChanged(nameof(Showing3D));
+    partial void OnShow3DChanged(bool value)
+    {
+        OnPropertyChanged(nameof(Showing3D));
+        if (value) _ = Open3DAsync();
+    }
     partial void OnPictureIsNewerChanged(bool value) => OnPropertyChanged(nameof(Showing3D));
+
+    private async Task LoadPictureAsync(Account a)
+    {
+        try
+        {
+            var url = await RobloxAvatar.GetPictureAsync(a.UserId, false, CancellationToken.None);
+            if (a == CurrentAccount && url.Length > 0) AvatarPicture = url;
+        }
+        catch { }   // the page works without it; the next change brings a fresh one
+    }
+
+    /// <summary>The 3D model doesn't match the look anymore (a change was made while showing the picture).</summary>
+    private bool _model3DStale = true;
+
+    /// <summary>3D is only loaded when you look at it: it's the slowest part, and its service is easily rate-limited.</summary>
+    private async Task Open3DAsync()
+    {
+        if (CurrentAccount is not { } a || !_model3DStale) return;
+        _model3DStale = false;
+        Preview3DNote = "Loading 3D…";
+        await Load3DAsync(a, null, _previewGeneration);
+        if (Avatar3DModel != null) Preview3DNote = "";
+    }
 
     private async Task Load3DAsync(Account a, string? previous, int generation)
     {
@@ -193,7 +224,9 @@ public partial class MainViewModel
             _ = RobloxAvatar.RedrawAsync(a.Cookie);   // a nudge; Roblox redraws after a change anyway, so don't wait for it
             var oldModel = Avatar3DModel;
             var pic = RobloxAvatar.WaitForNewPictureAsync(a.UserId, AvatarPicture, CancellationToken.None);
-            var model = Load3DAsync(a, oldModel?.SourceUrl, generation);
+            Task model;
+            if (Show3D) { _model3DStale = false; model = Load3DAsync(a, oldModel?.SourceUrl, generation); }
+            else { _model3DStale = true; model = Task.CompletedTask; }   // loaded when you switch to 3D
 
             var url = await pic;
             pictureAt = clock.Elapsed.TotalSeconds;
@@ -214,7 +247,7 @@ public partial class MainViewModel
                 PreviewUpdating = false;
                 PictureIsNewer = false;
                 Log(ActivityLog.Info, "Avatar preview: picture after " + (pictureAt < 0 ? "–" : $"{pictureAt:0.0} s")
-                                      + ", 3D after " + (modelAt < 0 ? "– (kept the last one)" : $"{modelAt:0.0} s") + ".");
+                                      + (Show3D ? ", 3D after " + (modelAt < 0 ? "– (kept the last one)" : $"{modelAt:0.0} s") : "") + ".");
             }
         }
     }

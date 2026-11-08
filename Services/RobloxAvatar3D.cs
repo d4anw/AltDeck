@@ -37,11 +37,11 @@ public static class RobloxAvatar3D
     public static async Task<Avatar3D?> LoadAsync(string cookie, long userId, string? previous, CancellationToken ct)
     {
         string url = "";
-        for (int i = 0; i < 40; i++)   // ~16 s
+        for (int i = 0; i < 20; i++)   // ~20 s, once a second: this service is strict about how often it's asked
         {
             url = await GetMetaUrlAsync(cookie, userId, ct);
             if (url.Length > 0 && url != previous) break;
-            await Task.Delay(400, ct);
+            await Task.Delay(1000, ct);
         }
         if (url.Length == 0) return null;
         return await BuildAsync(url, ct);

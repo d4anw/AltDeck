@@ -119,9 +119,9 @@ public static class RobloxAvatar
     public static async Task<string> WaitForNewPictureAsync(long userId, string? old, CancellationToken ct)
     {
         string latest = old ?? "";
-        for (int i = 0; i < 40; i++)   // ~16 s
+        for (int i = 0; i < 30; i++)   // ~15 s
         {
-            await Task.Delay(i == 0 ? 300 : 400, ct);
+            await Task.Delay(i == 0 ? 300 : 500, ct);
             Thumbnails.Forget("Avatar", userId);
             var pics = await Thumbnails.GetAsync("Avatar", new[] { userId }, "420x420", ct);
             if (pics.TryGetValue(userId, out var url))

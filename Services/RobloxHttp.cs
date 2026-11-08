@@ -79,6 +79,16 @@ public static class RobloxHttp
         }
     }
 
+    /// <summary>
+    /// One pace per Roblox service (host + path, with IDs taken out), not per server: Roblox limits each service on its own,
+    /// so a busy 3D-avatar service mustn't hold up the picture service on the same server.
+    /// </summary>
+    static string GateKey(string url)
+    {
+        var u = new Uri(url);
+        return u.Host + System.Text.RegularExpressions.Regex.Replace(u.AbsolutePath, @"/\d+(?=/|$)", "/{id}");
+    }
+
     static int? Header(HttpResponseMessage resp, string name) =>
         resp.Headers.TryGetValues(name, out var v) && int.TryParse(v.First().Split(',')[0].Trim(), out var n) ? n : null;
 
@@ -115,7 +125,7 @@ public static class RobloxHttp
         bool changes = method != HttpMethod.Get && method != HttpMethod.Head;
         string? key = cookie != null ? Key(cookie) : null;
 
-        var gate = Gates.GetOrAdd(new Uri(url).Host, _ => new HostGate());
+        var gate = Gates.GetOrAdd(GateKey(url), _ => new HostGate());
 
         for (int attempt = 1; ; attempt++)
         {
