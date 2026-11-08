@@ -162,7 +162,9 @@ public partial class MainViewModel
         _adjLoading = true;
         AdjustItem = updated;   // keep the panel on the new version
         _adjLoading = false;
-        PreviewUpdating = true;
+        // shown live on the 3D model: the save is quiet; otherwise the preview waits for Roblox like any change
+        bool live = Showing3D && _livePiecesFor == w.Id && _adjustPieces.Count > 0;
+        if (!live) { PreviewUpdating = true; _pendingVisibleChange = true; }
         UpdateLive();
 
         if (!_wearTimerHooked) { _wearSaveTimer.Tick += async (_, _) => { _wearSaveTimer.Stop(); await SaveWearingAsync(); }; _wearTimerHooked = true; }

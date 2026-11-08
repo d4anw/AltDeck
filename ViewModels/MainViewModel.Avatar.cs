@@ -353,6 +353,17 @@ public partial class MainViewModel
         }
     }
 
+    /// <summary>After a live-shown adjustment: just fetch Roblox's new picture for Picture mode, without touching the 3D view.</summary>
+    private async Task RefreshPictureQuietlyAsync(Account a)
+    {
+        try
+        {
+            var url = await RobloxAvatar.WaitForNewPictureAsync(a.UserId, AvatarPicture, CancellationToken.None);
+            if (a == CurrentAccount && url.Length > 0 && url != AvatarPicture) { AvatarPicture = url; SaveSnap(); }
+        }
+        catch { }
+    }
+
     [RelayCommand]
     private void TogglePreview3D() => Show3D = !Show3D;
 
@@ -493,15 +504,25 @@ public partial class MainViewModel
         look.Assets = list;
         ShowLook(look);          // instant: ticks, "Wearing" row
         PreviewUpdating = true;
+        _pendingVisibleChange = true;   // the preview has to wait for Roblox's new render
 
         if (!_wearTimerHooked) { _wearSaveTimer.Tick += async (_, _) => { _wearSaveTimer.Stop(); await SaveWearingAsync(); }; _wearTimerHooked = true; }
         _wearSaveTimer.Stop();
         _wearSaveTimer.Start();
     }
 
+    /// <summary>
+    /// The next save changes something the screen can't show by itself (an item put on or taken off), so the preview
+    /// waits for Roblox's new render. Not set for an adjustment that's already shown live on the 3D model: that save is
+    /// quiet (no "Updating preview", no switch to the picture, no 3D reload that would make it flicker).
+    /// </summary>
+    private bool _pendingVisibleChange;
+
     private async Task SaveWearingAsync()
     {
         if (AvatarLook is not { } look || CurrentAccount is not { } a) return;
+        bool quiet = !_pendingVisibleChange;
+        _pendingVisibleChange = false;
         await _wearSaveGate.WaitAsync();
         try
         {
@@ -516,7 +537,8 @@ public partial class MainViewModel
                 StatusMessage = names.Count == 1 ? $"Roblox didn't allow {names[0]} with this look." : $"Roblox didn't allow {names.Count} of those items.";
             }
             _lastSavedAssets = null;
-            _ = RefreshPreviewAsync(a);
+            if (quiet && refused.Count == 0) _ = RefreshPictureQuietlyAsync(a);
+            else _ = RefreshPreviewAsync(a);
         }
         catch (Exception ex)
         {
