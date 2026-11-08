@@ -183,8 +183,12 @@
 
         <!-- page area -->
         <Border Grid.Column="1" Margin="0,2,12,12" CornerRadius="20" Background="{DynamicResource Page}"
-                BorderBrush="{DynamicResource Line}" BorderThickness="1">
+                BorderBrush="{DynamicResource CardEdge}" BorderThickness="1">
           <Grid>
+            <!-- a faint glow of the accent colour in the top corner -->
+            <Border CornerRadius="20" Background="{DynamicResource PageGlow}" IsHitTestVisible="False"/>
+            <Grid x:Name="PageHost">
+              <Grid.RenderTransform><TranslateTransform x:Name="PageSlide"/></Grid.RenderTransform>
             <views:StartPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Home}"/>
             <views:GamesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Games}"/>
             <views:AvatarPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Avatar}"/>
@@ -194,9 +198,10 @@
             <views:MultiLaunchPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Multi}"/>
             <views:PerformancePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Performance}"/>
             <views:SettingsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Settings}"/>
+            </Grid>
 
             <!-- toast: bottom centre, or top centre while the launch queue panel is in the corner -->
-            <Border Padding="18,11" Background="{DynamicResource Card2}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
+            <Border Padding="18,11" Background="{DynamicResource Card2}" BorderBrush="{DynamicResource AccentLine}" BorderThickness="1"
                     CornerRadius="12" MaxWidth="620"
                     Visibility="{Binding StatusMessage, Converter={StaticResource EmptyCollapsed}}">
               <Border.Style>

@@ -49,7 +49,7 @@
 
     <!-- a limited as a small card: picture, name, value / RAP, serial; accent border when picked -->
     <DataTemplate x:Key="LimitedCard">
-      <Border x:Name="b" Width="140" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12"
+      <Border x:Name="b" Width="140" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1" CornerRadius="12"
               ToolTipService.InitialShowDelay="250" ToolTipService.ShowDuration="60000">
         <Border.ToolTip><ctl:RapTip/></Border.ToolTip>
         <StackPanel>
@@ -89,9 +89,31 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Grid x:Name="g" Background="Transparent"><ContentPresenter/></Grid>
+            <Grid x:Name="g" Background="Transparent">
+              <Grid.RenderTransform><TranslateTransform/></Grid.RenderTransform>
+              <ContentPresenter/>
+            </Grid>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="g" Property="Opacity" Value="0.85"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                      <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="g" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="-4" Duration="0:0:0.14">
+                          <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                      </Storyboard>
+                    </BeginStoryboard>
+                  </Trigger.EnterActions>
+                  <Trigger.ExitActions>
+                    <BeginStoryboard>
+                      <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="g" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="0" Duration="0:0:0.18">
+                          <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                      </Storyboard>
+                    </BeginStoryboard>
+                  </Trigger.ExitActions>
+              </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>

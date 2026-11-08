@@ -65,6 +65,7 @@ public partial class MainWindow : Window
         _vm.Notify += msg => { if (!IsVisible) _tray.Balloon("RoDeck", msg); };
         _vm.PropertyChanged += (_, e) =>
         {
+            if (e.PropertyName == nameof(MainViewModel.Page)) AnimatePageIn();
             if (e.PropertyName == nameof(MainViewModel.RunningCount))
                 _tray.SetTooltip(_vm.RunningCount == 0 ? "RoDeck" : $"RoDeck · {_vm.RunningCount} running");
         };
@@ -145,6 +146,16 @@ public partial class MainWindow : Window
             Close();   // Closed installs the download and starts the new version
         }
         finally { _updateOpen = false; }
+    }
+
+    /// <summary>A new page fades in and slides up a few pixels, so switching feels smooth instead of a hard cut.</summary>
+    private void AnimatePageIn()
+    {
+        var ease = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
+        var fade = new System.Windows.Media.Animation.DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease };
+        var slide = new System.Windows.Media.Animation.DoubleAnimation(10.0, 0.0, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease };
+        PageHost.BeginAnimation(OpacityProperty, fade);
+        PageSlide.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, slide);
     }
 
     private string _lastNotificationPage = "";

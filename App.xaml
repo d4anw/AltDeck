@@ -17,6 +17,14 @@
     <SolidColorBrush x:Key="Blue" Color="#4DA3FF"/>
     <SolidColorBrush x:Key="Orange" Color="#FF8A3D"/>
     <SolidColorBrush x:Key="Red" Color="#FF5A5F"/>
+    <Color x:Key="AccentColor">#FF8A1F</Color>
+    <SolidColorBrush x:Key="AccentSoft" Color="#22FF8A1F"/>
+    <SolidColorBrush x:Key="AccentHover" Color="#14FF8A1F"/>
+    <SolidColorBrush x:Key="AccentLine" Color="#78FF8A1F"/>
+    <LinearGradientBrush x:Key="AccentGrad" StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#FF9C3F" Offset="0"/><GradientStop Color="#F0821D" Offset="1"/></LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardGrad" StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#1B1E21" Offset="0"/><GradientStop Color="#15181B" Offset="1"/></LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardEdge" StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#383B41" Offset="0"/><GradientStop Color="#272A30" Offset="1"/></LinearGradientBrush>
+    <RadialGradientBrush x:Key="PageGlow" Center="0.05,0" GradientOrigin="0.05,0" RadiusX="0.75" RadiusY="0.55"><GradientStop Color="#1AFF8A1F" Offset="0"/><GradientStop Color="#00FF8A1F" Offset="1"/></RadialGradientBrush>
     <FontFamily x:Key="Icons">Segoe MDL2 Assets</FontFamily>
 
     <BooleanToVisibilityConverter x:Key="BoolVis"/>
@@ -51,8 +59,8 @@
       <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
     </Style>
     <Style x:Key="CardBox" TargetType="Border">
-      <Setter Property="Background" Value="{DynamicResource Card}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="Background" Value="{DynamicResource CardGrad}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource CardEdge}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="16"/>
       <Setter Property="Padding" Value="22"/>
@@ -61,8 +69,8 @@
     <!-- ===== buttons ===== -->
     <Style TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
-      <Setter Property="Background" Value="{DynamicResource Card}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="Background" Value="{DynamicResource CardGrad}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource CardEdge}"/>
       <Setter Property="Padding" Value="16,9"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
       <Setter Property="Margin" Value="0,0,8,0"/>
@@ -78,6 +86,10 @@
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter TargetName="b" Property="Opacity" Value="0.45"/>
@@ -88,7 +100,7 @@
       </Setter>
     </Style>
     <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+      <Setter Property="Background" Value="{DynamicResource AccentGrad}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
       <Setter Property="Foreground" Value="{DynamicResource AccentFg}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
@@ -97,10 +109,31 @@
           <ControlTemplate TargetType="Button">
             <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
+              <Border.Effect>
+                <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="18" ShadowDepth="0" Opacity="0"/>
+              </Border.Effect>
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.88"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="b" Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                       To="0.55" Duration="0:0:0.15"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="b" Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                       To="0" Duration="0:0:0.2"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.85"/></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter TargetName="b" Property="Opacity" Value="0.4"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -191,12 +224,12 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{TemplateBinding BorderBrush}"
+            <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="1" CornerRadius="11" Padding="{TemplateBinding Padding}">
               <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
             </Border>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource AccentHover}"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
@@ -267,16 +300,17 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
+            <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"
                     CornerRadius="10" Padding="16,8">
               <ContentPresenter HorizontalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource AccentHover}"/></Trigger>
               <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
                 <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
                 <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
               </Trigger>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
@@ -290,21 +324,32 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="b" Background="Transparent" CornerRadius="10" Padding="12,10">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="30"/>
-                  <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="{TemplateBinding Tag}" FontFamily="{StaticResource Icons}" FontSize="15" VerticalAlignment="Center"/>
-                <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
-              </Grid>
-            </Border>
+            <Grid>
+              <Border x:Name="b" Background="Transparent" CornerRadius="10" Padding="12,10">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="icon" Text="{TemplateBinding Tag}" FontFamily="{StaticResource Icons}" FontSize="15" VerticalAlignment="Center"/>
+                  <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+              <!-- the accent bar on the left of the selected item -->
+              <Border x:Name="bar" Width="3" Height="18" CornerRadius="1.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                      Background="{DynamicResource Accent}" Visibility="Collapsed"/>
+            </Grid>
             <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card}"/></Trigger>
-              <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource Card}"/>
                 <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
+                <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource Accent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -775,14 +820,33 @@
                 Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
           <Button.Template>
             <ControlTemplate TargetType="Button">
-              <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
+              <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"
                       CornerRadius="14">
+                <Border.RenderTransform><TranslateTransform/></Border.RenderTransform>
                 <ContentPresenter/>
               </Border>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                   <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
                   <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+                  <Trigger.EnterActions>
+                    <BeginStoryboard>
+                      <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="b" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="-4" Duration="0:0:0.14">
+                          <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                      </Storyboard>
+                    </BeginStoryboard>
+                  </Trigger.EnterActions>
+                  <Trigger.ExitActions>
+                    <BeginStoryboard>
+                      <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="b" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="0" Duration="0:0:0.18">
+                          <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                      </Storyboard>
+                    </BeginStoryboard>
+                  </Trigger.ExitActions>
                 </Trigger>
               </ControlTemplate.Triggers>
             </ControlTemplate>
