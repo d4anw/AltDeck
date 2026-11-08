@@ -34,7 +34,20 @@
     <local:HexBrushConverter x:Key="HexBrush"/>
 
     <!-- ===== text + containers ===== -->
-    <Style x:Key="MutedText" TargetType="TextBlock">
+    <!-- Every piece of text, 1 px up. Windows' font (Segoe UI) keeps room under the letters for descenders (g, y, p),
+         so text centred in a button, tab, chip or row looks 1-2 px low (measured on screenshots). Lifting it here fixes
+         that everywhere at once; it only moves how text is drawn, not the layout. Icons (Segoe MDL2) are already centred
+         and stay where they are. -->
+    <TranslateTransform x:Key="TextLift" Y="-1"/>
+    <Style TargetType="TextBlock">
+      <Setter Property="RenderTransform" Value="{StaticResource TextLift}"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding FontFamily.Source, RelativeSource={RelativeSource Self}}" Value="Segoe MDL2 Assets">
+          <Setter Property="RenderTransform" Value="{x:Null}"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="MutedText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
       <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
     </Style>
     <Style x:Key="CardBox" TargetType="Border">
@@ -472,13 +485,13 @@
       <Setter Property="Background" Value="{DynamicResource Line}"/>
       <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
-    <Style x:Key="BadgeText" TargetType="TextBlock">
+    <Style x:Key="BadgeText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
       <Setter Property="FontSize" Value="11"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="HorizontalAlignment" Value="Center"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="TextAlignment" Value="Center"/>
-      <Setter Property="Margin" Value="0,0,0,1"/>
+      <Setter Property="RenderTransform" Value="{StaticResource TextLift}"/>
       <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
     </Style>
 
