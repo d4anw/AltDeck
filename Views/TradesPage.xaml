@@ -179,6 +179,39 @@
       </Button>
     </DataTemplate>
 
+    <!-- a calculator slot: like a trade ad slot, items only -->
+    <DataTemplate x:Key="CalcSlotTile">
+      <Button Style="{StaticResource CardButton}" Margin="0,0,10,10" ToolTip="Empty: click to pick an item. Filled: click to take it out."
+              Command="{Binding DataContext.OpenCalcSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+        <Grid Width="104" Height="104">
+          <Border CornerRadius="14" BorderThickness="1.5" Background="{DynamicResource Card}"
+                  Visibility="{Binding IsEmpty, Converter={StaticResource BoolVis}}">
+            <Border.BorderBrush>
+              <DrawingBrush Viewport="0,0,8,8" ViewportUnits="Absolute" TileMode="Tile">
+                <DrawingBrush.Drawing>
+                  <GeometryDrawing Brush="#55FFFFFF">
+                    <GeometryDrawing.Geometry>
+                      <GeometryGroup><RectangleGeometry Rect="0,0,4,4"/><RectangleGeometry Rect="4,4,4,4"/></GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                  </GeometryDrawing>
+                </DrawingBrush.Drawing>
+              </DrawingBrush>
+            </Border.BorderBrush>
+            <TextBlock Text="{Binding EmptyText}" FontStyle="Italic" FontWeight="SemiBold" Style="{StaticResource MutedText}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <Border CornerRadius="14" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"
+                  Visibility="{Binding HasItem, Converter={StaticResource BoolVis}}">
+            <Grid>
+              <ctl:RemoteImage Url="{Binding Item.ThumbUrl}" Margin="8,6,8,26" CornerRadius="8" Background="Transparent" Stretch="Uniform"/>
+              <TextBlock Text="{Binding Item.WorthNumber}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                         Margin="0,0,0,8" Foreground="{DynamicResource Accent}" ToolTip="{Binding Item.Name}"/>
+            </Grid>
+          </Border>
+        </Grid>
+      </Button>
+    </DataTemplate>
+
 
     <!-- win / loss colouring for an int: 1 green, -1 red -->
     <Style x:Key="VerdictText" TargetType="TextBlock">
@@ -279,137 +312,184 @@
         <!-- ================= CALCULATOR ================= -->
         <Grid Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Calculator}">
           <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="24"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="20"/>
-            <ColumnDefinition Width="340"/>
           </Grid.ColumnDefinitions>
 
-          <StackPanel>
-            <!-- you give -->
-            <Border Style="{StaticResource CalcSideCard}">
-              <StackPanel>
-                <Grid Margin="0,0,0,12">
-                  <TextBlock Text="You give" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="Add items here" GroupName="calcside" HorizontalAlignment="Right" Margin="0"
-                               IsChecked="{Binding CalcSide, Converter={StaticResource Eq}, ConverterParameter=Give, Mode=TwoWay}"/>
-                </Grid>
-                <ItemsControl ItemsSource="{Binding CalcGive}">
-                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Button Style="{StaticResource CardButton}" Margin="0" Content="{Binding}" ContentTemplate="{StaticResource TradeItemCard}" ToolTip="Click to take it off"
-                              Command="{Binding DataContext.CalcRemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Text="Pick items on the right (up to 4)." Style="{StaticResource MutedText}" Margin="0,0,0,12"
-                           Visibility="{Binding CalcGive.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
-                <Grid>
-                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="+ Robux" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,10,0"/>
-                    <TextBox Text="{Binding CalcGiveRobux, UpdateSourceTrigger=PropertyChanged}" Width="100" Style="{StaticResource NumBoxSmall}"/>
-                  </StackPanel>
-                  <StackPanel HorizontalAlignment="Right">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                      <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="{Binding CalcGiveValue}" FontWeight="Bold" FontSize="15"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                      <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="{Binding CalcGiveRap}" FontWeight="Bold" FontSize="15"/>
-                    </StackPanel>
-                  </StackPanel>
-                </Grid>
-              </StackPanel>
-            </Border>
-
-            <!-- the result -->
-            <Grid Margin="0,14">
-              <StackPanel HorizontalAlignment="Center">
-                <TextBlock Text="{Binding CalcVerdict}" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Tag="{Binding CalcVerdictKind}"
-                           Style="{StaticResource VerdictText}"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                  <Border Style="{StaticResource DiffPill}" Tag="{Binding CalcValueDiffKind}" ToolTip="Value difference">
+          <!-- 4 slots per side, like a trade ad -->
+          <Border Style="{StaticResource CardBox}" Padding="22,18" VerticalAlignment="Top">
+            <StackPanel>
+              <Grid Margin="0,0,0,10">
+                <TextBlock Text="YOU GIVE" FontSize="12" FontWeight="Bold" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                  <Border Padding="10,3" CornerRadius="9" Background="{DynamicResource AccentSoft}" ToolTip="Value" Margin="0,0,6,0">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="{Binding CalcValueDiff}" FontSize="12" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding CalcGiveValue}" FontWeight="Bold" FontSize="12"/>
                     </StackPanel>
                   </Border>
-                  <Border Style="{StaticResource DiffPill}" Tag="{Binding CalcRapDiffKind}" ToolTip="RAP difference">
+                  <Border Padding="10,3" CornerRadius="9" Background="{DynamicResource Card2}" ToolTip="RAP">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="{Binding CalcRapDiff}" FontSize="12" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding CalcGiveRap}" FontWeight="Bold" FontSize="12"/>
                     </StackPanel>
                   </Border>
                 </StackPanel>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Button Style="{StaticResource IconBtn}" Content="&#xE8AB;" ToolTip="Swap the sides" Command="{Binding CalcSwapCommand}"/>
-                <Button Style="{StaticResource IconBtn}" Content="&#xE74D;" ToolTip="Clear both sides" Margin="0" Command="{Binding CalcClearCommand}"/>
-              </StackPanel>
-            </Grid>
-
-            <!-- you get -->
-            <Border Style="{StaticResource CalcSideCard}">
-              <StackPanel>
-                <Grid Margin="0,0,0,12">
-                  <TextBlock Text="You get" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="Add items here" GroupName="calcside" HorizontalAlignment="Right" Margin="0"
-                               IsChecked="{Binding CalcSide, Converter={StaticResource Eq}, ConverterParameter=Get, Mode=TwoWay}"/>
-                </Grid>
-                <ItemsControl ItemsSource="{Binding CalcGet}">
-                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Button Style="{StaticResource CardButton}" Margin="0" Content="{Binding}" ContentTemplate="{StaticResource TradeItemCard}" ToolTip="Click to take it off"
-                              Command="{Binding DataContext.CalcRemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Text="Pick items on the right (up to 4)." Style="{StaticResource MutedText}" Margin="0,0,0,12"
-                           Visibility="{Binding CalcGet.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
-                <Grid>
-                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="+ Robux" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,10,0"/>
-                    <TextBox Text="{Binding CalcGetRobux, UpdateSourceTrigger=PropertyChanged}" Width="100" Style="{StaticResource NumBoxSmall}"
-                             ToolTip="Counts after Roblox's 30% fee, as in a real trade"/>
-                  </StackPanel>
-                  <StackPanel HorizontalAlignment="Right">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                      <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="{Binding CalcGetValue}" FontWeight="Bold" FontSize="15"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                      <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="{Binding CalcGetRap}" FontWeight="Bold" FontSize="15"/>
-                    </StackPanel>
-                  </StackPanel>
-                </Grid>
-              </StackPanel>
-            </Border>
-            <TextBlock Text="Values from Rolimons (RAP when an item has no value). Robux you get count after Roblox's 30% fee."
-                       FontSize="11" Style="{StaticResource MutedText}" Margin="2,12,0,0" TextWrapping="Wrap"/>
-          </StackPanel>
-
-          <!-- the picker -->
-          <Border Grid.Column="2" Style="{StaticResource CardBox}" Padding="16,16,16,10" VerticalAlignment="Top">
-            <StackPanel>
-              <TextBlock FontWeight="SemiBold" Margin="0,0,0,10">
-                <Run Text="Add to"/> <Run Text="{Binding CalcSideLabel, Mode=OneWay}" Foreground="{DynamicResource Accent}"/>
-              </TextBlock>
-              <ctl:SearchBox Text="{Binding CalcSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Name, acronym or ID" Margin="0,0,0,10"/>
-              <ItemsControl ItemsSource="{Binding CalcHits}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <Button Style="{StaticResource CardButton}" Margin="0" HorizontalContentAlignment="Stretch" Content="{Binding}" ContentTemplate="{StaticResource LimitedLine}"
-                            Command="{Binding DataContext.CalcAddCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding CalcGiveSlots}" ItemTemplate="{StaticResource CalcSlotTile}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
               </ItemsControl>
-              <TextBlock Text="Nothing matches that." Style="{StaticResource MutedText}" Margin="2,0,0,6"
-                         Visibility="{Binding CalcHits.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+              <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                <TextBlock Text="+ Robux" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,10,0"/>
+                <TextBox Text="{Binding CalcGiveRobux, UpdateSourceTrigger=PropertyChanged}" Width="110" Style="{StaticResource NumBoxSmall}"/>
+              </StackPanel>
+
+              <!-- the result -->
+              <Border Height="1" Background="{DynamicResource Line}" Margin="0,16,0,14"/>
+              <Grid>
+                <StackPanel>
+                  <TextBlock Text="{Binding CalcVerdict}" FontSize="14" FontWeight="SemiBold" Tag="{Binding CalcVerdictKind}" Style="{StaticResource VerdictText}"
+                             TextWrapping="Wrap" MaxWidth="330" HorizontalAlignment="Left"/>
+                  <StackPanel Orientation="Horizontal" Margin="-4,8,0,0">
+                    <Border Style="{StaticResource DiffPill}" Tag="{Binding CalcValueDiffKind}" ToolTip="Value difference">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding CalcValueDiff}" FontSize="12" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource DiffPill}" Tag="{Binding CalcRapDiffKind}" ToolTip="RAP difference">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding CalcRapDiff}" FontSize="12" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Border>
+                  </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE8AB;" ToolTip="Swap the sides" Command="{Binding CalcSwapCommand}"/>
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE74D;" ToolTip="Clear both sides" Margin="0" Command="{Binding CalcClearCommand}"/>
+                </StackPanel>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource Line}" Margin="0,14,0,14"/>
+
+              <Grid Margin="0,0,0,10">
+                <TextBlock Text="YOU GET" FontSize="12" FontWeight="Bold" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                  <Border Padding="10,3" CornerRadius="9" Background="{DynamicResource AccentSoft}" ToolTip="Value" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                      <TextBlock Text="{Binding CalcGetValue}" FontWeight="Bold" FontSize="12"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Padding="10,3" CornerRadius="9" Background="{DynamicResource Card2}" ToolTip="RAP">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                      <TextBlock Text="{Binding CalcGetRap}" FontWeight="Bold" FontSize="12"/>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding CalcGetSlots}" ItemTemplate="{StaticResource CalcSlotTile}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+              <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                <TextBlock Text="+ Robux" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,10,0"/>
+                <TextBox Text="{Binding CalcGetRobux, UpdateSourceTrigger=PropertyChanged}" Width="110" Style="{StaticResource NumBoxSmall}" ToolTip="Counts after Roblox's 30% fee, as in a real trade"/>
+              </StackPanel>
             </StackPanel>
           </Border>
+
+          <Border Grid.Column="2" Style="{StaticResource CardBox}" Padding="20,16" VerticalAlignment="Top">
+            <StackPanel>
+              <TextBlock Text="How it works" FontWeight="SemiBold" Margin="0,0,0,6"/>
+              <TextBlock TextWrapping="Wrap" FontSize="12" Style="{StaticResource MutedText}" LineHeight="19"
+                         Text="Click an empty slot to pick an item, click a filled slot to take it out. You give starts on your own inventory, You get on every limited; both can switch. Values come from Rolimons (RAP when an item has no value). Robux you get count after Roblox's 30% fee."/>
+            </StackPanel>
+          </Border>
+
+          <!-- the picker, over the tab -->
+          <Grid Grid.ColumnSpan="3" Visibility="{Binding IsCalcPickerOpen, Converter={StaticResource BoolVis}}">
+            <Border Background="#99000000" CornerRadius="16" Margin="-12,-8,-12,0"/>
+            <Border Style="{StaticResource CardBox}" Background="{DynamicResource Card}" Padding="20,16" Margin="20,0,20,0" VerticalAlignment="Top" MaxWidth="900">
+              <StackPanel>
+                <Grid Margin="0,0,0,12">
+                  <TextBlock Text="{Binding CalcPickerTitle}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE711;" Margin="0" HorizontalAlignment="Right" ToolTip="Close" Command="{Binding CloseCalcPickerCommand}"/>
+                </Grid>
+                <!-- where the items come from -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                  <RadioButton Style="{StaticResource Seg}" GroupName="calcsource"
+                               IsChecked="{Binding CalcPickerSource, Converter={StaticResource Eq}, ConverterParameter=Inventory, Mode=TwoWay}">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE7B8;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                      <TextBlock Text="Your inventory"/>
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton Style="{StaticResource Seg}" GroupName="calcsource" Margin="0"
+                               IsChecked="{Binding CalcPickerSource, Converter={StaticResource Eq}, ConverterParameter=Browse, Mode=TwoWay}">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                      <TextBlock Text="Browse items"/>
+                    </StackPanel>
+                  </RadioButton>
+                </StackPanel>
+
+                <!-- search, sort, value range -->
+                <Grid Margin="0,0,0,12">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <ctl:SearchBox Text="{Binding CalcPickerSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Filter by name, acronym or ID" Margin="0,0,12,0"/>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton Style="{StaticResource Seg}" Content="High → Low" GroupName="calcsort"
+                                 IsChecked="{Binding CalcPickerAscending, Converter={StaticResource Not}}"/>
+                    <RadioButton Style="{StaticResource Seg}" Content="Low → High" GroupName="calcsort" Margin="0,0,12,0"
+                                 IsChecked="{Binding CalcPickerAscending}"/>
+                    <TextBox Text="{Binding CalcPickerMin, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Lowest value"/>
+                    <TextBlock Text="–" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                    <TextBox Text="{Binding CalcPickerMax, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Highest value"/>
+                  </StackPanel>
+                </Grid>
+
+                <!-- your inventory still loading -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                  <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                      <Style.Triggers>
+                        <MultiDataTrigger>
+                          <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding CalcPickerIsInventory}" Value="True"/>
+                            <Condition Binding="{Binding CalcInventoryLoad.State}" Value="Loading"/>
+                          </MultiDataTrigger.Conditions>
+                          <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </StackPanel.Style>
+                  <ProgressBar IsIndeterminate="True" Width="120" Height="3" BorderThickness="0" Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                  <TextBlock Text="{Binding CalcInventoryLoad.Message}" FontSize="12" Style="{StaticResource MutedText}"/>
+                </StackPanel>
+
+                <ScrollViewer MaxHeight="430" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                  <ItemsControl ItemsSource="{Binding CalcPickerItems}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Style="{StaticResource CardButton}" Margin="0,0,10,10" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}"
+                                Command="{Binding DataContext.PickCalcItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+                <TextBlock Text="Nothing matches." Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                           Visibility="{Binding CalcPickerItems.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+              </StackPanel>
+            </Border>
+          </Grid>
         </Grid>
 
         <!-- ================= WATCHLIST ================= -->
@@ -561,46 +641,79 @@
           </Border>
 
           <!-- value over time -->
-          <Border Style="{StaticResource CardBox}" Padding="22,18" Margin="0,14,0,0" Visibility="{Binding TradeProfileItems.Count, Converter={StaticResource CountVis}}">
+          <Border Style="{StaticResource CardBox}" Padding="22,18" Margin="0,14,0,0">
             <StackPanel>
-              <Grid Margin="0,0,0,10">
-                <TextBlock Text="Value over the last 90 days" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                <Border Style="{StaticResource DiffPill}" Tag="{Binding TradeProfileChartKind}" HorizontalAlignment="Right" Margin="0"
-                        Visibility="{Binding TradeProfileChartChange, Converter={StaticResource EmptyCollapsed}}">
-                  <TextBlock Text="{Binding TradeProfileChartChange}" FontSize="12" FontWeight="SemiBold"/>
-                </Border>
-              </Grid>
-              <ctl:StateView State="{Binding TradeProfileChartLoad.State}" Message="{Binding TradeProfileChartLoad.Message}" MinHeight="160">
-                <StackPanel>
-                  <Viewbox Stretch="Fill" Height="170">
-                    <Canvas Width="600" Height="140">
-                      <Polygon Points="{Binding TradeProfileChartFill}" Fill="{DynamicResource AccentSoft}"/>
-                      <Polyline Points="{Binding TradeProfileChart}" Stroke="{DynamicResource Accent}" StrokeThickness="2" StrokeLineJoin="Round"/>
-                    </Canvas>
-                  </Viewbox>
-                  <TextBlock Text="{Binding TradeProfileChartNote}" FontSize="12" Style="{StaticResource MutedText}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+              <Grid Margin="0,0,0,12">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="Value over time" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                  <Border Style="{StaticResource DiffPill}" Tag="{Binding TradeProfileChartKind}" Margin="12,0,0,0" VerticalAlignment="Center"
+                          Visibility="{Binding TradeProfileChartChange, Converter={StaticResource EmptyCollapsed}}">
+                    <TextBlock Text="{Binding TradeProfileChartChange}" FontSize="12" FontWeight="SemiBold"/>
+                  </Border>
                 </StackPanel>
-              </ctl:StateView>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                  <RadioButton Style="{StaticResource Seg}" Content="1w" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=1w, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="1m" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=1m, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="3m" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=3m, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="6m" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=6m, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="1y" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=1y, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="All" GroupName="profrange" Margin="0" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=All, Mode=TwoWay}"/>
+                </StackPanel>
+              </Grid>
+              <Grid Height="260">
+                <ctl:ValueChart Points="{Binding TradeProfileChart}"/>
+                <!-- still being worked out -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="300"
+                            Visibility="{Binding TradeProfileChartLoading, Converter={StaticResource BoolVis}}">
+                  <ProgressBar IsIndeterminate="True" Height="4" BorderThickness="0" Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}"/>
+                  <TextBlock Text="{Binding TradeProfileChartText}" FontSize="12" Style="{StaticResource MutedText}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                </StackPanel>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="54,10,0,0">
+                <Ellipse Width="8" Height="8" Fill="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock Text="Value" FontSize="12" Margin="0,0,16,0"/>
+                <Ellipse Width="8" Height="8" Fill="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock Text="RAP" FontSize="12"/>
+              </StackPanel>
+              <TextBlock Text="{Binding TradeProfileChartNote}" FontSize="11" Style="{StaticResource MutedText}" Margin="54,6,0,0" TextWrapping="Wrap"
+                         Visibility="{Binding TradeProfileChartNote, Converter={StaticResource EmptyCollapsed}}"/>
             </StackPanel>
           </Border>
 
-          <!-- their limiteds -->
-          <TextBlock FontSize="18" FontWeight="Bold" Margin="2,22,0,12">
-            <Run Text="Limiteds"/><Run Text="{Binding TradeProfileCount, Mode=OneWay, StringFormat=' · {0}'}"/>
-          </TextBlock>
-          <ctl:StateView State="{Binding TradeProfileLoad.State}" Message="{Binding TradeProfileLoad.Message}" MinHeight="160"
-                         EmptyText="{Binding TradeProfileEmpty}">
-            <ItemsControl ItemsSource="{Binding TradeProfileItems}">
-              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Button Style="{StaticResource CardButton}" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}"
-                          Command="{Binding DataContext.OpenLimitedFromInventoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          CommandParameter="{Binding}"/>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ctl:StateView>
+          <!-- their limiteds: they appear one by one as they come in -->
+          <Grid Margin="2,22,0,12">
+            <TextBlock FontSize="18" FontWeight="Bold">
+              <Run Text="Limiteds"/><Run Text="{Binding TradeProfileItems.Count, Mode=OneWay, StringFormat=' · {0}'}"/>
+            </TextBlock>
+          </Grid>
+          <StackPanel Orientation="Horizontal" Margin="2,0,0,12" Visibility="{Binding TradeProfileLoading, Converter={StaticResource BoolVis}}">
+            <ProgressBar IsIndeterminate="True" Width="160" Height="3" BorderThickness="0" Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}"
+                         VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <TextBlock Text="{Binding TradeProfileLoadingText}" FontSize="12" Style="{StaticResource MutedText}"/>
+          </StackPanel>
+          <TextBlock Text="{Binding TradeProfileNote}" Style="{StaticResource MutedText}" Margin="2,0,0,12"
+                     Visibility="{Binding TradeProfileNote, Converter={StaticResource EmptyCollapsed}}"/>
+          <ItemsControl ItemsSource="{Binding TradeProfileItems}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource CardButton}" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}"
+                        Command="{Binding DataContext.OpenLimitedFromInventoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}">
+                  <!-- each one fades in as it arrives -->
+                  <Button.Triggers>
+                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                      <BeginStoryboard>
+                        <Storyboard>
+                          <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.25"/>
+                        </Storyboard>
+                      </BeginStoryboard>
+                    </EventTrigger>
+                  </Button.Triggers>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
 
         <!-- ================= TRADE ADS ================= -->

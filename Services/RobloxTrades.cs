@@ -166,7 +166,8 @@ public static class RobloxTrades
     }
 
     /// <summary>All the account's limiteds (one tile per copy), for its inventory value.</summary>
-    public static async Task<List<LimitedTile>> GetCollectiblesAsync(string cookie, long userId, CancellationToken ct)
+    public static async Task<List<LimitedTile>> GetCollectiblesAsync(string cookie, long userId, CancellationToken ct,
+                                                                    Action<IReadOnlyList<LimitedTile>>? arrived = null)
     {
         var list = new List<LimitedTile>();
         string? cursor = null;
@@ -175,9 +176,12 @@ public static class RobloxTrades
             var url = $"https://inventory.roblox.com/v1/users/{userId}/assets/collectibles?limit=100&sortOrder=Desc"
                     + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
             using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
+            var got = new List<LimitedTile>();
             foreach (var x in doc.RootElement.GetProperty("data").EnumerateArray())
-                list.Add(LimitedTile.From(Long(x, "assetId"), Str(x, "name"), Long(x, "recentAveragePrice"), Long(x, "serialNumber"),
-                                          "", x.TryGetProperty("isOnHold", out var h) && h.ValueKind == JsonValueKind.True));
+                got.Add(LimitedTile.From(Long(x, "assetId"), Str(x, "name"), Long(x, "recentAveragePrice"), Long(x, "serialNumber"),
+                                         "", x.TryGetProperty("isOnHold", out var h) && h.ValueKind == JsonValueKind.True));
+            list.AddRange(got);
+            arrived?.Invoke(got);
             cursor = Str(doc.RootElement, "nextPageCursor");
             if (string.IsNullOrEmpty(cursor)) break;
         }
@@ -191,10 +195,10 @@ public static class RobloxTrades
             try { return await GetTradableAsync(cookie, userId, ct); }
             catch (RobloxException ex) when (!ex.TooMany) { return null; }
         }
-        try { list.AddRange(await GetNonSerialLimitedsAsync(cookie, userId, list.Select(t => t.AssetId).ToHashSet(), Tradable, ct)); }
+        try { var more = await GetNonSerialLimitedsAsync(cookie, userId, list.Select(t => t.AssetId).ToHashSet(), Tradable, ct); list.AddRange(more); arrived?.Invoke(more); }
         catch (RobloxException ex) when (!ex.TooMany) { }
         catch (JsonException) { }
-        try { list.AddRange(await GetLimitedBundlesAsync(cookie, userId, ct, Tradable)); }
+        try { var more = await GetLimitedBundlesAsync(cookie, userId, ct, Tradable); list.AddRange(more); arrived?.Invoke(more); }
         catch (RobloxException ex) when (!ex.TooMany) { }
         catch (JsonException) { }
         return list;
@@ -276,6 +280,13 @@ public static class RobloxTrades
                 bool isLimited = x.TryGetProperty("itemRestrictions", out var rs) && rs.ValueKind == JsonValueKind.Array
                                  && rs.EnumerateArray().Any(r => r.ValueKind == JsonValueKind.String && r.GetString() is "Limited" or "LimitedUnique" or "Collectible");
                 if (cid.Length > 0 && isLimited) { limited[Long(x, "id")] = (Str(x, "name"), cid); BundleCollectibleIds[Long(x, "id")] = cid; }
+                if (x.TryGetProperty("bundledItems", out var parts) && parts.ValueKind == JsonValueKind.Array)
+                {
+                    var assets = parts.EnumerateArray().Where(b => Str(b, "type") == "Asset").ToList();
+                    var head = assets.FirstOrDefault(b => Long(b, "assetType") == 79);
+                    var part = head.ValueKind == JsonValueKind.Object ? head : assets.FirstOrDefault();
+                    if (part.ValueKind == JsonValueKind.Object) BundleParts[Long(x, "id")] = Long(part, "id");
+                }
             }
         }
         if (limited.Count == 0) return new();
@@ -417,6 +428,86 @@ public static class RobloxTrades
     }
 
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> BundleCollectibleIds = new();
+    /// <summary>A limited bundle → one asset in it (its head), to find out when someone got the bundle.</summary>
+    public static readonly System.Collections.Concurrent.ConcurrentDictionary<long, long> BundleParts = new();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<(long, bool), (DateTime At, List<DaySales> Days)> SalesCache = new();
+
+    /// <summary>
+    /// When someone got each asset they own now (the inventory's "created" per copy), newest first, for the kinds of
+    /// items limiteds are (and dynamic heads, for bundles). Needs a public inventory, or the account itself.
+    /// </summary>
+    public static async Task<Dictionary<long, List<DateTime>>> GetAcquiredAsync(string cookie, long userId, CancellationToken ct)
+    {
+        var result = new Dictionary<long, List<DateTime>>();
+        string? cursor = null;
+        for (int page = 0; page < 25; page++)
+        {
+            var url = $"https://inventory.roblox.com/v2/users/{userId}/inventory?assetTypes={LimitedAssetTypes},DynamicHead&limit=100&sortOrder=Desc"
+                    + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
+            using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                foreach (var x in data.EnumerateArray())
+                {
+                    long id = Long(x, "assetId");
+                    var when = Date(x, "created");
+                    if (id <= 0 || when == default) continue;
+                    if (!result.TryGetValue(id, out var list)) result[id] = list = new();
+                    list.Add(when);
+                }
+            cursor = Str(doc.RootElement, "nextPageCursor");
+            if (string.IsNullOrEmpty(cursor)) break;
+        }
+        return result;
+    }
+
+    /// <summary>One day of sales: the average price and how many sold.</summary>
+    public readonly record struct DaySales(DateTime Day, double Price, long Volume);
+
+    /// <summary>
+    /// Every day this limited sold on Roblox (average price and number sold), oldest first: what its RAP followed.
+    /// Remembered for 30 minutes.
+    /// </summary>
+    public static async Task<List<DaySales>> GetDailySalesAsync(long id, bool bundle, CancellationToken ct)
+    {
+        if (SalesCache.TryGetValue((id, bundle), out var known) && DateTime.UtcNow - known.At < TimeSpan.FromMinutes(30)) return known.Days;
+        string cid;
+        if (bundle)
+        {
+            if (!BundleCollectibleIds.TryGetValue(id, out cid!))
+            {
+                using var bd = await RobloxHttp.GetJsonAsync($"https://catalog.roblox.com/v1/catalog/items/{id}/details?itemType=Bundle", null, ct);
+                cid = BundleCollectibleIds[id] = Str(bd.RootElement, "collectibleItemId");
+            }
+        }
+        else if (!CollectibleIds.TryGetValue(id, out cid!))
+        {
+            using var det = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{id}/details", null, ct);
+            cid = CollectibleIds[id] = Str(det.RootElement, "CollectibleItemId");
+        }
+        var days = new List<DaySales>();
+        if (cid.Length > 0)
+        {
+            using var doc = await RobloxHttp.GetJsonAsync($"https://apis.roblox.com/marketplace-sales/v1/item/{cid}/resale-data", null, ct);
+            var r = doc.RootElement;
+            var prices = new Dictionary<DateTime, List<double>>();
+            var volumes = new Dictionary<DateTime, long>();
+            if (r.TryGetProperty("priceDataPoints", out var pd) && pd.ValueKind == JsonValueKind.Array)
+                foreach (var p in pd.EnumerateArray())
+                    if (Date(p, "date") is { } d && d != default && p.TryGetProperty("value", out var v) && v.ValueKind == JsonValueKind.Number && v.GetDouble() > 0)
+                    {
+                        if (!prices.TryGetValue(d.Date, out var l)) prices[d.Date] = l = new();
+                        l.Add(v.GetDouble());
+                    }
+            if (r.TryGetProperty("volumeDataPoints", out var vd) && vd.ValueKind == JsonValueKind.Array)
+                foreach (var p in vd.EnumerateArray())
+                    if (Date(p, "date") is { } d && d != default) volumes[d.Date] = volumes.GetValueOrDefault(d.Date) + Long(p, "value");
+            foreach (var (day, l) in prices.OrderBy(kv => kv.Key))
+                days.Add(new DaySales(day, l.Average(), Math.Max(1, volumes.GetValueOrDefault(day))));
+        }
+        if (SalesCache.Count > 500) SalesCache.Clear();
+        SalesCache[(id, bundle)] = (DateTime.UtcNow, days);
+        return days;
+    }
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<(DateTime, long)> Points)> BundleHistories = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> CollectibleIds = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<(DateTime, long)> Points)> Histories = new();

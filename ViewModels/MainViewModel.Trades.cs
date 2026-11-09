@@ -44,7 +44,7 @@ public partial class MainViewModel
             case "Trades": MaybeLoadTradeList(); break;
             case "Ads": LoadTradeAdTab(); break;
             case "Calculator": _ = OpenCalculatorAsync(); break;
-            case "Watchlist": _ = WatchTickAsync(); break;
+            case "Watchlist": _ = WatchFullCheckAsync(); break;
         }
     }
 
@@ -439,6 +439,7 @@ public partial class MainViewModel
                     w.Count = items.Count;
                     w.Rap = items.Sum(i => i.Rap);
                     w.Value = items.Sum(i => i.Worth);
+                    ValueHistory.Record(w.Account.UserId, w.Value, w.Rap);   // a real point for the profile graph
                     w.Note = items.Count == 0 ? "No limiteds" : $"{items.Count} limited{(items.Count == 1 ? "" : "s")}";
                 }
                 catch (RobloxException ex) { w.Note = ex.SignedOut ? "Signed out" : ex.TooMany ? "Roblox is busy, refresh in a moment" : ex.Message; }

@@ -301,6 +301,8 @@ public partial class AdSlot : ObservableObject
     public bool IsEmpty => Item == null && Tag == null;
     public bool HasItem => Item != null;
     public bool HasTag => Tag != null;
-    public string EmptyText => IsOffer ? "Offer" : "Want";
+    /// <summary>The empty slot's word; "Offer" / "Want" unless set (the calculator says "Add").</summary>
+    public string? Label { get; init; }
+    public string EmptyText => Label ?? (IsOffer ? "Offer" : "Want");
     public void Clear() { Item = null; Tag = null; }
 }

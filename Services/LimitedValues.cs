@@ -110,7 +110,18 @@ public static class LimitedValues
     /// The latest market moves (about the last two minutes): new lowest prices, and RAP updates which are applied to the
     /// values right away. Only new lowest prices come back.
     /// </summary>
-    public static async Task<List<(long AssetId, long Price, DateTime At)>> GetNewPricesAsync(CancellationToken ct)
+    private static Task<List<(long AssetId, long Price, DateTime At)>>? _feedTask;
+    private static DateTime _feedAt;
+
+    public static Task<List<(long AssetId, long Price, DateTime At)>> GetNewPricesAsync(CancellationToken ct)
+    {
+        // asked again within the same second (Deals, notifications and the watchlist all poll it): share one request
+        if (_feedTask != null && DateTime.UtcNow - _feedAt < TimeSpan.FromMilliseconds(900)) return _feedTask;
+        _feedAt = DateTime.UtcNow;
+        return _feedTask = FetchNewPricesAsync(ct);
+    }
+
+    private static async Task<List<(long AssetId, long Price, DateTime At)>> FetchNewPricesAsync(CancellationToken ct)
     {
         var text = await RobloxHttp.SendAsync(HttpMethod.Get, "https://api.rolimons.com/market/v1/dealactivity", null, null, ct);
         using var doc = JsonDocument.Parse(text);
