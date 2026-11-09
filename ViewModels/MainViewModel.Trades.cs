@@ -186,7 +186,9 @@ public partial class MainViewModel
         return take;
     }
 
-    private void ScanResult(long id, long price, DateTime now, List<DealTile> added)
+    /// <param name="fresh">From the per-item service, which is up to date. The batch service lags behind new listings,
+    /// so it never changes a deal that has a listing time.</param>
+    private void ScanResult(long id, long price, DateTime now, List<DealTile> added, bool fresh)
     {
         _scanDone++;
         if (!_allDeals.TryGetValue(id, out var known))
@@ -196,13 +198,13 @@ public partial class MainViewModel
             return;
         }
         // Roblox's price lists lag a little behind new listings: a listing gets two minutes before a check may change it
-        if (known.Listed && now - known.At < TimeSpan.FromMinutes(2)) return;
+        if (known.Listed && (!fresh || now - known.At < TimeSpan.FromMinutes(2))) return;
         // that copy was bought: nobody sells it anymore (Roblox said so, not a missing answer)
         if (price == 0) { _allDeals.Remove(id); _dealsChanged = true; return; }
         if (price == known.Price) return;
         // another price now: a listing whose copy was bought goes back to "time unknown" at the new price;
         // a cheaper copy than the one we know was listed while we weren't looking (time unknown too)
-        if (AddDeal(id, price, now, scanned: true) is { } changed) added.Add(changed);
+        if (AddDeal(id, price, price < known.Price ? now : known.At, scanned: true) is { } changed) added.Add(changed);
         if (known.Listed) _dealsChanged = true;
     }
 
@@ -230,7 +232,7 @@ public partial class MainViewModel
                 var added = new List<DealTile>();
                 foreach (var id in chunk)
                 {
-                    if (prices.TryGetValue(id, out var p)) ScanResult(id, p, now, added);
+                    if (prices.TryGetValue(id, out var p)) ScanResult(id, p, now, added, fresh: false);
                     else _scanQueue.Enqueue(id);   // Roblox left it out of its answer: unknown, check it again
                 }
                 if (prices.Count == 0) await Task.Delay(5000);   // an empty answer: Roblox is busy, give it a moment
@@ -261,7 +263,7 @@ public partial class MainViewModel
                 var added = new List<DealTile>();
                 foreach (var (id, price, ok) in results)
                 {
-                    if (ok && price >= 0) ScanResult(id, price, now, added);
+                    if (ok && price >= 0) ScanResult(id, price, now, added, fresh: true);
                     else if (!ok) _scanQueue.Enqueue(id);   // try it again later in this pass
                     else _scanDone++;                       // Roblox didn't say: leave the deal as it is
                 }
@@ -279,7 +281,8 @@ public partial class MainViewModel
     {
         var v = LimitedValues.Get(id);
         if (v == null || v.Worth <= 0) return null;
-        if (_allDeals.TryGetValue(id, out var old) && old.Price == price) return null;
+        // the same price again: nothing new, unless the feed now tells when a deal the price check found was listed
+        if (_allDeals.TryGetValue(id, out var old) && old.Price == price && (scanned || old.Listed)) return null;
         var d = new DealTile
         {
             AssetId = id, Name = v.Name, Price = price, Rap = v.Rap, Value = v.Value, Demand = v.Demand, Projected = v.Projected,
@@ -364,7 +367,8 @@ public partial class MainViewModel
         list = (DealSort?.Value ?? 0) switch
         {
             // real listings by when they were listed (like Rolimons); deals the price check found have no listing time, so they go after
-            1 => list.OrderByDescending(d => d.Listed).ThenByDescending(d => d.Listed ? d.At.Ticks : 0).ThenByDescending(d => d.Discount),
+            // newest first: when it was listed, or (listing time unknown) when RoDeck first found it, so new deals are on top
+            1 => list.OrderByDescending(d => d.At).ThenByDescending(d => d.Discount),
             2 => list.OrderByDescending(d => d.Saving),
             _ => list.OrderByDescending(d => d.Discount)
         };
