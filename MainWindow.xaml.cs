@@ -295,9 +295,39 @@ public partial class MainWindow : Window
         };
         foreach (var a in _vm.Accounts.OrderByDescending(x => x.IsFavourite).ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase))
         {
-            var header = a.Label + (string.IsNullOrEmpty(a.Username) || a.Username == a.Label ? "" : $"  (@{a.Username})")
-                       + (a.StatusKind == "signedout" ? "  · signed out" : "");
-            var item = new System.Windows.Controls.MenuItem { Header = header, IsCheckable = true, IsChecked = a == _vm.CurrentAccount };
+            // the avatar, the name (and @username), and a tick on the account in use
+            bool current = a == _vm.CurrentAccount;
+            var row = new System.Windows.Controls.DockPanel { LastChildFill = true, MinWidth = 190 };
+            var tick = new System.Windows.Controls.TextBlock
+            {
+                Text = "", FontSize = 12, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center,
+                FontFamily = (System.Windows.Media.FontFamily)Application.Current.FindResource("Icons"),
+                Visibility = current ? Visibility.Visible : Visibility.Hidden
+            };
+            tick.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "Accent");
+            System.Windows.Controls.DockPanel.SetDock(tick, System.Windows.Controls.Dock.Right);
+            row.Children.Add(tick);
+            var names = new System.Windows.Controls.TextBlock { VerticalAlignment = VerticalAlignment.Center };
+            names.Inlines.Add(new System.Windows.Documents.Run(a.Label) { FontWeight = current ? FontWeights.SemiBold : FontWeights.Normal });
+            if (!string.IsNullOrEmpty(a.Username) && a.Username != a.Label)
+            {
+                var at = new System.Windows.Documents.Run("  @" + a.Username) { FontSize = 11.5 };
+                at.SetResourceReference(System.Windows.Documents.TextElement.ForegroundProperty, "Muted");
+                names.Inlines.Add(at);
+            }
+            if (a.StatusKind == "signedout")
+            {
+                var so = new System.Windows.Documents.Run("  · signed out") { FontSize = 11.5 };
+                so.SetResourceReference(System.Windows.Documents.TextElement.ForegroundProperty, "Red");
+                names.Inlines.Add(so);
+            }
+            row.Children.Add(names);
+            var item = new System.Windows.Controls.MenuItem
+            {
+                Header = row,
+                Padding = new Thickness(14, 6, 14, 6),
+                Icon = new Controls.AvatarView { Width = 26, Height = 26, Url = a.AvatarUrl, Initials = a.Initials }
+            };
             var account = a;
             item.Click += (_, _) => _vm.SwitchAccountCommand.Execute(account);
             menu.Items.Add(item);

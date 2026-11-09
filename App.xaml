@@ -780,7 +780,7 @@
               <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <!-- an icon, or a tick for the chosen item (left out when the item has neither) -->
-                <Grid x:Name="side" Width="18" Margin="0,0,10,0" VerticalAlignment="Center">
+                <Grid x:Name="side" MinWidth="26" Margin="0,0,10,0" VerticalAlignment="Center">
                   <ContentPresenter ContentSource="Icon" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                   <TextBlock x:Name="tick" Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="12" Visibility="Collapsed"
                              Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
