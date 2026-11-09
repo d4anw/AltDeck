@@ -70,9 +70,8 @@ public partial class Account : ObservableObject
     private bool isPremium;
 
     [JsonIgnore] public DateTime? LastChecked { get; set; }
-    /// <summary>"R$ 1,234", plus "· Premium". Empty until the account has been checked.</summary>
-    [JsonIgnore] public string RobuxText =>
-        Robux is long r ? $"R$ {r:N0}{(IsPremium ? "  ·  Premium" : "")}" : (IsPremium ? "Premium" : "");
+    /// <summary>"R$ 1,234". Empty until the account has been checked.</summary>
+    [JsonIgnore] public string RobuxText => Robux is long r ? $"R$ {r:N0}" : "";
     /// <summary>Just the amount ("1,234"), for the Robux pill top right. Empty until checked.</summary>
     [JsonIgnore] public string RobuxShort => Robux is long r ? r.ToString("N0") : "";
     [JsonIgnore] public string Label => string.IsNullOrWhiteSpace(Alias) ? DisplayName : Alias;

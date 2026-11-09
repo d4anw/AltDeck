@@ -319,6 +319,7 @@ public partial class MainViewModel
     /// </summary>
     private async Task RefreshPreviewAsync(Account a)
     {
+        _ = RefreshHeadshotAsync(a, waitForChange: true);   // the picture top right follows right away
         int generation = ++_previewGeneration;
         PreviewUpdating = true;
         var clock = System.Diagnostics.Stopwatch.StartNew();
@@ -360,6 +361,7 @@ public partial class MainViewModel
     /// <summary>After a live-shown adjustment: just fetch Roblox's new picture for Picture mode, without touching the 3D view.</summary>
     private async Task RefreshPictureQuietlyAsync(Account a)
     {
+        _ = RefreshHeadshotAsync(a, waitForChange: true);   // the picture top right follows right away
         try
         {
             var url = await RobloxAvatar.WaitForNewPictureAsync(a.UserId, AvatarPicture, CancellationToken.None);

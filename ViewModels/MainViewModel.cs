@@ -190,6 +190,19 @@ public partial class MainViewModel : ObservableObject
         if (Accounts.Count > 0) await CheckAllAsync();
     }
 
+    /// <summary>Fetches the account's picture again; with <paramref name="waitForChange"/>, keeps trying for a while
+    /// until Roblox has drawn the new look (right after a change in the avatar editor).</summary>
+    public async Task RefreshHeadshotAsync(Account a, bool waitForChange = false)
+    {
+        var old = a.AvatarUrl;
+        for (int i = 0; i < (waitForChange ? 12 : 1); i++)
+        {
+            if (i > 0) await Task.Delay(1500);
+            var url = await RobloxApi.GetAvatarUrlAsync(a.UserId);
+            if (url.Length > 0 && url != old) { a.AvatarUrl = url; _vaultTimer.Stop(); _vaultTimer.Start(); return; }
+        }
+    }
+
     public void SaveSettingsNow() { try { _store.Save(Settings); } catch { } }
 
     /// <summary>Called when the window closes: Roblox's own settings and any CPU limits go back to normal.</summary>
@@ -450,9 +463,13 @@ public partial class MainViewModel : ObservableObject
         catch { }
     }
 
+    private int _headshotTick;
+
     private void Tick()
     {
         ClientMon.Tick();
+        // the picture top right: checked every 20 seconds, so a change made in Roblox itself shows up soon
+        if (++_headshotTick % 10 == 0 && CurrentAccount is { UserId: > 0 } me) _ = RefreshHeadshotAsync(me);
         try { _logWatcher.Poll(ClientMon.Clients); } catch { }
         try { SnapBackWindows(); } catch { }
         try { _perf.TuneClients(ClientMon.Clients, Settings); } catch { }
@@ -575,7 +592,7 @@ public partial class MainViewModel : ObservableObject
             if (u == null) { SetStatus(a, "signedout", "Signed out"); return; }
             a.Username = u.Name;
             a.DisplayName = u.DisplayName;
-            if (string.IsNullOrEmpty(a.AvatarUrl)) a.AvatarUrl = await RobloxApi.GetAvatarUrlAsync(u.Id);
+            if (await RobloxApi.GetAvatarUrlAsync(u.Id) is { Length: > 0 } pic) a.AvatarUrl = pic;   // the look may have changed
 
             // Robux and Premium: keep the last known values if Roblox doesn't answer this time
             var robux = RobloxApi.GetRobuxAsync(a.Cookie, u.Id);

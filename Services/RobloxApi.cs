@@ -71,7 +71,10 @@ public static class RobloxApi
         {
             var url = $"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={userId}&size=150x150&format=Png";
             using var doc = JsonDocument.Parse(await Http.GetStringAsync(url));
-            return doc.RootElement.GetProperty("data")[0].GetProperty("imageUrl").GetString() ?? "";
+            var x = doc.RootElement.GetProperty("data")[0];
+            // while Roblox is still drawing a new look it says "Pending": keep the old picture until the new one is there
+            if (x.TryGetProperty("state", out var st) && st.GetString() != "Completed") return "";
+            return x.GetProperty("imageUrl").GetString() ?? "";
         }
         catch { return ""; }
     }
