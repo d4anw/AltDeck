@@ -197,9 +197,12 @@ public static class RobloxTrades
         }
         var nonSerial = Safe(() => GetNonSerialLimitedsAsync(cookie, userId, known, ct));
         var bundles = Safe(() => GetLimitedBundlesAsync(cookie, userId, ct));
-        foreach (var task in new[] { nonSerial, bundles })
+        var pending = new List<Task<List<LimitedTile>>> { nonSerial, bundles };
+        while (pending.Count > 0)   // whichever search is done first shows first
         {
-            var more = await task;
+            var done = await Task.WhenAny(pending);
+            pending.Remove(done);
+            var more = await done;
             list.AddRange(more);
             if (more.Count > 0) arrived?.Invoke(more);
         }
@@ -246,35 +249,49 @@ public static class RobloxTrades
     /// </summary>
     public static async Task<List<LimitedTile>> GetLimitedBundlesAsync(string cookie, long userId, CancellationToken ct)
     {
-        var owned = new List<long>();
-        string? cursor = null;
-        for (int page = 0; page < 10; page++)
+        // the bundles they own (remembered 5 minutes: Roblox allows only 10 of these lists a minute)
+        List<long> owned;
+        if (OwnedBundles.TryGetValue(userId, out var ob) && DateTime.UtcNow - ob.At < TimeSpan.FromMinutes(5)) owned = ob.Ids;
+        else
         {
-            var url = $"https://catalog.roblox.com/v1/users/{userId}/bundles?limit=100&sortOrder=Desc"
-                    + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
-            using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
-            if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
-                foreach (var x in data.EnumerateArray()) if (Long(x, "id") is > 0 and var id) owned.Add(id);
-            cursor = Str(doc.RootElement, "nextPageCursor");
-            if (string.IsNullOrEmpty(cursor)) break;
+            owned = new List<long>();
+            string? cursor = null;
+            for (int page = 0; page < 10; page++)
+            {
+                var url = $"https://catalog.roblox.com/v1/users/{userId}/bundles?limit=100&sortOrder=Desc"
+                        + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
+                using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
+                if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                    foreach (var x in data.EnumerateArray()) if (Long(x, "id") is > 0 and var id) owned.Add(id);
+                cursor = Str(doc.RootElement, "nextPageCursor");
+                if (string.IsNullOrEmpty(cursor)) break;
+            }
+            OwnedBundles[userId] = (DateTime.UtcNow, owned);
         }
         if (owned.Count == 0) return new();
 
-        // which of them are limited
-        var limited = new Dictionary<long, (string Name, string Cid)>();
-        foreach (var chunk in owned.Distinct().Chunk(100))
+        // which of them are limited: from the bundles service (50 per request, its own allowance), and remembered for
+        // good, since a bundle doesn't stop or start being limited. Not the catalog's item details: that one allows
+        // very few requests and is busy with prices, which made faces wait.
+        var unknown = owned.Distinct().Where(id => !BundleKinds.ContainsKey(id)).ToList();
+        foreach (var chunk in unknown.Chunk(50))
         {
-            var body = new { items = chunk.Select(id => new { itemType = "Bundle", id }).ToArray() };
-            using var doc = await RobloxHttp.PostJsonAsync("https://catalog.roblox.com/v1/catalog/items/details", null, body, ct);
-            if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array) continue;
-            foreach (var x in data.EnumerateArray())
+            var url = "https://catalog.roblox.com/v1/bundles/details?" + string.Join("&", chunk.Select(id => $"bundleIds={id}"));
+            using var doc = await RobloxHttp.GetJsonAsync(url, null, ct);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array) continue;
+            foreach (var x in doc.RootElement.EnumerateArray())
             {
-                var cid = Str(x, "collectibleItemId");
-                bool isLimited = x.TryGetProperty("itemRestrictions", out var rs) && rs.ValueKind == JsonValueKind.Array
+                var col = x.TryGetProperty("collectibleItemDetail", out var c) && c.ValueKind == JsonValueKind.Object ? c : default;
+                var cid = Str(col, "collectibleItemId");
+                bool isLimited = cid.Length > 0 && x.TryGetProperty("itemRestrictions", out var rs) && rs.ValueKind == JsonValueKind.Array
                                  && rs.EnumerateArray().Any(r => r.ValueKind == JsonValueKind.String && r.GetString() is "Limited" or "LimitedUnique" or "Collectible");
-                if (cid.Length > 0 && isLimited) { limited[Long(x, "id")] = (Str(x, "name"), cid); BundleCollectibleIds[Long(x, "id")] = cid; }
+                BundleKinds[Long(x, "id")] = (isLimited, Str(x, "name"), cid);
+                if (isLimited) BundleCollectibleIds[Long(x, "id")] = cid;
             }
+            foreach (var id in chunk) BundleKinds.TryAdd(id, (false, "", ""));   // not answered: not limited
         }
+        var limited = owned.Distinct().Where(id => BundleKinds.TryGetValue(id, out var k) && k.Limited)
+                           .ToDictionary(id => id, id => (BundleKinds[id].Name, BundleKinds[id].Cid));
         if (limited.Count == 0) return new();
 
         // RAP from each bundle's sales: 8 at a time, remembered for 10 minutes
@@ -296,6 +313,8 @@ public static class RobloxTrades
     }
 
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, long Rap)> BundleRaps = new();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (bool Limited, string Name, string Cid)> BundleKinds = new();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<long> Ids)> OwnedBundles = new();
 
     private readonly record struct LimitedTileBuilder(long Id, string Name, long Rap = 0)
     {
@@ -398,23 +417,25 @@ public static class RobloxTrades
     /// <summary>A limited bundle (a dynamic head, for one): the catalog has its numbers, the marketplace its sales.</summary>
     static async Task<ItemStats> GetBundleStatsAsync(long bundleId, CancellationToken ct)
     {
-        using var det = await RobloxHttp.GetJsonAsync($"https://catalog.roblox.com/v1/catalog/items/{bundleId}/details?itemType=Bundle", null, ct);
-        var d = det.RootElement;
-        var cid = Str(d, "collectibleItemId");
+        // the bundles service (its own allowance), not the catalog's busy item details
+        using var det = await RobloxHttp.GetJsonAsync($"https://catalog.roblox.com/v1/bundles/details?bundleIds={bundleId}", null, ct);
+        var d = det.RootElement.ValueKind == JsonValueKind.Array && det.RootElement.GetArrayLength() > 0 ? det.RootElement[0] : default;
+        var col = d.ValueKind == JsonValueKind.Object && d.TryGetProperty("collectibleItemDetail", out var c) && c.ValueKind == JsonValueKind.Object ? c : default;
+        var cid = Str(col, "collectibleItemId");
         if (cid.Length > 0) BundleCollectibleIds[bundleId] = cid;
         var (rap, sold30, points) = cid.Length > 0 ? await ReadSalesAsync(cid, ct) : (0, 0, new List<(DateTime, long)>());
         if (cid.Length > 0) BundleHistories[bundleId] = (DateTime.UtcNow, points);
-        bool lu = d.TryGetProperty("itemRestrictions", out var rs) && rs.ValueKind == JsonValueKind.Array
+        bool lu = d.ValueKind == JsonValueKind.Object && d.TryGetProperty("itemRestrictions", out var rs) && rs.ValueKind == JsonValueKind.Array
                   && rs.EnumerateArray().Any(x => x.ValueKind == JsonValueKind.String && x.GetString() == "LimitedUnique");
-        long copies = Long(d, "totalQuantity");
-        long best = Long(d, "lowestResalePrice");
+        long copies = Long(col, "totalQuantity");
+        long best = Long(col, "lowestResalePrice");
         return new ItemStats
         {
-            Type = Long(d, "bundleType") == 4 ? "Dynamic head" : "Bundle",
+            Type = Str(d, "bundleType") == "DynamicHead" ? "Dynamic head" : "Bundle",
             LimitedU = lu,
             Copies = copies,
             Made = copies,
-            BestPrice = best > 0 ? best : Long(d, "lowestPrice"),
+            BestPrice = best > 0 ? best : Long(col, "lowestPrice"),
             Rap = rap,
             Sold30 = sold30,
             History = points
@@ -457,8 +478,9 @@ public static class RobloxTrades
             if (BundleHistories.TryGetValue(assetId, out var kb) && DateTime.UtcNow - kb.At < TimeSpan.FromMinutes(15)) return kb.Points;
             if (!BundleCollectibleIds.TryGetValue(assetId, out var bcid))
             {
-                using var bd = await RobloxHttp.GetJsonAsync($"https://catalog.roblox.com/v1/catalog/items/{assetId}/details?itemType=Bundle", null, ct);
-                bcid = Str(bd.RootElement, "collectibleItemId");
+                using var bd = await RobloxHttp.GetJsonAsync($"https://catalog.roblox.com/v1/bundles/details?bundleIds={assetId}", null, ct);
+                var first = bd.RootElement.ValueKind == JsonValueKind.Array && bd.RootElement.GetArrayLength() > 0 ? bd.RootElement[0] : default;
+                bcid = first.ValueKind == JsonValueKind.Object && first.TryGetProperty("collectibleItemDetail", out var cd) ? Str(cd, "collectibleItemId") : "";
                 BundleCollectibleIds[assetId] = bcid;
             }
             var pts = bcid.Length > 0 ? (await ReadSalesAsync(bcid, ct)).Points : new List<(DateTime, long)>();
