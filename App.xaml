@@ -80,20 +80,32 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
-              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
-            </Border>
+            <Grid>
+              <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="1" CornerRadius="10"/>
+              <!-- the hover colour, faded in and out -->
+              <Border x:Name="hov" Background="{DynamicResource Card2}" BorderBrush="{DynamicResource AccentLine}"
+                      BorderThickness="1" CornerRadius="10" Opacity="0"/>
+              <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+            </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
-                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard><DoubleAnimation Storyboard.TargetName="hov" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard><DoubleAnimation Storyboard.TargetName="hov" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/></Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
-                <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
+                <Setter TargetName="hov" Property="Background" Value="{DynamicResource AccentSoft}"/>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
-                <Setter TargetName="b" Property="Opacity" Value="0.45"/>
+                <Setter Property="Opacity" Value="0.45"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -326,6 +338,7 @@
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
             <Grid>
+              <Border x:Name="hov" Background="{DynamicResource Card}" CornerRadius="10" Opacity="0"/>
               <Border x:Name="b" Background="Transparent" CornerRadius="10" Padding="12,10">
                 <Grid>
                   <Grid.ColumnDefinitions>
@@ -342,8 +355,17 @@
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="b" Property="Background" Value="{DynamicResource Card}"/>
                 <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard><DoubleAnimation Storyboard.TargetName="hov" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard><DoubleAnimation Storyboard.TargetName="hov" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/></Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
               </Trigger>
               <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
@@ -696,6 +718,28 @@
 
     <!-- scrollbar: a thin rounded handle on an invisible track. Wider and brighter on hover, orange while dragged.
          Kept clear of the page's rounded corners. Horizontal bars are hidden (rows scroll with buttons / Shift + wheel). -->
+    <!-- tooltips: a small card in the app's colours, instead of Windows' plain box -->
+    <Style TargetType="ToolTip">
+      <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="HasDropShadow" Value="False"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToolTip">
+            <Border Margin="6,4,6,10" Padding="10,6" CornerRadius="8" Background="{DynamicResource Card}"
+                    BorderBrush="{DynamicResource Line}" BorderThickness="1" MaxWidth="340">
+              <Border.Effect><DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.25" Color="Black"/></Border.Effect>
+              <ContentPresenter>
+                <ContentPresenter.Resources>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+                </ContentPresenter.Resources>
+              </ContentPresenter>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <Style TargetType="ScrollBar">
       <Setter Property="Width" Value="14"/>
       <Setter Property="MinWidth" Value="14"/>
@@ -809,7 +853,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ctl:SettingRow">
-            <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,16">
+            <Border x:Name="row" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,16">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
@@ -824,12 +868,18 @@
                       <TextBlock Text="soon" FontSize="10" Style="{StaticResource MutedText}"/>
                     </Border>
                   </StackPanel>
-                  <TextBlock Text="{TemplateBinding Description}" FontSize="{TemplateBinding DescriptionSize}" TextWrapping="Wrap" Margin="0,3,0,0"
+                  <TextBlock x:Name="desc" Text="{TemplateBinding Description}" FontSize="{TemplateBinding DescriptionSize}" TextWrapping="Wrap" Margin="0,3,0,0"
                              Style="{StaticResource MutedText}"/>
                 </StackPanel>
                 <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
               </Grid>
             </Border>
+            <!-- no description: no empty line under the title, so the title lines up with the switch -->
+            <ControlTemplate.Triggers>
+              <Trigger Property="Description" Value="{x:Null}"><Setter TargetName="desc" Property="Visibility" Value="Collapsed"/></Trigger>
+              <Trigger Property="Description" Value=""><Setter TargetName="desc" Property="Visibility" Value="Collapsed"/></Trigger>
+              <Trigger Property="IsLast" Value="True"><Setter TargetName="row" Property="BorderThickness" Value="0"/></Trigger>
+            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>

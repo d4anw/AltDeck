@@ -45,7 +45,7 @@
                     <Style TargetType="Ellipse">
                       <Setter Property="Fill" Value="{DynamicResource Muted}"/>
                       <Style.Triggers>
-                        <DataTrigger Binding="{Binding AdRunning}" Value="True"><Setter Property="Fill" Value="#3DD68C"/></DataTrigger>
+                        <DataTrigger Binding="{Binding AdRunning}" Value="True"><Setter Property="Fill" Value="{DynamicResource Green}"/></DataTrigger>
                       </Style.Triggers>
                     </Style>
                   </Ellipse.Style>

@@ -257,7 +257,7 @@
                 <TextBlock Text="Move, turn and resize it within Roblox's limits. Saved to Roblox a moment after you let go."
                            FontSize="12" Style="{StaticResource MutedText}" Margin="0,3,0,0" TextWrapping="Wrap"/>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding AdjustLiveNote, Converter={StaticResource EmptyCollapsed}}">
-                  <Ellipse Width="7" Height="7" Fill="#3DD68C" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                  <Ellipse Width="7" Height="7" Fill="{DynamicResource Green}" VerticalAlignment="Center" Margin="0,0,7,0"/>
                   <TextBlock Text="{Binding AdjustLiveNote}" FontSize="12" TextWrapping="Wrap"/>
                 </StackPanel>
               </StackPanel>

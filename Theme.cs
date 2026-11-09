@@ -29,12 +29,14 @@ public static class ThemeManager
             Set("Bg", "#E8EAEE"); Set("Page", "#FFFFFF"); Set("Card", "#F5F6F8"); Set("Card2", "#E9ECF0");
             Set("Line", "#D3D8DF"); Set("Fg", "#14161A"); Set("Muted", "#5C636D");
             Set("Pill", "#FFFFFF"); Set("PillHover", "#DDE1E7");   // the title bar's bell / Robux / account buttons
+            Set("Green", "#16A34A"); Set("GreenBg", "#DCF5E5"); Set("RedBg", "#FBE1E2"); Set("Gold", "#B7791F");
         }
         else
         {
             Set("Bg", "#0A0B0D"); Set("Page", "#101215"); Set("Card", "#15181B"); Set("Card2", "#1C1F23");
             Set("Line", "#272A30"); Set("Fg", "#F2F3F5"); Set("Muted", "#9AA0A8");
             Set("Pill", "#1C1F23"); Set("PillHover", "#272A30");
+            Set("Green", "#3DD68C"); Set("GreenBg", "#1F3A2C"); Set("RedBg", "#4A1F22"); Set("Gold", "#F2C14E");
         }
 
         Color accent;

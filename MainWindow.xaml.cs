@@ -88,6 +88,7 @@ public partial class MainWindow : Window
 
         Closing += (_, e) =>
         {
+            SavePlacement();
             if (_reallyExit || !KeepRunningOnClose) return;
             e.Cancel = true;
             _tray.Visible = true;
@@ -104,6 +105,17 @@ public partial class MainWindow : Window
 
 
         SmoothScroll.Attach(this);   // gliding mouse-wheel scrolling everywhere
+        RestorePlacement();
+
+        // Ctrl + 1…8: the pages in the sidebar's order; Ctrl + , : Settings
+        KeyDown += (_, e) =>
+        {
+            if (Keyboard.Modifiers != ModifierKeys.Control || e.OriginalSource is System.Windows.Controls.TextBox) return;
+            string[] pages = { "Home", "Games", "Friends", "Avatar", "Marketplace", "Trades", "Multi", "Performance" };
+            int n = e.Key >= Key.D1 && e.Key <= Key.D8 ? e.Key - Key.D1 : e.Key >= Key.NumPad1 && e.Key <= Key.NumPad8 ? e.Key - Key.NumPad1 : -1;
+            if (n >= 0) { _vm.Page = pages[n]; e.Handled = true; }
+            else if (e.Key == Key.OemComma) { _vm.Page = "Settings"; e.Handled = true; }
+        };
 
         // back / forward: the mouse's side buttons and Alt+← / Alt+→
         PreviewMouseDown += (_, e) =>
@@ -193,6 +205,33 @@ public partial class MainWindow : Window
         Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
+    }
+
+    /// <summary>Opens where it was last time (and maximized if it was), as long as that spot is still on a screen.</summary>
+    private void RestorePlacement()
+    {
+        var parts = (_vm.Settings.WindowPlacement ?? "").Split(',');
+        if (parts.Length != 5 || !double.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var l)
+            || !double.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var t)
+            || !double.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var w)
+            || !double.TryParse(parts[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var h)) return;
+        // still on one of the screens (a monitor may have been unplugged since)
+        var screen = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+        if (w < MinWidth || h < MinHeight || !screen.IntersectsWith(new Rect(l + 40, t + 10, Math.Max(1, w - 80), 30))) return;
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Left = l; Top = t; Width = w; Height = h;
+        if (parts[4] == "1") Loaded += (_, _) => WindowState = WindowState.Maximized;
+    }
+
+    private void SavePlacement()
+    {
+        if (WindowState == WindowState.Minimized || !IsVisible) return;
+        var r = WindowState == WindowState.Maximized ? RestoreBounds : new Rect(Left, Top, Width, Height);
+        if (r.IsEmpty) return;
+        var c = System.Globalization.CultureInfo.InvariantCulture;
+        _vm.Settings.WindowPlacement = string.Join(",", r.Left.ToString(c), r.Top.ToString(c), r.Width.ToString(c), r.Height.ToString(c),
+                                                   WindowState == WindowState.Maximized ? "1" : "0");
+        _vm.SaveSettingsNow();
     }
 
     private void ApplyHotkey()

@@ -3,9 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctl="clr-namespace:RoDeck.Controls">
   <UserControl.Resources>
-    <SolidColorBrush x:Key="Win" Color="#3DD68C"/>
-    <SolidColorBrush x:Key="WinBg" Color="#1F3A2C"/>
-    <SolidColorBrush x:Key="LossBg" Color="#4A1F22"/>
 
     <!-- a difference pill: green when it's in your favour, red when not -->
     <Style x:Key="DiffPill" TargetType="Border">
@@ -14,8 +11,8 @@
       <Setter Property="Margin" Value="4,0"/>
       <Setter Property="Background" Value="{DynamicResource Card2}"/>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="1"><Setter Property="Background" Value="{StaticResource WinBg}"/></DataTrigger>
-        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="-1"><Setter Property="Background" Value="{StaticResource LossBg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="1"><Setter Property="Background" Value="{DynamicResource GreenBg}"/></DataTrigger>
+        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="-1"><Setter Property="Background" Value="{DynamicResource RedBg}"/></DataTrigger>
       </Style.Triggers>
     </Style>
 
@@ -180,7 +177,7 @@
     <Style x:Key="VerdictText" TargetType="TextBlock">
       <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
       <Style.Triggers>
-        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="1"><Setter Property="Foreground" Value="{StaticResource Win}"/></DataTrigger>
+        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="1"><Setter Property="Foreground" Value="{DynamicResource Green}"/></DataTrigger>
         <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="-1"><Setter Property="Foreground" Value="{DynamicResource Red}"/></DataTrigger>
       </Style.Triggers>
     </Style>
@@ -215,7 +212,7 @@
                        IsChecked="{Binding TradesTab, Converter={StaticResource Eq}, ConverterParameter=Ads, Mode=TwoWay}">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="Trade ads" VerticalAlignment="Center"/>
-              <Ellipse Width="7" Height="7" Fill="#3DD68C" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="Posting"
+              <Ellipse Width="7" Height="7" Fill="{DynamicResource Green}" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="Posting"
                        Visibility="{Binding AdRunning, Converter={StaticResource BoolVis}}"/>
             </StackPanel>
           </RadioButton>
@@ -279,7 +276,7 @@
                     <Style TargetType="Ellipse">
                       <Setter Property="Fill" Value="{DynamicResource Muted}"/>
                       <Style.Triggers>
-                        <DataTrigger Binding="{Binding AdRunning}" Value="True"><Setter Property="Fill" Value="#3DD68C"/></DataTrigger>
+                        <DataTrigger Binding="{Binding AdRunning}" Value="True"><Setter Property="Fill" Value="{DynamicResource Green}"/></DataTrigger>
                       </Style.Triggers>
                     </Style>
                   </Ellipse.Style>
@@ -307,7 +304,7 @@
                 </StackPanel>
                 <Grid Margin="0,6,0,0" Visibility="{Binding HasRoliCookie, Converter={StaticResource BoolVis}}">
                   <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" Foreground="#3DD68C" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" Foreground="{DynamicResource Green}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBlock Text="Saved, encrypted on this PC" FontSize="12" VerticalAlignment="Center"/>
                   </StackPanel>
                   <Button Content="Forget" HorizontalAlignment="Right" Margin="0" Command="{Binding ForgetRoliCookieCommand}"/>
@@ -447,7 +444,7 @@
                     </StackPanel>
                     <StackPanel Grid.Column="3" VerticalAlignment="Center">
                       <Border Padding="8,3" CornerRadius="8" HorizontalAlignment="Left" Background="{DynamicResource Card2}">
-                        <TextBlock Text="{Binding DiscountText}" FontWeight="Bold" Foreground="{StaticResource Win}"/>
+                        <TextBlock Text="{Binding DiscountText}" FontWeight="Bold" Foreground="{DynamicResource Green}"/>
                       </Border>
                       <TextBlock Text="{Binding AgoText}" FontSize="11" Style="{StaticResource MutedText}" Margin="2,3,0,0"/>
                     </StackPanel>
@@ -784,7 +781,7 @@
                             <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
                               <TextBlock Text="{Binding PartnerLabel}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding PartnerName}"/>
                               <!-- always takes its line, so the row doesn't grow when the value arrives -->
-                              <TextBlock Text="{Binding PartnerWorth}" FontSize="11" FontWeight="SemiBold" Foreground="#F2C14E" Margin="0,1,0,0"
+                              <TextBlock Text="{Binding PartnerWorth}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Gold}" Margin="0,1,0,0"
                                          ToolTip="Their inventory value"/>
                               <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                                 <Button Padding="10,2" Margin="0,0,6,0" FontSize="11" Focusable="False" Foreground="White" Background="#B5363C" BorderThickness="0"
@@ -817,7 +814,7 @@
                                   <Style TargetType="Border">
                                     <Setter Property="Background" Value="{DynamicResource Line}"/>
                                     <Style.Triggers>
-                                      <DataTrigger Binding="{Binding Result}" Value="1"><Setter Property="Background" Value="{StaticResource Win}"/></DataTrigger>
+                                      <DataTrigger Binding="{Binding Result}" Value="1"><Setter Property="Background" Value="{DynamicResource Green}"/></DataTrigger>
                                       <DataTrigger Binding="{Binding Result}" Value="-1"><Setter Property="Background" Value="{DynamicResource Red}"/></DataTrigger>
                                     </Style.Triggers>
                                   </Style>

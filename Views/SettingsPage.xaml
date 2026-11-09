@@ -330,6 +330,7 @@
           <Border Style="{StaticResource Group}">
             <StackPanel>
               <ctl:SettingRow Title="Back and forward" Description="The side buttons on your mouse, or Alt + ← / Alt + →, move through the pages you visited."/>
+              <ctl:SettingRow Title="Jump to a page" Description="Ctrl + 1 to 8 opens the pages in the sidebar's order (Home, Games, Friends, Avatar, Marketplace, Trades, Multi-launch, FPS &amp; FastFlags). Ctrl + , opens Settings."/>
               <ctl:SettingRow Title="Hold to stop all" Description="On Multi-launch, press and hold the red button top right for one second."/>
               <ctl:SettingRow Title="Preset hotkeys" Description="On Multi-launch → Launch, right-click a preset and pick Set hotkey. It launches that preset from any app, even with RoDeck in the tray."/>
               <ctl:SettingRow Title="Favourites" Description="On Multi-launch → Launch, right-click a favourite chip to remove it."/>

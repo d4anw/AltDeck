@@ -227,7 +227,7 @@
             </Grid>
 
             <!-- toast: bottom centre, or top centre while the launch queue panel is in the corner -->
-            <Border Padding="18,11" Background="{DynamicResource Card2}" BorderBrush="{DynamicResource AccentLine}" BorderThickness="1"
+            <Border Padding="14,10,18,10" Background="{DynamicResource Card}" BorderBrush="{DynamicResource AccentLine}" BorderThickness="1"
                     CornerRadius="12" MaxWidth="620"
                     Visibility="{Binding StatusMessage, Converter={StaticResource EmptyCollapsed}}">
               <Border.Style>
@@ -243,7 +243,14 @@
                   </Style.Triggers>
                 </Style>
               </Border.Style>
-              <TextBlock Text="{Binding StatusMessage, Mode=OneWay}" TextWrapping="Wrap"/>
+              <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="3" Opacity="0.3" Color="Black"/></Border.Effect>
+              <StackPanel Orientation="Horizontal">
+                <Border Width="22" Height="22" CornerRadius="11" Background="{DynamicResource AccentSoft}" Margin="0,0,10,0" VerticalAlignment="Top">
+                  <TextBlock Text="&#xE946;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource Accent}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="{Binding StatusMessage, Mode=OneWay}" TextWrapping="Wrap" MaxWidth="560" VerticalAlignment="Center"/>
+              </StackPanel>
             </Border>
 
             <!-- launch queue -->

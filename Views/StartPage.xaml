@@ -87,8 +87,8 @@
         <Border CornerRadius="18" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1">
           <Grid>
             <ctl:RemoteImage Url="{Binding HeroImage}" CornerRadius="17"/>
-            <!-- darker towards the bottom left, so the text stays readable on any picture -->
-            <Border CornerRadius="17">
+            <!-- darker towards the bottom left, so the text stays readable on any picture (only when there is one) -->
+            <Border CornerRadius="17" Visibility="{Binding HasHeroGame, Converter={StaticResource BoolVis}}">
               <Border.Background>
                 <LinearGradientBrush StartPoint="0,1" EndPoint="0.9,0">
                   <GradientStop Color="#F00B0C0E" Offset="0"/>

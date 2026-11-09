@@ -25,6 +25,7 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool trayDefaultApplied;     // set once: older settings.json files get Close to tray turned on once
     [ObservableProperty] private bool trayTipShown;           // the "still running in the tray" note was shown (it shows only once ever)
     [ObservableProperty] private bool skipSplash;
+    [ObservableProperty] private string windowPlacement = "";   // "left,top,width,height,maximized" of RoDeck's window
     [ObservableProperty] private bool detailedView = true;
 
     // Automation / security
