@@ -8,6 +8,25 @@
       <Setter Property="HorizontalScrollBarVisibility" Value="Hidden"/>
       <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
     </Style>
+    <Style x:Key="HomeStat" TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" CornerRadius="16" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}"
+                    BorderThickness="1" Padding="18,16,18,16">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </UserControl.Resources>
 
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -55,15 +74,17 @@
       </Border>
 
       <!-- ================= banner + live numbers ================= -->
-      <Grid Margin="0,22,0,0" Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}">
+      <!-- its height follows the width only a little (320 to 440, set in code): the picture fills it (cropped) instead of
+           growing with the window, and the four cards beside it keep a good shape -->
+      <Grid x:Name="HeroRow" Margin="0,22,0,0" Height="340" Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="1.6*"/>
+          <ColumnDefinition Width="2*"/>
           <ColumnDefinition Width="16"/>
-          <ColumnDefinition Width="*" MinWidth="300"/>
+          <ColumnDefinition Width="*" MinWidth="320" MaxWidth="560"/>
         </Grid.ColumnDefinitions>
 
         <!-- the last game you played, big, with Play right on it -->
-        <Border CornerRadius="18" MinHeight="236" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1">
+        <Border CornerRadius="18" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1">
           <Grid>
             <ctl:RemoteImage Url="{Binding HeroImage}" CornerRadius="17"/>
             <!-- darker towards the bottom left, so the text stays readable on any picture -->
@@ -99,63 +120,75 @@
           </Grid>
         </Border>
 
-        <!-- live numbers; each opens its page -->
+        <!-- live numbers; each opens its page. Icon top left, the number and what it is at the bottom: fills any height. -->
         <UniformGrid Grid.Column="2" Columns="2" Rows="2">
-          <Button Margin="0,0,10,10" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Friends">
-            <Grid>
-              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <StackPanel>
-                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding OnlineFriends.Count, Mode=OneWay}"/>
-                <TextBlock Text="Friends online" FontWeight="SemiBold" Margin="0,2,0,0"/>
-                <TextBlock Text="Who is playing now" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+          <Button Style="{StaticResource HomeStat}" Margin="0,0,6,6" Command="{Binding OpenHomeCardCommand}" CommandParameter="Friends">
+            <DockPanel>
+              <Grid DockPanel.Dock="Top">
+                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource AccentSoft}" HorizontalAlignment="Left">
+                  <TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="17" Foreground="{DynamicResource Accent}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="&#xE76C;" FontFamily="{StaticResource Icons}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Top"
+                           Margin="0,4,0,0" Style="{StaticResource MutedText}"/>
+              </Grid>
+              <StackPanel VerticalAlignment="Bottom">
+                <TextBlock FontSize="34" FontWeight="Bold" Text="{Binding OnlineFriends.Count, Mode=OneWay}"/>
+                <TextBlock Text="Friends online" FontWeight="SemiBold" FontSize="14" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="Who is playing now" FontSize="12" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
-                <TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              </Border>
-            </Grid>
+            </DockPanel>
           </Button>
-          <Button Margin="0,0,0,10" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Requests">
-            <Grid>
-              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <StackPanel>
-                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding RequestCount, Mode=OneWay}"/>
-                <TextBlock Text="Friend requests" FontWeight="SemiBold" Margin="0,2,0,0"/>
-                <TextBlock Text="Accept or decline" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+          <Button Style="{StaticResource HomeStat}" Margin="6,0,0,6" Command="{Binding OpenHomeCardCommand}" CommandParameter="Requests">
+            <DockPanel>
+              <Grid DockPanel.Dock="Top">
+                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource AccentSoft}" HorizontalAlignment="Left">
+                  <TextBlock Text="&#xE8FA;" FontFamily="{StaticResource Icons}" FontSize="17" Foreground="{DynamicResource Accent}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="&#xE76C;" FontFamily="{StaticResource Icons}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Top"
+                           Margin="0,4,0,0" Style="{StaticResource MutedText}"/>
+              </Grid>
+              <StackPanel VerticalAlignment="Bottom">
+                <TextBlock FontSize="34" FontWeight="Bold" Text="{Binding RequestCount, Mode=OneWay}"/>
+                <TextBlock Text="Friend requests" FontWeight="SemiBold" FontSize="14" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="Accept or decline" FontSize="12" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
-                <TextBlock Text="&#xE8FA;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              </Border>
-            </Grid>
+            </DockPanel>
           </Button>
-          <Button Margin="0,0,10,0" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Trades">
-            <Grid>
-              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <StackPanel>
-                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding InboundCount, Mode=OneWay}"/>
-                <TextBlock Text="Trades waiting" FontWeight="SemiBold" Margin="0,2,0,0"/>
-                <TextBlock Text="Sent to this account" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+          <Button Style="{StaticResource HomeStat}" Margin="0,6,6,0" Command="{Binding OpenHomeCardCommand}" CommandParameter="Trades">
+            <DockPanel>
+              <Grid DockPanel.Dock="Top">
+                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource AccentSoft}" HorizontalAlignment="Left">
+                  <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource Icons}" FontSize="17" Foreground="{DynamicResource Accent}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="&#xE76C;" FontFamily="{StaticResource Icons}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Top"
+                           Margin="0,4,0,0" Style="{StaticResource MutedText}"/>
+              </Grid>
+              <StackPanel VerticalAlignment="Bottom">
+                <TextBlock FontSize="34" FontWeight="Bold" Text="{Binding InboundCount, Mode=OneWay}"/>
+                <TextBlock Text="Trades waiting" FontWeight="SemiBold" FontSize="14" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="Sent to this account" FontSize="12" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
-                <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              </Border>
-            </Grid>
+            </DockPanel>
           </Button>
-          <Button Margin="0" HorizontalContentAlignment="Stretch" Padding="18,16" Command="{Binding OpenHomeCardCommand}" CommandParameter="Multi">
-            <Grid>
-              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <StackPanel>
-                <TextBlock FontSize="26" FontWeight="Bold" Text="{Binding RunningCount, Mode=OneWay}"/>
-                <TextBlock Text="Clients running" FontWeight="SemiBold" Margin="0,2,0,0"/>
-                <TextBlock Text="Multi-launch" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+          <Button Style="{StaticResource HomeStat}" Margin="6,6,0,0" Command="{Binding OpenHomeCardCommand}" CommandParameter="Multi">
+            <DockPanel>
+              <Grid DockPanel.Dock="Top">
+                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource AccentSoft}" HorizontalAlignment="Left">
+                  <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource Icons}" FontSize="17" Foreground="{DynamicResource Accent}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="&#xE76C;" FontFamily="{StaticResource Icons}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Top"
+                           Margin="0,4,0,0" Style="{StaticResource MutedText}"/>
+              </Grid>
+              <StackPanel VerticalAlignment="Bottom">
+                <TextBlock FontSize="34" FontWeight="Bold" Text="{Binding RunningCount, Mode=OneWay}"/>
+                <TextBlock Text="Clients running" FontWeight="SemiBold" FontSize="14" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="Multi-launch" FontSize="12" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <Border Grid.Column="1" Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top">
-                <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              </Border>
-            </Grid>
+            </DockPanel>
           </Button>
         </UniformGrid>
       </Grid>

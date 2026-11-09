@@ -9,7 +9,12 @@ namespace RoDeck.Views;
 /// <summary>Home: who you are, friends online, Continue and Recommended games, shortcuts.</summary>
 public partial class StartPage : UserControl
 {
-    public StartPage() { InitializeComponent(); }
+    public StartPage()
+    {
+        InitializeComponent();
+        // the banner row: a bit taller on a wide window, never as tall as the picture would make it
+        SizeChanged += (_, e) => HeroRow.Height = Math.Round(Math.Clamp(e.NewSize.Width * 0.22, 320, 440));
+    }
 
     private MainViewModel VM => (MainViewModel)DataContext;
 
