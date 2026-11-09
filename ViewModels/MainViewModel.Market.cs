@@ -222,8 +222,41 @@ public partial class MainViewModel
                 : await Thumbnails.GetAsync("Asset", new[] { full.Id }, "420x420", ct);
             if (big.TryGetValue(full.Id, out var url) && OpenMarketItem == full) MarketItemPicture = url;
             if (full.IsLimited && full.CollectibleItemId.Length > 0) _ = LoadSellersAsync(full, null);
+            _ = LoadRelatedAsync(full);
             return true;
         }, "Loading item…");
+    }
+
+    // ---- under an item: similar items and more from its creator (two searches, cached like any search)
+
+    public ObservableCollection<MarketItem> SimilarItems { get; } = new();
+    public ObservableCollection<MarketItem> CreatorItems { get; } = new();
+    [ObservableProperty] private string creatorItemsTitle = "";
+
+    private async Task LoadRelatedAsync(MarketItem item)
+    {
+        SimilarItems.Clear();
+        CreatorItems.Clear();
+        CreatorItemsTitle = item.CreatorName.Length > 0 ? $"More from {item.CreatorName}" : "";
+        // a few words of the name find look-alikes ("Beautiful Hair for Beautiful People" → "Beautiful Hair")
+        var words = item.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 2 && w.All(char.IsLetterOrDigit)).Take(2).ToList();
+        const string all = "tZsUsd2BqGViQrJ9Vs3Wah";
+        async Task Fill(ObservableCollection<MarketItem> into, RobloxMarket.SearchQuery q)
+        {
+            try
+            {
+                var (found, _) = await RobloxMarket.SearchAsync(q, null, CurrentAccount?.Cookie, CancellationToken.None);
+                if (_lastMarketItem != item) return;
+                var list = found.Where(i => !(i.Id == item.Id && i.ItemType == item.ItemType)).Take(18).ToList();
+                foreach (var i in list) into.Add(i);
+                await RobloxMarket.FillThumbsAsync(list, "150x150", CancellationToken.None);
+            }
+            catch (RobloxException) { }
+            catch (System.Text.Json.JsonException) { }
+        }
+        await Task.WhenAll(
+            words.Count > 0 ? Fill(SimilarItems, new(all, string.Join(' ', words), 0, 0, null, null, false)) : Task.CompletedTask,
+            item.CreatorName.Length > 0 ? Fill(CreatorItems, new(all, "", 2, 5, null, null, false, item.CreatorName)) : Task.CompletedTask);
     }
 
     // ---- resellers (limiteds)

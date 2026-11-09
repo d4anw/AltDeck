@@ -169,7 +169,7 @@
     </ScrollViewer>
 
     <!-- ================= one item ================= -->
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+    <ScrollViewer x:Name="ItemScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding IsMarketPlainItemOpen, Converter={StaticResource BoolVis}}">
       <StackPanel Margin="32,22,32,32">
         <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseMarketItemCommand}" Margin="-8,0,0,10">
@@ -374,6 +374,37 @@
             </StackPanel>
           </Grid>
         </ctl:StateView>
+
+        <!-- look-alikes -->
+        <StackPanel Visibility="{Binding SimilarItems.Count, Converter={StaticResource CountVis}}">
+          <Grid Margin="2,30,0,10">
+            <TextBlock Text="Similar items" FontSize="20" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=SimilarRow}"/>
+              <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=SimilarRow}"/>
+            </StackPanel>
+          </Grid>
+          <ScrollViewer x:Name="SimilarRow" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Margin="0,-6,0,0" PreviewMouseWheel="Row_Wheel">
+            <ItemsControl ItemsSource="{Binding SimilarItems}" ItemTemplate="{StaticResource MarketTile}" Margin="0,6,0,0">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+        <!-- more from the creator -->
+        <StackPanel Visibility="{Binding CreatorItems.Count, Converter={StaticResource CountVis}}">
+          <Grid Margin="2,30,0,10">
+            <TextBlock Text="{Binding CreatorItemsTitle}" FontSize="20" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Style="{StaticResource IconBtn}" Content="&#xE76B;" Width="30" Height="30" Click="ScrollLeft_Click" Tag="{Binding ElementName=CreatorRow}"/>
+              <Button Style="{StaticResource IconBtn}" Content="&#xE76C;" Width="30" Height="30" Margin="0" Click="ScrollRight_Click" Tag="{Binding ElementName=CreatorRow}"/>
+            </StackPanel>
+          </Grid>
+          <ScrollViewer x:Name="CreatorRow" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Margin="0,-6,0,0" PreviewMouseWheel="Row_Wheel">
+            <ItemsControl ItemsSource="{Binding CreatorItems}" ItemTemplate="{StaticResource MarketTile}" Margin="0,6,0,0">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
       </StackPanel>
     </ScrollViewer>
 

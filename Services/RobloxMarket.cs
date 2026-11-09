@@ -56,7 +56,8 @@ public static class RobloxMarket
 
     // ------------------------------------------------------------------ search
 
-    public sealed record SearchQuery(string Taxonomy, string Keyword, int Sort, int Aggregation, long? MinPrice, long? MaxPrice, bool LimitedsOnly);
+    public sealed record SearchQuery(string Taxonomy, string Keyword, int Sort, int Aggregation, long? MinPrice, long? MaxPrice, bool LimitedsOnly,
+                                     string Creator = "");
 
     static readonly ConcurrentDictionary<string, (DateTime At, List<MarketItem> Items, string? Next)> Pages = new();
 
@@ -67,6 +68,7 @@ public static class RobloxMarket
                 + $"&sortType={q.Sort}"
                 + (q.Sort is 1 or 2 ? $"&sortAggregation={q.Aggregation}" : "")
                 + (q.Keyword.Length > 0 ? "&keyword=" + Uri.EscapeDataString(q.Keyword) : "")
+                + (q.Creator.Length > 0 ? "&creatorName=" + Uri.EscapeDataString(q.Creator) : "")
                 + (q.MinPrice is long min ? $"&minPrice={min}" : "")
                 + (q.MaxPrice is long max ? $"&maxPrice={max}" : "")
                 + (q.MaxPrice == 0 ? "&includeNotForSale=false" : "")
