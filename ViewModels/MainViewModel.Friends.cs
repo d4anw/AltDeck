@@ -37,9 +37,16 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
+    private void ShowAllFriends()
+    {
+        _friendsShown = int.MaxValue;
+        ShowFriendsPage();
+    }
+
+    [RelayCommand]
     private void ShowMoreFriends()
     {
-        _friendsShown += FriendsPageSize;
+        _friendsShown = (int)Math.Min(int.MaxValue, (long)_friendsShown + FriendsPageSize);
         ShowFriendsPage();
     }
 

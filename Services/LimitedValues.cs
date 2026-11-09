@@ -104,6 +104,17 @@ public static class LimitedValues
         return result;
     }
 
+    /// <summary>
+    /// One limited's cheapest copy for sale right now (0 = nobody sells), from the economy service: quick, and not the
+    /// catalog's busy batch that the Limiteds table and the deals scan share.
+    /// </summary>
+    public static async Task<long> GetBestPriceAsync(long assetId, CancellationToken ct)
+    {
+        using var doc = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct);
+        return doc.RootElement.TryGetProperty("CollectiblesItemDetails", out var c) && c.ValueKind == JsonValueKind.Object
+               && c.TryGetProperty("CollectibleLowestResalePrice", out var p) && p.ValueKind == JsonValueKind.Number ? p.GetInt64() : 0;
+    }
+
     /// <summary>Best price (0 = nobody sells), copies that exist, and favorites, from Roblox's batch item details.</summary>
     public readonly record struct CatalogStats(long BestPrice, long Copies, long Favorites);
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, CatalogStats Stats)> Stats = new();

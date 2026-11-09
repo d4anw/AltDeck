@@ -451,6 +451,8 @@ public partial class MainViewModel
         "Calculator" => "Back to the calculator",
         "Trades" => "Back to the trade",
         "Inventory" => "Back to inventory value",
+        "Deals" => "Back to deals",
+        "Watchlist" => "Back to the watchlist",
         _ => "Back to limiteds"
     };
 

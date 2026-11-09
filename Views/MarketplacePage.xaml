@@ -183,7 +183,7 @@
                        RetryCommand="{Binding RetryOpenMarketCommand}">
           <Grid>
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" MaxWidth="460"/>
+              <ColumnDefinition Width="340"/>
               <ColumnDefinition Width="28"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -218,7 +218,7 @@
             </StackPanel>
 
             <!-- info and actions -->
-            <StackPanel Grid.Column="2" MaxWidth="460" HorizontalAlignment="Left">
+            <StackPanel Grid.Column="2">
               <TextBlock Text="{Binding OpenMarketItem.Name}" FontSize="26" FontWeight="Bold" TextWrapping="Wrap"/>
               <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                 <TextBlock Style="{StaticResource MutedText}"><Run Text="by"/> <Run Text="{Binding OpenMarketItem.CreatorName, Mode=OneWay}"
@@ -229,7 +229,41 @@
               </StackPanel>
               <TextBlock Text="{Binding MarketItemMeta}" Margin="0,4,0,0" FontSize="12" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
 
-              <Grid Margin="0,20,0,14">
+              <!-- the numbers as cards, like a limited's page: they use the width next to the picture -->
+              <UniformGrid Columns="3" Margin="0,18,-12,0">
+                <Border Style="{StaticResource CardBox}" Padding="16,12" Margin="0,0,12,12" BorderThickness="0,2,0,0" BorderBrush="{DynamicResource Accent}">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE7BF;" FontFamily="{StaticResource Icons}" FontSize="20" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Type" FontSize="12" Foreground="{DynamicResource Accent}"/>
+                      <TextBlock Text="{Binding OpenMarketItem.KindText}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource CardBox}" Padding="16,12" Margin="0,0,12,12" BorderThickness="0,2,0,0" BorderBrush="{DynamicResource Accent}">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE734;" FontFamily="{StaticResource Icons}" FontSize="20" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Favourites" FontSize="12" Foreground="{DynamicResource Accent}"/>
+                      <TextBlock Text="{Binding OpenMarketItem.Favorites, StringFormat={}{0:N0}}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource CardBox}" Padding="16,12" Margin="0,0,12,12" BorderThickness="0,2,0,0" BorderBrush="{DynamicResource Accent}">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE77B;" FontFamily="{StaticResource Icons}" FontSize="20" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="Creator" FontSize="12" Foreground="{DynamicResource Accent}"/>
+                      <TextBlock Text="{Binding OpenMarketItem.CreatorName}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </UniformGrid>
+
+              <Grid Margin="0,8,0,14" MaxWidth="560" HorizontalAlignment="Left" MinWidth="420">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                   <TextBlock Text="{Binding OpenMarketItem.PriceText}" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
                   <TextBlock Text="{Binding OpenMarketItem.PriceNote}" Style="{StaticResource MutedText}" Margin="10,0,0,0" VerticalAlignment="Center"/>
@@ -245,6 +279,7 @@
                 </Border>
               </Grid>
 
+              <StackPanel MaxWidth="560" HorizontalAlignment="Left" MinWidth="420">
               <Button Style="{StaticResource Primary}" HorizontalAlignment="Stretch" Padding="16,13" Margin="0,0,0,8"
                       Command="{Binding GetOrBuyCommand}" IsEnabled="{Binding CanGetOrBuy}">
                 <TextBlock FontWeight="SemiBold" Text="{Binding BuyButtonText}"/>
@@ -273,6 +308,7 @@
               </UniformGrid>
 
               <TextBlock Margin="2,12,0,0" FontSize="12" Style="{StaticResource MutedText}" TextWrapping="Wrap" Text="{Binding MarketAsText}"/>
+              </StackPanel>
 
               <!-- limiteds: everyone reselling a copy, cheapest first -->
               <StackPanel Margin="0,22,0,0" Visibility="{Binding ShowSellers, Converter={StaticResource BoolVis}}">

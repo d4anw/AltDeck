@@ -31,7 +31,7 @@ public partial class MainViewModel
     private async Task BuildGameRowsAsync()
     {
         var rows = GameCharts.Select(s => new GameRow { Id = s.Id, Name = s.Name, Games = s.Games.Take(RowPreview).ToList() }).ToList();
-        var fav = Settings.FavouriteGames.Select(s => s.Tile).Take(RowPreview).ToList();
+        var fav = (await FavouriteTilesAsync()).Take(RowPreview).ToList();
         var recent = Settings.RecentGames.Select(s => s.Tile).Take(RowPreview).ToList();
         if (fav.Count > 0) rows.Insert(0, new GameRow { Id = "favourites", Name = "My favourites", Icon = "", Games = fav });
         if (recent.Count > 0) rows.Insert(fav.Count > 0 ? 1 : 0, new GameRow { Id = "recent", Name = "Recently played", Icon = "", Games = recent });
@@ -128,11 +128,15 @@ public partial class MainViewModel
     private void ShowSaved(string which)
     {
         GamesView = which;
-        var list = which == "favourites" ? Settings.FavouriteGames : Settings.RecentGames;
         GamesTitle = which == "favourites" ? "My favourites" : "Recently played";
-        GamesInfo = which == "favourites"
-            ? (list.Count == 0 ? "Star a game on its page to keep it here." : "Games you starred. Saved on this PC.")
-            : (list.Count == 0 ? "Games you launch from RoDeck show up here." : "The games you launched from RoDeck, newest first.");
+        if (which == "favourites")
+        {
+            GamesInfo = "Games you starred, here or on Roblox. A star here favourites it on Roblox too.";
+            _ = ShowFavouritesAsync();
+            return;
+        }
+        var list = Settings.RecentGames;
+        GamesInfo = list.Count == 0 ? "Games you launch from RoDeck show up here." : "The games you launched from RoDeck, newest first.";
         _ = ShowTilesAsync(list.Select(s => s.Tile).ToList(), fillDetails: true);
     }
 
@@ -224,6 +228,12 @@ public partial class MainViewModel
             OpenGame = d;
             SelectedMedia = d.Media.FirstOrDefault() ?? "";
             OpenGameIsFavourite = Settings.FavouriteGames.Any(f => f.UniverseId == d.UniverseId);
+            if (!OpenGameIsFavourite && CurrentAccount is { } fa && !string.IsNullOrEmpty(fa.Cookie))
+                _ = Task.Run(async () =>
+                {
+                    try { return await RobloxHome.IsFavoriteAsync(fa.Cookie, d.UniverseId, CancellationToken.None); }
+                    catch { return false; }
+                }).ContinueWith(t => { if (t.Result && OpenGame == d) OpenGameIsFavourite = true; }, TaskScheduler.FromCurrentSynchronizationContext());
             OnPropertyChanged(nameof(OpenGameStats));
             OnPropertyChanged(nameof(OpenGameStatCards));
             OnPropertyChanged(nameof(OpenGameMeta));
@@ -247,17 +257,57 @@ public partial class MainViewModel
     private void ShowMedia(string? url) { if (!string.IsNullOrEmpty(url)) SelectedMedia = url; }
 
     [RelayCommand]
-    private void ToggleFavouriteGame()
+    private async Task ToggleFavouriteGame()
     {
         if (OpenGame is not { } g) return;
+        bool fav = !OpenGameIsFavourite;
         var existing = Settings.FavouriteGames.FirstOrDefault(f => f.UniverseId == g.UniverseId);
-        if (existing != null) Settings.FavouriteGames.Remove(existing);
-        else Settings.FavouriteGames.Insert(0, new SavedGame { UniverseId = g.UniverseId, PlaceId = g.PlaceId, Name = g.Name });
-        OpenGameIsFavourite = existing == null;
-        StatusMessage = existing == null ? $"Added {g.Name} to your favourites." : $"Removed {g.Name} from your favourites.";
+        if (!fav && existing != null) Settings.FavouriteGames.Remove(existing);
+        if (fav && existing == null) Settings.FavouriteGames.Insert(0, new SavedGame { UniverseId = g.UniverseId, PlaceId = g.PlaceId, Name = g.Name });
+        OpenGameIsFavourite = fav;
         QueueSettingsSave();
+
+        // the same on Roblox, for the account top right
+        string where = "";
+        if (CurrentAccount is { } a && !string.IsNullOrEmpty(a.Cookie))
+        {
+            try
+            {
+                await RobloxHome.SetFavoriteAsync(a.Cookie, g.UniverseId, fav, CancellationToken.None);
+                _robloxFavs = null;   // read again next time
+                where = " and on Roblox";
+            }
+            catch (RobloxException ex) { where = $" (Roblox didn't take it: {(ex.TooMany ? "busy, try again later" : ex.Message)})"; }
+        }
+        StatusMessage = fav ? $"Added {g.Name} to your favourites{where}." : $"Removed {g.Name} from your favourites{where}.";
         if (GamesView == "favourites") ShowSaved("favourites");
         else if (GamesOverview) _ = BuildGameRowsAsync();
+        _homeLoadedAt = DateTime.MinValue;   // Home's Favorites row too
+    }
+
+    private async Task ShowFavouritesAsync()
+    {
+        var tiles = await FavouriteTilesAsync();
+        if (GamesView == "favourites") await ShowTilesAsync(tiles, fillDetails: true);
+    }
+
+    // ---- favourites: the ones starred here plus the account's favourites on Roblox
+    private (Account Account, DateTime At, List<long> Ids)? _robloxFavs;
+
+    private async Task<List<GameTile>> FavouriteTilesAsync()
+    {
+        var list = Settings.FavouriteGames.Select(s => s.Tile).ToList();
+        if (CurrentAccount is { UserId: > 0 } a)
+        {
+            if (_robloxFavs is not { } c || c.Account != a || DateTime.Now - c.At > TimeSpan.FromMinutes(2))
+            {
+                try { _robloxFavs = (a, DateTime.Now, (await RobloxHome.GetFavoriteGamesAsync(a.UserId, CancellationToken.None)).Select(t => t.UniverseId).ToList()); }
+                catch (RobloxException) { }
+                catch (System.Text.Json.JsonException) { }
+            }
+            if (_robloxFavs is { } f && f.Account == a) list.AddRange(f.Ids.Select(id => new GameTile { UniverseId = id }));
+        }
+        return list.GroupBy(t => t.UniverseId).Select(x => x.First()).ToList();
     }
 
     [RelayCommand]

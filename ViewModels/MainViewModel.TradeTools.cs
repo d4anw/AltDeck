@@ -251,7 +251,13 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
-    private Task WatchOpen(WatchRow? r) => r == null ? Task.CompletedTask : OpenLimitedInMarketAsync(r.AssetId, r.Name, buy: false);
+    private Task WatchOpen(WatchRow? r)
+    {
+        if (r == null) return Task.CompletedTask;
+        var t = LimitedTile.From(r.AssetId, r.Name, r.Rap);
+        t.ThumbUrl = r.ThumbUrl;
+        return OpenLimitedFromInventory(t);   // the item page with its sellers; Back returns to the watchlist
+    }
 
     private void SaveWatchlist()
     {
@@ -298,16 +304,22 @@ public partial class MainViewModel
         {
             try { await LimitedValues.EnsureAsync(CancellationToken.None, maxAge: TimeSpan.FromMinutes(10)); } catch { }
             var rows = WatchRows.ToList();
-            var prices = new Dictionary<long, long>();
-            foreach (var chunk in rows.Select(r => r.AssetId).Distinct().Chunk(100))
-                foreach (var (id, p) in await LimitedValues.GetBestPricesAsync(chunk, null, CancellationToken.None)) prices[id] = p;
-            foreach (var r in rows)
+            using var gate = new SemaphoreSlim(4);
+            await Task.WhenAll(rows.Select(async r =>
             {
-                if (LimitedValues.Get(r.AssetId) is { } v) { r.Rap = v.Rap; r.Value = v.Value; }
-                r.BestPrice = prices.TryGetValue(r.AssetId, out var p) ? p : 0;
-                r.Checked = true;
-                Announce(r);
-            }
+                await gate.WaitAsync();
+                try
+                {
+                    var p = await LimitedValues.GetBestPriceAsync(r.AssetId, CancellationToken.None);
+                    if (LimitedValues.Get(r.AssetId) is { } v) { r.Rap = v.Rap; r.Value = v.Value; }
+                    r.BestPrice = p;
+                    r.Checked = true;
+                    Announce(r);
+                }
+                catch (RobloxException) { }
+                catch (System.Text.Json.JsonException) { }
+                finally { gate.Release(); }
+            }));
         }
         catch (RobloxException) { }
         catch (System.Text.Json.JsonException) { }

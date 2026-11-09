@@ -100,8 +100,10 @@
               </ItemsControl>
               <TextBlock Text="No friends match that." Style="{StaticResource MutedText}" Margin="2,4,0,0"
                          Visibility="{Binding AllFriends.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
-              <Button Content="{Binding MoreFriendsText}" HorizontalAlignment="Left" Margin="0,4,0,0" Command="{Binding ShowMoreFriendsCommand}"
-                      Visibility="{Binding HasMoreFriends, Converter={StaticResource BoolVis}}"/>
+              <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding HasMoreFriends, Converter={StaticResource BoolVis}}">
+                <Button Content="{Binding MoreFriendsText}" ctl:Btn.Icon="&#xE70D;" Command="{Binding ShowMoreFriendsCommand}"/>
+                <Button Content="Show all" ctl:Btn.Icon="&#xE8FD;" Margin="0" Command="{Binding ShowAllFriendsCommand}"/>
+              </StackPanel>
             </StackPanel>
           </ctl:StateView>
         </StackPanel>

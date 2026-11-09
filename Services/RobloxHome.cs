@@ -127,6 +127,19 @@ public static class RobloxHome
         return list;
     }
 
+    /// <summary>Whether the account has this game favourited on Roblox.</summary>
+    public static async Task<bool> IsFavoriteAsync(string cookie, long universeId, CancellationToken ct)
+    {
+        using var doc = await RobloxHttp.GetJsonAsync($"https://games.roblox.com/v1/games/{universeId}/favorites", cookie, ct);
+        return doc.RootElement.TryGetProperty("isFavorited", out var f) && f.ValueKind == JsonValueKind.True;
+    }
+
+    /// <summary>Favourites (or un-favourites) the game on the account's Roblox profile.</summary>
+    public static async Task SetFavoriteAsync(string cookie, long universeId, bool favorite, CancellationToken ct)
+    {
+        using var _ = await RobloxHttp.PostJsonAsync($"https://games.roblox.com/v1/games/{universeId}/favorites", cookie, new { isFavorited = favorite }, ct);
+    }
+
     /// <summary>Fills name / place / players / likes from the public games service where Roblox didn't include them, then icons.</summary>
     public static async Task FillMissingAsync(List<GameTile> tiles, CancellationToken ct)
     {

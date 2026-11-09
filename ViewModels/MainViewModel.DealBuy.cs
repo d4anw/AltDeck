@@ -193,6 +193,7 @@ public partial class MainViewModel
         if (d == null) return Task.CompletedTask;
         var t = LimitedTile.From(d.AssetId, d.Name, d.Rap);
         t.ThumbUrl = d.ThumbUrl;
-        return OpenLimitedTile(t);
+        if (Page != "Trades") Page = "Trades";
+        return OpenLimitedFromInventory(t);   // switches to the item page, Back returns to Deals
     }
 }

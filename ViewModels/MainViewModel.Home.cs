@@ -136,11 +136,7 @@ public partial class MainViewModel
 
     private async Task LoadHomeFavoritesAsync(Account a)
     {
-        var list = Settings.FavouriteGames.Select(s => s.Tile).ToList();
-        try { list.AddRange(await RobloxHome.GetFavoriteGamesAsync(a.UserId, CancellationToken.None)); }
-        catch (RobloxException) { }
-        catch (System.Text.Json.JsonException) { }
-        list = list.GroupBy(t => t.UniverseId).Select(g => g.First()).ToList();
+        var list = await FavouriteTilesAsync();
         try { await RobloxHome.FillMissingAsync(list, CancellationToken.None); }
         catch (RobloxException) { }
         catch (System.Text.Json.JsonException) { }
