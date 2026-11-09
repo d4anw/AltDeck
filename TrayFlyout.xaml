@@ -6,7 +6,7 @@
         ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" ShowActivated="True"
         FontFamily="Segoe UI" FontSize="13" Foreground="{DynamicResource Fg}">
   <!-- the panel that opens from RoDeck's tray icon: a quick look at what RoDeck is doing, and the main switches -->
-  <Border Margin="14" CornerRadius="18" Background="{DynamicResource Page}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1">
+  <Border Margin="14" CornerRadius="18" RenderOptions.BitmapScalingMode="HighQuality" Background="{DynamicResource Page}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1">
     <Border.Effect>
       <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.45" Color="Black"/>
     </Border.Effect>

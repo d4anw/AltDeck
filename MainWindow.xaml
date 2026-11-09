@@ -63,7 +63,8 @@
                         CornerRadius="0" UseAeroCaptionButtons="False"/>
   </shell:WindowChrome.WindowChrome>
 
-  <Grid x:Name="Root">
+  <!-- pictures are shown smaller than they are: scale them smoothly (WPF's default is fast and jagged) -->
+  <Grid x:Name="Root" RenderOptions.BitmapScalingMode="HighQuality">
     <Image x:Name="BgImage" Stretch="UniformToFill" Opacity="0.15" IsHitTestVisible="False"/>
     <Grid>
       <Grid.RowDefinitions>

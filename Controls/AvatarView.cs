@@ -34,6 +34,7 @@ public class AvatarView : Grid
         Children.Add(_bg);
         Children.Add(_txt);
         Children.Add(_img);
+        RenderOptions.SetBitmapScalingMode(_img, BitmapScalingMode.HighQuality);   // smooth when a 150 px picture is shown small
         SizeChanged += (_, _) => _txt.FontSize = Math.Max(10, ActualHeight * 0.38);
     }
 
