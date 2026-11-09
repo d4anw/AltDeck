@@ -222,7 +222,7 @@ public partial class MainViewModel
                 : await Thumbnails.GetAsync("Asset", new[] { full.Id }, "420x420", ct);
             if (big.TryGetValue(full.Id, out var url) && OpenMarketItem == full) MarketItemPicture = url;
             if (full.IsLimited && full.CollectibleItemId.Length > 0) _ = LoadSellersAsync(full, null);
-            _ = LoadRelatedAsync(full);
+            _ = LoadRelatedAsync(item, full);
             return true;
         }, "Loading item…");
     }
@@ -233,7 +233,8 @@ public partial class MainViewModel
     public ObservableCollection<MarketItem> CreatorItems { get; } = new();
     [ObservableProperty] private string creatorItemsTitle = "";
 
-    private async Task LoadRelatedAsync(MarketItem item)
+    /// <param name="opened">What was clicked (<see cref="_lastMarketItem"/>); <paramref name="item"/> is its full details.</param>
+    private async Task LoadRelatedAsync(MarketItem opened, MarketItem item)
     {
         SimilarItems.Clear();
         CreatorItems.Clear();
@@ -246,7 +247,7 @@ public partial class MainViewModel
             try
             {
                 var (found, _) = await RobloxMarket.SearchAsync(q, null, CurrentAccount?.Cookie, CancellationToken.None);
-                if (_lastMarketItem != item) return;
+                if (_lastMarketItem != opened) return;   // another item was opened meanwhile
                 var list = found.Where(i => !(i.Id == item.Id && i.ItemType == item.ItemType)).Take(18).ToList();
                 foreach (var i in list) into.Add(i);
                 await RobloxMarket.FillThumbsAsync(list, "150x150", CancellationToken.None);
