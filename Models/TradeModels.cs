@@ -85,7 +85,9 @@ public partial class LimitedTile : ObservableObject
     /// <summary>One copy: its serial (0 none), its instance ID (what trades send) and whether it's on trade hold.</summary>
     public long Serial { get; init; }
     public string InstanceId { get; init; } = "";
-    public bool IsOnHold { get; init; }
+    [ObservableProperty] private bool isOnHold;
+    /// <summary>Found outside Roblox's limiteds list: on hold or not is worked out after it shows (RobloxTrades.MarkHoldsAsync).</summary>
+    public bool HoldUnknown { get; set; }
     /// <summary>A limited bundle (a dynamic head, for one) rather than a single asset: it has its own pictures and item page.</summary>
     public bool IsBundle { get; init; }
 

@@ -527,6 +527,7 @@ public partial class MainViewModel
                     w.Count = items.Count;
                     w.Rap = items.Sum(i => i.Rap);
                     w.Value = items.Sum(i => i.Worth);
+                    _ = RobloxTrades.MarkHoldsAsync(w.Account.Cookie, w.Account.UserId, items, CancellationToken.None);
                     w.Note = items.Count == 0 ? "No limiteds" : $"{items.Count} limited{(items.Count == 1 ? "" : "s")}";
                 }
                 catch (RobloxException ex) { w.Note = ex.SignedOut ? "Signed out" : ex.TooMany ? "Roblox is busy, refresh in a moment" : ex.Message; }

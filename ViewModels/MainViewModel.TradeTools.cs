@@ -455,23 +455,29 @@ public partial class MainViewModel
         try
         {
             try { await LimitedValues.EnsureAsync(CancellationToken.None); } catch { }
-            int seen = 0;
+            var sofar = new List<LimitedTile>();
             items = await RobloxTrades.GetCollectiblesAsync(a.Cookie, id, CancellationToken.None, arrived =>
             {
                 if (gen != _profileGen) return;
                 foreach (var t in arrived) _profileQueue.Enqueue(t);
-                seen += arrived.Count;
-                TradeProfileLoadingText = $"Loading limiteds… {seen} so far";
+                sofar.AddRange(arrived);
+                // the totals count up as the items come in
+                TradeProfileValue = sofar.Sum(i => i.Worth).ToString("N0");
+                TradeProfileRap = sofar.Sum(i => i.Rap).ToString("N0");
+                TradeProfileCount = sofar.Count.ToString("N0");
+                TradeProfileLoadingText = $"Loading limiteds… {sofar.Count} so far · looking for faces and newer limiteds";
                 _ = FillLimitedThumbsAsync(arrived.ToList());
             });
         }
-        catch (RobloxException ex)
+        catch (Exception ex)
         {
             if (gen != _profileGen) return;
             TradeProfileLoading = false;
-            TradeProfileNote = ex.Status is System.Net.HttpStatusCode.Forbidden || (ex.Status is System.Net.HttpStatusCode.Unauthorized && !ex.SignedOut)
+            TradeProfileNote = ex is RobloxException { Status: System.Net.HttpStatusCode.Forbidden } or RobloxException { Status: System.Net.HttpStatusCode.Unauthorized, SignedOut: false }
                 ? "Their inventory is private, so their limiteds can't be shown."
-                : ex.TooMany ? "Roblox is busy. Open the profile again in a moment." : ex.Message;
+                : ex is RobloxException { TooMany: true } ? "Roblox is busy. Open the profile again in a moment."
+                : ex is RobloxException re ? re.Message
+                : "Roblox didn't answer in time. Open the profile again.";
             return;
         }
         if (gen != _profileGen) return;
@@ -480,6 +486,7 @@ public partial class MainViewModel
         TradeProfileRap = items.Sum(i => i.Rap).ToString("N0");
         TradeProfileCount = items.Count.ToString("N0");
         if (items.Count == 0) TradeProfileNote = "No limiteds.";
+        else _ = RobloxTrades.MarkHoldsAsync(a.Cookie, id, items, CancellationToken.None);   // "On hold" labels follow a moment later
     }
 
     private bool _profilePopSetUp;
