@@ -56,10 +56,6 @@
                      Text="{Binding CurrentAccount.Username, Mode=OneWay, StringFormat='@{0}', FallbackValue='Add an account to get started.'}"/>
         </StackPanel>
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-          <Border Padding="14,8" CornerRadius="12" Background="{DynamicResource AccentSoft}" Margin="0,0,10,0"
-                  Visibility="{Binding CurrentAccount.RobuxText, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">
-            <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
-          </Border>
           <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh Home" Margin="0"
                   Command="{Binding RefreshHomeCommand}"
                   Visibility="{Binding HasCurrentAccount, Converter={StaticResource BoolVis}}"/>
