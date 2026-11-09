@@ -181,11 +181,64 @@ public static class RobloxTrades
             cursor = Str(doc.RootElement, "nextPageCursor");
             if (string.IsNullOrEmpty(cursor)) break;
         }
-        // that list only has single items: limited bundles (dynamic heads) come from the bundles the account owns
-        try { list.AddRange(await GetLimitedBundlesAsync(cookie, userId, ct)); }
+        // That list only has limiteds with a serial number. Newer limiteds without one (Lord of the Buxeration, for one)
+        // and limited bundles (dynamic heads) are found in the rest of the inventory. What they can trade (fetched once,
+        // only when needed) tells which copies are on hold.
+        Task<List<LimitedTile>?>? tradableTask = null;
+        Task<List<LimitedTile>?> Tradable() => tradableTask ??= LoadTradable();
+        async Task<List<LimitedTile>?> LoadTradable()
+        {
+            try { return await GetTradableAsync(cookie, userId, ct); }
+            catch (RobloxException ex) when (!ex.TooMany) { return null; }
+        }
+        try { list.AddRange(await GetNonSerialLimitedsAsync(cookie, userId, list.Select(t => t.AssetId).ToHashSet(), Tradable, ct)); }
+        catch (RobloxException ex) when (!ex.TooMany) { }
+        catch (JsonException) { }
+        try { list.AddRange(await GetLimitedBundlesAsync(cookie, userId, ct, Tradable)); }
         catch (RobloxException ex) when (!ex.TooMany) { }
         catch (JsonException) { }
         return list;
+    }
+
+    const string LimitedAssetTypes = "Hat,HairAccessory,FaceAccessory,NeckAccessory,ShoulderAccessory,FrontAccessory,BackAccessory,WaistAccessory,"
+                                   + "Face,Gear,TShirtAccessory,ShirtAccessory,PantsAccessory,JacketAccessory,SweaterAccessory,ShortsAccessory,"
+                                   + "DressSkirtAccessory,LeftShoeAccessory,RightShoeAccessory";
+
+    /// <summary>
+    /// Limiteds without a serial number, which Roblox's limiteds list leaves out: the inventory's accessories (newest
+    /// first) matched against the values list. One tile per copy.
+    /// </summary>
+    static async Task<List<LimitedTile>> GetNonSerialLimitedsAsync(string cookie, long userId, HashSet<long> known,
+                                                                   Func<Task<List<LimitedTile>?>> tradable, CancellationToken ct)
+    {
+        await LimitedValues.EnsureAsync(ct);
+        var found = new Dictionary<long, (string Name, int Count)>();
+        string? cursor = null;
+        for (int page = 0; page < 10; page++)
+        {
+            var url = $"https://inventory.roblox.com/v2/users/{userId}/inventory?assetTypes={LimitedAssetTypes}&limit=100&sortOrder=Desc"
+                    + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
+            using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                foreach (var x in data.EnumerateArray())
+                {
+                    long id = Long(x, "assetId");
+                    if (id <= 0 || known.Contains(id) || LimitedValues.Get(id) == null) continue;
+                    found[id] = found.TryGetValue(id, out var f) ? (f.Name, f.Count + 1) : (Str(x, "name"), 1);
+                }
+            cursor = Str(doc.RootElement, "nextPageCursor");
+            if (string.IsNullOrEmpty(cursor)) break;
+        }
+        var result = new List<LimitedTile>();
+        if (found.Count == 0) return result;
+        var trade = await tradable();
+        foreach (var (id, (name, count)) in found)
+        {
+            var copies = trade?.Where(t => !t.IsBundle && t.AssetId == id).Take(count).ToList() ?? new();
+            result.AddRange(copies);
+            for (int i = copies.Count; i < count; i++) result.Add(LimitedTile.From(id, name, 0, onHold: trade != null));   // owned but not tradable: on hold
+        }
+        return result;
     }
 
     /// <summary>
@@ -193,7 +246,8 @@ public static class RobloxTrades
     /// catalog; the limited ones are picked out with the batch item details; copies, serials and RAP come from what they
     /// can trade, and a bundle that isn't in there (on hold) gets its RAP from its sales.
     /// </summary>
-    public static async Task<List<LimitedTile>> GetLimitedBundlesAsync(string cookie, long userId, CancellationToken ct)
+    public static async Task<List<LimitedTile>> GetLimitedBundlesAsync(string cookie, long userId, CancellationToken ct,
+                                                                     Func<Task<List<LimitedTile>?>>? tradable = null)
     {
         var owned = new List<long>();
         string? cursor = null;
@@ -228,14 +282,17 @@ public static class RobloxTrades
 
         // copies with serials and RAP, from what they can trade
         var result = new List<LimitedTile>();
-        List<LimitedTile> tradable;
-        bool tradableKnown = true;
-        try { tradable = (await GetTradableAsync(cookie, userId, ct)).Where(t => t.IsBundle).ToList(); }
-        catch (RobloxException ex) when (!ex.TooMany) { tradable = new(); tradableKnown = false; }
+        List<LimitedTile>? all;
+        if (tradable != null) all = await tradable();
+        else
+            try { all = await GetTradableAsync(cookie, userId, ct); }
+            catch (RobloxException ex) when (!ex.TooMany) { all = null; }
+        bool tradableKnown = all != null;
+        var bundleCopies = all?.Where(t => t.IsBundle).ToList() ?? new();
         int lookups = 0;
         foreach (var (id, (name, cid)) in limited)
         {
-            var copies = tradable.Where(t => t.AssetId == id).ToList();
+            var copies = bundleCopies.Where(t => t.AssetId == id).ToList();
             if (copies.Count > 0) { result.AddRange(copies); continue; }
             long rap = 0;
             if (lookups++ < 40)   // keep a huge collection from flooding Roblox
