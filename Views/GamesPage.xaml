@@ -104,7 +104,13 @@
                 </ItemsControl>
               </StackPanel>
 
-              <StackPanel Grid.Column="2">
+              <!-- right: name, stat cards that fill the height of the picture, then play -->
+              <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="*"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <StackPanel Orientation="Horizontal">
                   <ctl:RemoteImage Url="{Binding OpenGame.IconUrl}" Width="84" Height="84" CornerRadius="18"/>
                   <StackPanel Margin="16,0,0,0" VerticalAlignment="Center" MaxWidth="320">
@@ -112,8 +118,40 @@
                     <TextBlock Text="{Binding OpenGameMeta}" Margin="0,4,0,0" FontSize="12" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
                   </StackPanel>
                 </StackPanel>
-                <TextBlock Text="{Binding OpenGameStats}" Margin="0,16,0,18" TextWrapping="Wrap" LineHeight="22"/>
 
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding OpenGameStatCards}" Margin="-5,14,-5,10" MinHeight="230">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2" Rows="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Margin="5" CornerRadius="14" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1" Padding="16,12">
+                        <Grid VerticalAlignment="Center">
+                          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                          <Border Width="38" Height="38" CornerRadius="11" Background="{DynamicResource AccentSoft}" VerticalAlignment="Top" Margin="0,2,12,0">
+                            <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Icons}" FontSize="15" Foreground="{DynamicResource Accent}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                          </Border>
+                          <StackPanel Grid.Column="1">
+                            <StackPanel Orientation="Horizontal">
+                              <TextBlock Text="{Binding Value}" FontSize="22" FontWeight="Bold"/>
+                              <Ellipse Width="8" Height="8" Fill="{DynamicResource Green}" Margin="8,2,0,0" VerticalAlignment="Center"
+                                       Visibility="{Binding Live, Converter={StaticResource BoolVis}}" ToolTip="Live"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Label}" FontWeight="SemiBold" FontSize="12" Margin="0,1,0,0"/>
+                            <TextBlock Text="{Binding Sub}" FontSize="11" Style="{StaticResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                            <!-- likes: green for up, red for down -->
+                            <Grid Height="4" Margin="0,7,0,0" Visibility="{Binding HasBar, Converter={StaticResource BoolVis}}">
+                              <Grid.ColumnDefinitions><ColumnDefinition Width="{Binding UpWidth}"/><ColumnDefinition Width="{Binding DownWidth}"/></Grid.ColumnDefinitions>
+                              <Border CornerRadius="2,0,0,2" Background="{DynamicResource Green}"/>
+                              <Border Grid.Column="1" CornerRadius="0,2,2,0" Background="{DynamicResource Red}" Opacity="0.8"/>
+                            </Grid>
+                          </StackPanel>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Grid.Row="2">
                 <Button Style="{StaticResource Primary}" HorizontalAlignment="Stretch" Margin="0,0,0,8" Padding="16,13"
                         Command="{Binding PlayOpenGameCommand}">
                   <StackPanel Orientation="Horizontal">
@@ -144,7 +182,8 @@
                   </Button>
                   <Button Content="Roblox.com" Margin="0" Command="{Binding OpenGameOnWebCommand}"/>
                 </UniformGrid>
-              </StackPanel>
+                </StackPanel>
+              </Grid>
             </Grid>
 
             <!-- description -->

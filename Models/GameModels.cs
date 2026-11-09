@@ -47,3 +47,12 @@ public partial class ChartChip : ObservableObject
     public string Icon { get; init; } = "";
     [ObservableProperty] private bool isSelected;
 }
+
+/// <summary>One stat card on a game's page. <paramref name="Ratio"/> (0–1) draws a like bar; -1 none.</summary>
+public sealed record GameStat(string Glyph, string Value, string Label, string Sub, double Ratio = -1, bool Live = false)
+{
+    public bool HasBar => Ratio >= 0;
+    /// <summary>The bar's green part in a 100-wide box.</summary>
+    public System.Windows.GridLength UpWidth => new(Math.Max(0, Ratio), System.Windows.GridUnitType.Star);
+    public System.Windows.GridLength DownWidth => new(Math.Max(0, 1 - Ratio), System.Windows.GridUnitType.Star);
+}

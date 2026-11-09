@@ -145,6 +145,21 @@ public partial class MainViewModel
         + (g.UpVotes + g.DownVotes > 0 ? $"  ·  {Math.Round(g.UpVotes * 100.0 / (g.UpVotes + g.DownVotes))}% likes" : "")
         + (g.MaxPlayers > 0 ? $"  ·  {g.MaxPlayers} per server" : "");
 
+    /// <summary>The game page's stat cards: playing, visits, favourites, likes (with a bar), server size, age.</summary>
+    public IReadOnlyList<GameStat> OpenGameStatCards => OpenGame is not { } g ? Array.Empty<GameStat>() : new[]
+    {
+        new GameStat("\uE716", Count(g.Playing), "Playing now", "Live player count", Live: true),
+        new GameStat("\uE7FC", Count(g.Visits), "Visits", "All time"),
+        new GameStat("\uE734", Count(g.Favorites), "Favourites", "Players who starred it"),
+        g.UpVotes + g.DownVotes > 0
+            ? new GameStat("\uE8E1", $"{Math.Round(g.UpVotes * 100.0 / (g.UpVotes + g.DownVotes))}%", "Likes",
+                           $"{Count(g.UpVotes)} up · {Count(g.DownVotes)} down", Ratio: (double)g.UpVotes / (g.UpVotes + g.DownVotes))
+            : new GameStat("\uE8E1", "–", "Likes", "No votes yet"),
+        new GameStat("\uE77B", g.MaxPlayers > 0 ? g.MaxPlayers.ToString() : "–", "Per server", "Max players"),
+        new GameStat("\uE787", g.Created is DateTime c ? c.ToString("MMM yyyy") : "–", "Created",
+                     g.Updated is DateTime u ? "Updated " + u.ToString("d MMM yyyy") : "")
+    };
+
     public string OpenGameMeta => OpenGame is not { } g ? "" :
         string.Join("  ·  ", new[]
         {
@@ -173,6 +188,7 @@ public partial class MainViewModel
             SelectedMedia = d.Media.FirstOrDefault() ?? "";
             OpenGameIsFavourite = Settings.FavouriteGames.Any(f => f.UniverseId == d.UniverseId);
             OnPropertyChanged(nameof(OpenGameStats));
+            OnPropertyChanged(nameof(OpenGameStatCards));
             OnPropertyChanged(nameof(OpenGameMeta));
             return true;
         }, "Opening game…");
