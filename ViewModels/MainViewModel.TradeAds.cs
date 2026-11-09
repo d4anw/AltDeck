@@ -102,7 +102,7 @@ public partial class MainViewModel
     {
         if (AdPickerSlot is not { } slot) return;
         var q = (AdPickerSearch ?? "").Trim();
-        long? min = long.TryParse(AdPickerMin, out var mn) ? mn : null, max = long.TryParse(AdPickerMax, out var mx) ? mx : null;
+        long? min = Limited.ParseAmount(AdPickerMin), max = Limited.ParseAmount(AdPickerMax);
         IEnumerable<LimitedTile> source = slot.IsOffer
             ? _myTradableAll.GroupBy(t => t.AssetId).Select(g => g.First())               // one tile per item you own
             : LimitedValues.All.Select(v => LimitedTile.From(v.AssetId, v.Name, v.Rap));
@@ -173,8 +173,7 @@ public partial class MainViewModel
     [RelayCommand]
     private void SaveRoliCookie()
     {
-        var c = (RoliCookieInput ?? "").Trim();
-        if (c.StartsWith("_RoliVerification=", StringComparison.OrdinalIgnoreCase)) c = c["_RoliVerification=".Length..];
+        var c = RolimonsAds.CleanVerification(RoliCookieInput ?? "");
         if (c.Length < 20) { StatusMessage = "That doesn't look like a Rolimons verification cookie."; return; }
         Settings.RoliVerification = RolimonsAds.Protect(c);
         RoliCookieInput = "";
@@ -224,7 +223,15 @@ public partial class MainViewModel
             UpdateAdStatus();
             return;
         }
-        var a = Accounts.FirstOrDefault(x => x.Id == Settings.TradeAdAccountId) ?? CurrentAccount;
+        // the ad offers that account's items: never post it as another account
+        var a = Settings.TradeAdAccountId.Length > 0 ? Accounts.FirstOrDefault(x => x.Id == Settings.TradeAdAccountId) : CurrentAccount;
+        if (a == null && Settings.TradeAdOn)
+        {
+            Settings.TradeAdOn = false;
+            AdLastResult = "The account this ad was for isn't in RoDeck anymore, so it stopped.";
+            NotifyAd();
+            return;
+        }
         var cookie = RolimonsAds.Unprotect(Settings.RoliVerification);
         if (a == null || cookie.Length == 0 || Settings.TradeAdOffer.Count == 0) { UpdateAdStatus(); return; }
 

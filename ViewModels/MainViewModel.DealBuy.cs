@@ -95,7 +95,8 @@ public partial class MainViewModel
     {
         if (d == null) return;
         if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; return; }
-        if (DealBuyBusy) return;
+        // one at a time: with insta-buy, a second click while the first is still checking must never buy twice
+        if (DealBuyBusy || DealBuyLoading) return;
 
         DealBuyDeal = d;
         DealBuyFromDeals = true;
@@ -164,7 +165,9 @@ public partial class MainViewModel
                 var msg = $"{a.Label} bought {item.Name} from {seller.Name} for R$ {seller.Price:N0}.";
                 StatusMessage = msg;
                 Log(ActivityLog.Purchase, msg + (DealInstaBuy ? " (insta-buy)" : ""));
+                // that copy is gone: off the list (also from the full list, or the next refresh would bring it back)
                 if (Deals.FirstOrDefault(x => x.AssetId == item.Id) is { } gone) Deals.Remove(gone);
+                _allDeals.Remove(item.Id);
                 LimitedSellers.Remove(seller);
                 NotifyLimitedSellers();
                 _avatarLoadedAt = DateTime.MinValue;

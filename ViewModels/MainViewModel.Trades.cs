@@ -39,7 +39,8 @@ public partial class MainViewModel
             : $"Values from Rolimons, updated {Ago(LimitedValues.LoadedAt)}.";
         switch (TradesTab)
         {
-            case "Limiteds": if (_limitedRowsAll.Count == 0) BuildLimiteds(); else _ = LoadLimitedStatsAsync(); break;
+            // built again when Rolimons' values were refreshed since, so RAP and values in the table are current
+            case "Limiteds": if (_limitedRowsAll.Count == 0 || _limitedRowsFrom != LimitedValues.LoadedAt) BuildLimiteds(); else _ = LoadLimitedStatsAsync(); break;
             case "Inventory": if (AccountWorths.Count == 0) _ = LoadWorthsAsync(); break;
             case "Trades": MaybeLoadTradeList(); break;
             case "Ads": LoadTradeAdTab(); break;
@@ -117,13 +118,23 @@ public partial class MainViewModel
             var ids = LimitedValues.All.Where(v => v.Worth > 0).OrderByDescending(v => v.Worth).Select(v => v.AssetId).ToList();
             _scanTotal = ids.Count;
             _scanDone = 0;
-            foreach (var chunk in ids.Chunk(100))
+            var chunks = ids.Chunk(100).ToList();
+            int retries = 0;
+            for (int ci = 0; ci < chunks.Count; ci++)
             {
+                var chunk = chunks[ci];
                 if (!_dealTimer.IsEnabled) return;   // left the Deals tab: stop, carry on next time
                 Dictionary<long, long> prices;
-                try { prices = await LimitedValues.GetBestPricesAsync(chunk, CurrentAccount?.Cookie, CancellationToken.None); }
-                catch (RobloxException ex) when (ex.TooMany) { await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(ex.WaitSeconds, 5, 60))); continue; }
+                try { prices = await LimitedValues.GetBestPricesAsync(chunk, CurrentAccount?.Cookie, CancellationToken.None); retries = 0; }
+                catch (RobloxException ex) when (ex.TooMany)
+                {
+                    // Roblox wants a pause: wait, then the same batch again (a few times), instead of skipping it
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(ex.WaitSeconds, 5, 60)));
+                    if (++retries <= 3) ci--; else retries = 0;
+                    continue;
+                }
                 catch (RobloxException) { continue; }
+                catch (System.Text.Json.JsonException) { continue; }
                 var now = DateTime.Now;
                 var added = new List<DealTile>();
                 foreach (var (id, price) in prices)
@@ -271,10 +282,15 @@ public partial class MainViewModel
     partial void OnLimitedsMinChanged(string value) => FilterLimiteds();
     partial void OnLimitedsMaxChanged(string value) => FilterLimiteds();
 
+    private DateTime _limitedRowsFrom;
+
     private void BuildLimiteds()
     {
         LimitedsFilterField ??= LimitedFilterFields[0];
+        _limitedRowsFrom = LimitedValues.LoadedAt;
+        var thumbs = _limitedRowsAll.Where(r => r.ThumbUrl.Length > 0).ToDictionary(r => r.AssetId, r => r.ThumbUrl);
         _limitedRowsAll = LimitedValues.All.Select(LimitedRow.From).ToList();
+        foreach (var r in _limitedRowsAll) if (thumbs.TryGetValue(r.AssetId, out var u)) r.ThumbUrl = u;   // keep the pictures
         ApplyLimitedStats();
         FilterLimiteds();
         _ = LoadLimitedStatsAsync();
@@ -323,7 +339,7 @@ public partial class MainViewModel
     private void FilterLimiteds()
     {
         var q = (LimitedsSearch ?? "").Trim();
-        long? min = long.TryParse(LimitedsMin, out var mn) ? mn : null, max = long.TryParse(LimitedsMax, out var mx) ? mx : null;
+        long? min = Limited.ParseAmount(LimitedsMin), max = Limited.ParseAmount(LimitedsMax);
         int field = LimitedsFilterField?.Value ?? 0;
         long FieldOf(LimitedRow r) => field switch { 1 => r.Rap, 2 => r.BestPrice, 3 => r.Copies, 4 => r.Favorites, _ => r.Worth };
 

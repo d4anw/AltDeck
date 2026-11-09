@@ -173,7 +173,8 @@ public partial class MainViewModel
     {
         Requests.Clear();
         foreach (var r in list) Requests.Add(r);
-        RequestCount = list.Count;
+        // Roblox lists 100 at most: with that many, the real number comes from the count instead
+        if (list.Count < 100) RequestCount = list.Count; else _ = RefreshRequestCountAsync();
     }
 
     /// <summary>Keeps the remembered list in step after Accept / Decline.</summary>
@@ -205,7 +206,7 @@ public partial class MainViewModel
             ForgetRequest(a, r.UserId);
             ForgetFriends(a);
             Requests.Remove(r);
-            RequestCount = Requests.Count;
+            RequestCount = Math.Max(0, RequestCount - 1);
             StatusMessage = $"{a.Label} and {r.Label} are friends now.";
             Log(ActivityLog.Info, $"{a.Label} accepted {r.Label}'s friend request.");
             _friendsLoadedAt = DateTime.MinValue;   // the list reloads next time
@@ -222,7 +223,7 @@ public partial class MainViewModel
             await RobloxFriends.DeclineAsync(a.Cookie, r.UserId);
             ForgetRequest(a, r.UserId);
             Requests.Remove(r);
-            RequestCount = Requests.Count;
+            RequestCount = Math.Max(0, RequestCount - 1);
             StatusMessage = $"Declined {r.Label}'s friend request.";
         }
         catch (Exception ex) { StatusMessage = "Couldn't decline: " + ex.Message; }

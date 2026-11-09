@@ -110,7 +110,8 @@ public partial class MainViewModel
         acc.Cookie = cookie;
         acc.Username = user.Name;
         acc.DisplayName = user.DisplayName;
-        acc.AvatarUrl = await RobloxApi.GetAvatarUrlAsync(user.Id);
+        // "" while Roblox is still drawing it: keep the picture there is
+        if (await RobloxApi.GetAvatarUrlAsync(user.Id) is { Length: > 0 } pic) acc.AvatarUrl = pic;
         await CheckAccountAsync(acc);
         return (acc, isNew, null);
     }

@@ -167,8 +167,10 @@ public static class RobloxTrades
     }
 
     /// <summary>All the account's limiteds (one tile per copy), for its inventory value.</summary>
+    /// <param name="extras">Also look for limiteds without a serial and limited bundles (more requests). Off for quick
+    /// estimates, like a trade partner's inventory value in the trade list.</param>
     public static async Task<List<LimitedTile>> GetCollectiblesAsync(string cookie, long userId, CancellationToken ct,
-                                                                    Action<IReadOnlyList<LimitedTile>>? arrived = null)
+                                                                    Action<IReadOnlyList<LimitedTile>>? arrived = null, bool extras = true)
     {
         var list = new List<LimitedTile>();
         string? cursor = null;
@@ -187,6 +189,7 @@ public static class RobloxTrades
             cursor = Str(doc.RootElement, "nextPageCursor");
             if (string.IsNullOrEmpty(cursor)) break;
         }
+        if (!extras) return list;
         // That list only has limiteds with a serial number. Newer limiteds without one (Lord of the Buxeration, for one)
         // and limited bundles (dynamic heads) are found in the rest of the inventory: both searches at the same time.
         // Which of those copies are on hold is worked out afterwards (MarkHoldsAsync), so nobody waits for it.

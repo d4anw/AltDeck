@@ -41,10 +41,14 @@ public static class Updater
 
     static string? ExePath => Environment.ProcessPath;
 
-    /// <summary>True for the published single-file RoDeck.exe. A framework-dependent build has RoDeck.dll next to it.</summary>
+    /// <summary>
+    /// True for the published single-file RoDeck.exe, also when it's still called AltDeck.exe (an install from before the
+    /// rename keeps its file name; the update goes into that same file). A framework-dependent build has RoDeck.dll next to it.
+    /// </summary>
     public static bool CanUpdate =>
         ExePath is { } p
-        && string.Equals(Path.GetFileName(p), AssetName, StringComparison.OrdinalIgnoreCase)
+        && (string.Equals(Path.GetFileName(p), AssetName, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(Path.GetFileName(p), OldAssetName, StringComparison.OrdinalIgnoreCase))
         && !File.Exists(Path.Combine(Path.GetDirectoryName(p)!, "RoDeck.dll"));
 
     /// <summary>The downloaded update waiting to be installed, if any.</summary>

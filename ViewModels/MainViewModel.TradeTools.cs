@@ -78,13 +78,15 @@ public partial class MainViewModel
 
     private async Task LoadCalcInventoryAsync()
     {
-        if (CurrentAccount is not { } a || (_calcInventoryFor == a && _calcInventory.Count > 0)) return;
+        // read again after 5 minutes: a trade or a purchase changes what you have
+        if (CurrentAccount is not { } a || (_calcInventoryFor == a && _calcInventory.Count > 0 && DateTime.Now - _calcInventoryAt < TimeSpan.FromMinutes(5))) return;
         await CalcInventoryLoad.RunAsync(async ct =>
         {
             await LimitedValues.EnsureAsync(ct);
             var items = await RobloxTrades.GetCollectiblesAsync(a.Cookie, a.UserId, ct);
             _calcInventory = items;
             _calcInventoryFor = a;
+            _calcInventoryAt = DateTime.Now;
             FillCalcPicker();
             return items.Count > 0;
         }, "Loading your limiteds…");
@@ -94,7 +96,7 @@ public partial class MainViewModel
     {
         if (CalcPickerSlot == null) return;
         var q = (CalcPickerSearch ?? "").Trim();
-        long? min = long.TryParse(CalcPickerMin, out var mn) ? mn : null, max = long.TryParse(CalcPickerMax, out var mx) ? mx : null;
+        long? min = Limited.ParseAmount(CalcPickerMin), max = Limited.ParseAmount(CalcPickerMax);
         IEnumerable<LimitedTile> source = CalcPickerIsInventory
             ? _calcInventory.GroupBy(t => (t.AssetId, t.IsBundle)).Select(g => g.First())
             : LimitedValues.All.Select(v => LimitedTile.From(v.AssetId, v.Name, v.Rap));
@@ -518,14 +520,16 @@ public partial class MainViewModel
         }
     }
 
+    private DateTime _calcInventoryAt;
+
     private async Task FillProfileNameAsync(long id)
     {
         try
         {
             using var doc = await RobloxHttp.GetJsonAsync($"https://users.roblox.com/v1/users/{id}", null, CancellationToken.None);
             var r = doc.RootElement;
-            string user = r.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
-            string display = r.TryGetProperty("displayName", out var dn) ? dn.GetString() ?? "" : "";
+            string user = r.Text("name");
+            string display = r.Text("displayName");
             if (TradeProfileId != id) return;
             TradeProfileName = display.Length > 0 ? display : user;
             TradeProfileUser = user;

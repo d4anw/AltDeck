@@ -445,6 +445,7 @@ public partial class MainViewModel
             _avatarLoadedAt = DateTime.MinValue;   // the Avatar page reloads next time
             StatusMessage = refused.Count == 0 ? $"{a.Label} is now wearing {item.Name}." : $"Roblox didn't allow {item.Name} with {a.Label}'s look.";
             StopTryOn();
+            if (refused.Count == 0) _ = RefreshHeadshotAsync(a, waitForChange: true);   // the picture top right follows
         }
         catch (RobloxException ex) { StatusMessage = "Couldn't put it on: " + ex.Message; }
     }

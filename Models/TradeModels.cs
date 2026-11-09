@@ -35,6 +35,22 @@ public static class Limited
     /// <summary>475,397 stays "475,397"; 1,234,567 → "1.23M".</summary>
     public static string Short(long r) => r >= 1_000_000 ? $"{r / 1_000_000d:0.##}M" : r.ToString("N0");
 
+    /// <summary>
+    /// A typed amount: "1500", "1,500", "1.500", "R$ 1500", "1.5k", "2m". Null when nothing (sensible) was typed.
+    /// </summary>
+    public static long? ParseAmount(string? text)
+    {
+        var t = (text ?? "").Trim().Replace("R$", "", StringComparison.OrdinalIgnoreCase).Replace(" ", "").ToLowerInvariant();
+        if (t.Length == 0) return null;
+        double mult = 1;
+        if (t.EndsWith("k")) { mult = 1_000; t = t[..^1]; }
+        else if (t.EndsWith("m")) { mult = 1_000_000; t = t[..^1]; }
+        if (mult == 1) t = t.Replace(",", "").Replace(".", "");   // thousands separators either way
+        else t = t.Replace(",", ".");                              // 1,5k = 1.5k
+        return double.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) && v >= 0
+            ? (long)Math.Round(v * mult) : null;
+    }
+
     /// <summary>"+R$ 216 (+2.7%)" / "−255 (−3.2%)" for a difference against a base.</summary>
     public static string Diff(long diff, long of) =>
         $"{(diff >= 0 ? "+" : "−")}{Math.Abs(diff):N0} ({(diff >= 0 ? "+" : "−")}{(of > 0 ? Math.Abs((double)diff / of) : 0):0.#%})";
@@ -283,7 +299,7 @@ public partial class WatchRow : ObservableObject
         get => MaxPrice.ToString();
         set
         {
-            if (long.TryParse((value ?? "").Replace(",", "").Replace(".", "").Trim(), out var p) && p >= 0) { Percent = 0; MaxPrice = p; }
+            if (Limited.ParseAmount(value) is long p) { Percent = 0; MaxPrice = p; }
             OnPropertyChanged();
             OnPropertyChanged(nameof(PercentInput));
         }

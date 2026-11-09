@@ -40,9 +40,9 @@ public class RapTip : ToolTip
             if (_shownFor != t.AssetId) return;
             Content = Build(t, points, points.Count < 2 ? "No sales history." : null);
         }
-        catch (RobloxException ex)
+        catch (Exception ex)   // a tooltip never shows an error window
         {
-            if (_shownFor == t.AssetId) Content = Build(t, null, ex.TooMany ? "Roblox is busy, hover again in a moment." : "Couldn't load the sales history.");
+            if (_shownFor == t.AssetId) Content = Build(t, null, ex is RobloxException { TooMany: true } ? "Roblox is busy, hover again in a moment." : "Couldn't load the sales history.");
             _shownFor = 0;
         }
     }

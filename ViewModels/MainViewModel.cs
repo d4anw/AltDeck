@@ -466,8 +466,22 @@ public partial class MainViewModel : ObservableObject
     }
 
     private int _headshotTick;
+    private DateTime _tickErrorLoggedAt;
 
+    /// <summary>Every 2 seconds. A failure here is logged (at most once a minute) and the next tick carries on,
+    /// instead of an error message every two seconds.</summary>
     private void Tick()
+    {
+        try { TickCore(); }
+        catch (Exception ex)
+        {
+            if (DateTime.Now - _tickErrorLoggedAt < TimeSpan.FromMinutes(1)) return;
+            _tickErrorLoggedAt = DateTime.Now;
+            Log(ActivityLog.Error, "Background update: " + ex.Message);
+        }
+    }
+
+    private void TickCore()
     {
         ClientMon.Tick();
         // the picture top right: checked every 20 seconds, so a change made in Roblox itself shows up soon

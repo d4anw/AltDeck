@@ -17,16 +17,19 @@ public sealed class SettingsStore
 
     public AppSettings Load()
     {
-        try
+        // the file, or (if it's damaged, e.g. the PC lost power while saving) the copy from the save before
+        foreach (var path in new[] { FilePath, FilePath + ".bak" })
         {
-            if (File.Exists(FilePath))
+            try
             {
-                var s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new AppSettings();
+                if (!File.Exists(path)) continue;
+                var s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path));
+                if (s == null) continue;
                 if (!s.TrayDefaultApplied) { s.CloseToTray = true; s.TrayDefaultApplied = true; }   // Close to tray is now the default
                 return s;
             }
+            catch { }
         }
-        catch { }
         return new AppSettings { TrayDefaultApplied = true };
     }
 
@@ -35,7 +38,12 @@ public sealed class SettingsStore
         try
         {
             Directory.CreateDirectory(Dir);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(s, new JsonSerializerOptions { WriteIndented = true }));
+            // written next to it first and then swapped in, so a crash halfway never leaves a broken settings file;
+            // the previous version stays as settings.json.bak
+            var tmp = FilePath + ".tmp";
+            File.WriteAllText(tmp, JsonSerializer.Serialize(s, new JsonSerializerOptions { WriteIndented = true }));
+            if (File.Exists(FilePath)) File.Replace(tmp, FilePath, FilePath + ".bak", ignoreMetadataErrors: true);
+            else File.Move(tmp, FilePath);
         }
         catch { }
     }

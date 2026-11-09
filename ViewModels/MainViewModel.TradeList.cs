@@ -147,7 +147,7 @@ public partial class MainViewModel
                 string text;
                 try
                 {
-                    var items = await RobloxTrades.GetCollectiblesAsync(a.Cookie, id, CancellationToken.None);
+                    var items = await RobloxTrades.GetCollectiblesAsync(a.Cookie, id, CancellationToken.None, extras: false);
                     text = items.Sum(i => i.Worth).ToString("N0");
                 }
                 catch (RobloxException ex) when (ex.TooMany) { return; }
@@ -557,8 +557,8 @@ public partial class MainViewModel
                 Log(ActivityLog.Trade, $"{a.Label} sent a trade to {partner}: {Items(mine)} for {Items(theirs)}.");
                 StatusMessage = $"Trade sent to {partner}.";
                 IsBuildingTrade = false;
-                TradeType = "Outbound";
-                if (_tradesTypeLoaded == "Outbound") _ = LoadTradeListAsync();
+                // show it in Outbound (switching there loads the list; already there: load it again)
+                if (TradeType == "Outbound") _ = LoadTradeListAsync(); else TradeType = "Outbound";
             });
     }
 
