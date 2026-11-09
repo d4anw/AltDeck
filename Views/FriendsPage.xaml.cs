@@ -61,4 +61,26 @@ public partial class FriendsPage : UserControl
     {
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
     }
+
+    // ---- requests: as many columns as fit
+    private System.Windows.Controls.Primitives.UniformGrid? _requestsGrid;
+    private double _requestsWidth;
+
+    private void RequestsGrid_Loaded(object sender, RoutedEventArgs e)
+    {
+        _requestsGrid = sender as System.Windows.Controls.Primitives.UniformGrid;
+        FitRequestColumns();
+    }
+
+    private void Requests_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        _requestsWidth = e.NewSize.Width;
+        FitRequestColumns();
+    }
+
+    private void FitRequestColumns()
+    {
+        if (_requestsGrid == null || _requestsWidth <= 0) return;
+        _requestsGrid.Columns = Math.Clamp((int)(_requestsWidth / 460), 1, 4);
+    }
 }

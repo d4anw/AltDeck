@@ -54,7 +54,7 @@ public class RapTip : ToolTip
         var nums = new TextBlock { FontSize = 12, Margin = new Thickness(0, 2, 0, 8) };
         nums.Inlines.Add(new System.Windows.Documents.Run($"Value {t.Worth:N0}") { Foreground = Brush("Accent") });
         nums.Inlines.Add(new System.Windows.Documents.Run("   "));
-        nums.Inlines.Add(new System.Windows.Documents.Run($"RAP {t.Rap:N0}") { Foreground = Brush("Blue") });
+        nums.Inlines.Add(new System.Windows.Documents.Run($"RAP {t.Rap:N0}") { Foreground = Brush("Fg") });
         root.Children.Add(nums);
 
         if (note != null || all == null || all.Count < 2)
@@ -79,9 +79,9 @@ public class RapTip : ToolTip
         }
         area.Add(new Point(W, H));
         var canvas = new Canvas { Width = W, Height = H, ClipToBounds = true };
-        var accent = (Brush("Blue") as SolidColorBrush)?.Color ?? Colors.DodgerBlue;
+        var accent = (Brush("Accent") as SolidColorBrush)?.Color ?? Colors.DodgerBlue;
         canvas.Children.Add(new Polygon { Points = area, Fill = new SolidColorBrush(Color.FromArgb(40, accent.R, accent.G, accent.B)) });
-        canvas.Children.Add(new Polyline { Points = line, Stroke = Brush("Blue"), StrokeThickness = 1.6, StrokeLineJoin = PenLineJoin.Round });
+        canvas.Children.Add(new Polyline { Points = line, Stroke = Brush("Accent"), StrokeThickness = 1.6, StrokeLineJoin = PenLineJoin.Round });
         root.Children.Add(new Border { Child = canvas, BorderBrush = Brush("Line"), BorderThickness = new Thickness(0, 0, 0, 1) });
 
         var foot = new Grid { Margin = new Thickness(0, 6, 0, 0) };

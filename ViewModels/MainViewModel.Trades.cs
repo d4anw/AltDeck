@@ -239,9 +239,6 @@ public partial class MainViewModel
         DealsStatus = $"Live · new listings checked {(_dealsCheckedAt == default ? "…" : _dealsCheckedAt.ToString("HH:mm:ss"))} · {scan} · {Deals.Count} shown";
     }
 
-    /// <summary>Opens the limited in the Marketplace with its sellers, and the cheapest copy's confirm card.</summary>
-    [RelayCommand]
-    private Task BuyDeal(DealTile? d) => d == null ? Task.CompletedTask : OpenLimitedInMarketAsync(d.AssetId, d.Name, buy: true);
 
     // ================================================================== limiteds catalog (a table, like Rolimons' item list)
 
@@ -404,15 +401,23 @@ public partial class MainViewModel
     [ObservableProperty] private string openLimitedPicture = "";
     [ObservableProperty] private PointCollection rapChart = new();
     [ObservableProperty] private string rapChartRange = "";
+    /// <summary>The days the line is drawn from (oldest first), for the hover on the graph.</summary>
+    public IReadOnlyList<(DateTime Day, long Price)> RapChartData { get; private set; } = Array.Empty<(DateTime, long)>();
 
     [RelayCommand]
     private async Task OpenLimitedTile(LimitedTile? t)
     {
         if (t == null) return;
+        _limitedFromMarket = Page == "Marketplace";
         OpenLimited = t;
         OpenStats = null;
+        LimitedSellers.Clear();
+        LimitedSellersNote = "";
+        LimitedSellersLoading = true;
+        NotifyLimitedSellers();
         RapChart = new PointCollection();
         RapChartRange = "";
+        RapChartData = Array.Empty<(DateTime, long)>();
         OpenLimitedPicture = t.ThumbUrl;
         await LimitedLoad.RunAsync(async ct =>
         {
@@ -421,6 +426,7 @@ public partial class MainViewModel
             if (OpenLimited != t) return true;
             OpenStats = stats;
             DrawRapChart(stats.History);
+            _ = LoadLimitedSellersAsync(t, null);   // the stats brought the marketplace ID
             if ((await pic).TryGetValue(t.AssetId, out var u)) OpenLimitedPicture = u;
             return true;
         }, "Loading sales…");
@@ -430,6 +436,7 @@ public partial class MainViewModel
     [RelayCommand]
     private void CloseLimited()
     {
+        if (Page == "Marketplace") { CloseMarketItem(); return; }
         OpenLimited = null;
         if (_limitedFrom.Length > 0) TradesTab = _limitedFrom;
         _limitedFrom = "";
@@ -438,7 +445,7 @@ public partial class MainViewModel
 
     /// <summary>Which tab the open item page goes back to ("" = the Limiteds list).</summary>
     private string _limitedFrom = "";
-    public string LimitedBackText => _limitedFrom switch
+    public string LimitedBackText => Page == "Marketplace" ? $"Back to {MarketTitle}" : _limitedFrom switch
     {
         "Profile" => $"Back to {TradeProfileName}'s profile",
         "Calculator" => "Back to the calculator",
@@ -464,6 +471,7 @@ public partial class MainViewModel
         var since = DateTime.UtcNow.AddDays(-365);
         var pts = history.Where(p => p.Price > 0 && p.Day >= since).ToList();
         if (pts.Count < 2) pts = history.Where(p => p.Price > 0).TakeLast(60).ToList();
+        RapChartData = pts.Count < 2 ? Array.Empty<(DateTime, long)>() : pts;
         if (pts.Count < 2) { RapChart = new PointCollection(); RapChartRange = ""; return; }
         long lo = pts.Min(p => p.Price), hi = pts.Max(p => p.Price);
         if (hi == lo) hi = lo + 1;
@@ -492,9 +500,10 @@ public partial class MainViewModel
     /// <summary>Shows a limited on the Marketplace page (sellers list). With <paramref name="buy"/>, the cheapest copy's confirm card opens too.</summary>
     private async Task OpenLimitedInMarketAsync(long assetId, string name, bool buy, bool bundle = false)
     {
-        _autoBuyFor = buy ? assetId : 0;
+        _limitedAutoBuy = buy ? assetId : 0;
         if (MarketCats.Count == 0 && MarketLoad.State != LoadState.Loading) _ = LoadMarketAsync();
-        Page = "Marketplace";
+        _marketDirect = true;   // straight to this item, not back to All items
+        try { Page = "Marketplace"; } finally { _marketDirect = false; }
         await OpenMarketItemAsync(new MarketItem { Id = assetId, ItemType = bundle ? "Bundle" : "Asset", Name = name, IsLimited = true });
     }
 

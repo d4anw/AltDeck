@@ -3,10 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctl="clr-namespace:RoDeck.Controls">
   <Grid Margin="32,26,32,28">
+    <!-- the details column only takes room while an account is picked; the list fills the rest -->
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*"/>
-      <ColumnDefinition Width="24"/>
-      <ColumnDefinition Width="340"/>
+      <ColumnDefinition Width="Auto"/>
+      <ColumnDefinition Width="Auto"/>
     </Grid.ColumnDefinitions>
 
     <!-- ===== list side ===== -->
@@ -102,10 +103,10 @@
           <Grid Margin="8,6,8,10">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="32"/>
-              <ColumnDefinition Width="*" MinWidth="170"/>
-              <ColumnDefinition Width="140"/>
-              <ColumnDefinition Width="170"/>
-              <ColumnDefinition Width="130"/>
+              <ColumnDefinition Width="2*" MinWidth="170"/>
+              <ColumnDefinition Width="*" MinWidth="130"/>
+              <ColumnDefinition Width="*" MinWidth="150"/>
+              <ColumnDefinition Width="1.2*" MinWidth="120"/>
               <ColumnDefinition Width="40"/>
               <ColumnDefinition Width="40"/>
             </Grid.ColumnDefinitions>
@@ -123,10 +124,10 @@
                 <Grid Height="{Binding DataContext.RowHeight, RelativeSource={RelativeSource AncestorType=UserControl}}">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="32"/>
-                    <ColumnDefinition Width="*" MinWidth="170"/>
-                    <ColumnDefinition Width="140"/>
-                    <ColumnDefinition Width="170"/>
-                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="2*" MinWidth="170"/>
+                    <ColumnDefinition Width="*" MinWidth="130"/>
+                    <ColumnDefinition Width="*" MinWidth="150"/>
+                    <ColumnDefinition Width="1.2*" MinWidth="120"/>
                     <ColumnDefinition Width="40"/>
                     <ColumnDefinition Width="40"/>
                   </Grid.ColumnDefinitions>
@@ -146,11 +147,11 @@
                                  ToolTip="{Binding Username, Mode=OneWay, StringFormat='@{0}'}"/>
                     </StackPanel>
                   </Grid>
-                  <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                  <DockPanel Grid.Column="2" VerticalAlignment="Center" LastChildFill="True">
                     <Ellipse Width="8" Height="8" Margin="0,0,8,0" Fill="{Binding StatusKind, Converter={StaticResource StatusBrush}}"/>
-                    <TextBlock Text="{Binding StatusText, Mode=OneWay}" TextTrimming="CharacterEllipsis" MaxWidth="110"
+                    <TextBlock Text="{Binding StatusText, Mode=OneWay}" TextTrimming="CharacterEllipsis" Margin="0,0,12,0"
                                ToolTip="{Binding StatusText, Mode=OneWay}"/>
-                  </StackPanel>
+                  </DockPanel>
                   <TextBlock Grid.Column="3" Text="{Binding RobuxText, Mode=OneWay}" VerticalAlignment="Center"
                              TextTrimming="CharacterEllipsis" ToolTip="{Binding RobuxText, Mode=OneWay}" Margin="0,0,20,0"/>
                   <ItemsControl Grid.Column="4" ItemsSource="{Binding GroupList}" VerticalAlignment="Center" ClipToBounds="True">
@@ -197,7 +198,7 @@
     </Grid>
 
     <!-- ===== detail side ===== -->
-    <Grid Grid.Column="2" Visibility="{Binding SelectedAccount, Converter={StaticResource NullCollapsed}}">
+    <Grid Grid.Column="2" Width="340" Margin="24,0,0,0" Visibility="{Binding SelectedAccount, Converter={StaticResource NullCollapsed}}">
       <Border DataContext="{Binding SelectedAccount}" Style="{StaticResource CardBox}" Padding="24" VerticalAlignment="Top">
         <StackPanel>
           <StackPanel Orientation="Horizontal">

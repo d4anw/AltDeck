@@ -255,6 +255,8 @@ public sealed class WatchEntry
 {
     public long AssetId { get; set; }
     public long MaxPrice { get; set; }
+    /// <summary>A deal of this many percent under the value (RAP without one); 0 = the fixed price above.</summary>
+    public int Percent { get; set; }
     public string Name { get; set; } = "";
 }
 
@@ -264,11 +266,53 @@ public partial class WatchRow : ObservableObject
     public long AssetId { get; init; }
     public string Name { get; init; } = "";
     [ObservableProperty] private string thumbUrl = "";
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsHit), nameof(StatusText), nameof(Kind))] private long maxPrice;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsHit), nameof(StatusText), nameof(Kind), nameof(PriceInput), nameof(PercentInput))] private long maxPrice;
+    /// <summary>Set as a percentage under what it's worth (0: a fixed price). The price follows the value / RAP then.</summary>
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(PercentInput))] private int percent;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(IsHit), nameof(BestText), nameof(StatusText), nameof(Kind))] private long bestPrice;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(BestText), nameof(StatusText), nameof(Kind))] private bool @checked;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(RapText))] private long rap;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ValueText))] private long value = -1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(RapText), nameof(PercentInput))] private long rap;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(ValueText), nameof(PercentInput))] private long value = -1;
+
+    /// <summary>What a deal is measured against: the value, or RAP for an item without one.</summary>
+    public long Worth => Value > 0 ? Value : Rap;
+
+    /// <summary>The price box: typing a price sets a fixed price.</summary>
+    public string PriceInput
+    {
+        get => MaxPrice.ToString();
+        set
+        {
+            if (long.TryParse((value ?? "").Replace(",", "").Replace(".", "").Trim(), out var p) && p >= 0) { Percent = 0; MaxPrice = p; }
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(PercentInput));
+        }
+    }
+
+    /// <summary>The % box: typing 25 means "25 % under its value"; the price is worked out (and follows the value).</summary>
+    public string PercentInput
+    {
+        get => Percent > 0 ? Percent.ToString()
+            : Worth > 0 && MaxPrice > 0 ? Math.Round((1 - (double)MaxPrice / Worth) * 100).ToString("0") : "";
+        set
+        {
+            if (int.TryParse((value ?? "").Replace("%", "").Replace("-", "").Trim(), out var p) && p is > 0 and < 100)
+            {
+                Percent = p;
+                Follow();
+            }
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>With a percentage set: the price for it at today's value / RAP.</summary>
+    public void Follow()
+    {
+        if (Percent > 0 && Worth > 0) MaxPrice = Math.Max(1, (long)Math.Floor(Worth * (1 - Percent / 100.0)));
+    }
+
+    partial void OnRapChanged(long value) => Follow();
+    partial void OnValueChanged(long value) => Follow();
     /// <summary>The price a notification was last sent for (0 none), so the same price isn't announced twice.</summary>
     public long NotifiedPrice { get; set; }
 

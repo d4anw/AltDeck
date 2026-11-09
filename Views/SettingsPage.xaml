@@ -346,14 +346,14 @@
             <StackPanel>
               <ctl:SettingRow Title="Export backup"
                               Description="Every account (with its sign-in), favourites, presets and window layouts in one file, locked with a password you choose. Works on another PC or after reinstalling Windows. Keep the file private.">
-                <Button Content="Export…" Margin="0" Command="{Binding ExportBackupCommand}"/>
+                <Button Content="Export…" ctl:Btn.Icon="&#xEDE1;" Margin="0" Command="{Binding ExportBackupCommand}"/>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Import backup"
                               Description="Adds what's in a backup file (.rodeck, or .altdeck from before the rename). Nothing you already have is replaced; a signed-out account gets the backup's sign-in.">
-                <Button Content="Import…" Margin="0" Command="{Binding ImportBackupCommand}"/>
+                <Button Content="Import…" ctl:Btn.Icon="&#xE8B5;" Margin="0" Command="{Binding ImportBackupCommand}"/>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Data folder" Description="Where RoDeck keeps its vault, settings and activity logs.">
-                <Button Content="Open folder" Margin="0" Command="{Binding OpenDataFolderCommand}"/>
+                <Button Content="Open folder" ctl:Btn.Icon="&#xE838;" Margin="0" Command="{Binding OpenDataFolderCommand}"/>
               </ctl:SettingRow>
             </StackPanel>
           </Border>
@@ -367,11 +367,11 @@
           <Border Style="{StaticResource Group}">
             <StackPanel>
               <ctl:SettingRow Title="{Binding AboutTitle, Mode=OneWay}" Description="{Binding UpdateStatus, Mode=OneWay, TargetNullValue='', FallbackValue=''}">
-                <Button Content="Check for updates" Margin="0" Command="{Binding CheckForUpdatesCommand}"/>
+                <Button Content="Check for updates" ctl:Btn.Icon="&#xE895;" Margin="0" Command="{Binding CheckForUpdatesCommand}"/>
               </ctl:SettingRow>
               <ctl:SettingRow Title="Roblox version" Description="{Binding RobloxVersion}"/>
               <ctl:SettingRow Title="Something not working?" Description="Opens a bug report on GitHub with your versions filled in, and copies your Activity log to paste in.">
-                <Button Content="Report a bug" Margin="0" Command="{Binding ReportBugCommand}"
+                <Button Content="Report a bug" ctl:Btn.External="True" Margin="0" Command="{Binding ReportBugCommand}"
                         ToolTip="Needs a free GitHub account"/>
               </ctl:SettingRow>
             </StackPanel>

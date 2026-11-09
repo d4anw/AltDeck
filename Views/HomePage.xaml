@@ -79,16 +79,6 @@
                     Command="{Binding ToggleAutoRejoinCommand}" Foreground="{DynamicResource Fg}" Margin="6,0,0,0"/>
           </StackPanel>
         </StackPanel>
-        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock Text="Detailed view" VerticalAlignment="Center" Margin="0,0,10,0" Style="{StaticResource MutedText}"/>
-          <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.DetailedView}" Margin="0,0,14,0"/>
-          <Button Margin="0" Click="Windows_Click" ToolTip="Tile, minimize, show, and save or restore where the client windows are">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="&#xE737;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Windows  &#x25BE;"/>
-            </StackPanel>
-          </Button>
-        </StackPanel>
       </Grid>
 
       <!-- stats -->
@@ -147,8 +137,36 @@
         </Grid>
       </Border>
 
+      <!-- the client windows: what you can do with all of them, right above them -->
+      <Grid Margin="0,26,0,12" Visibility="{Binding ClientMon.Clients.Count, Converter={StaticResource CountVis}}">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="Client windows" FontSize="17" FontWeight="Bold" VerticalAlignment="Center"/>
+          <Border Style="{StaticResource Badge}" Background="{DynamicResource Card2}" Margin="10,0,0,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ClientMon.Clients.Count}" Style="{StaticResource BadgeText}"/>
+          </Border>
+          <TextBlock Text="Detailed view" VerticalAlignment="Center" Margin="22,0,10,0" Style="{StaticResource MutedText}"/>
+          <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.DetailedView}" VerticalAlignment="Center"
+                        ToolTip="A live picture of each window on its card"/>
+        </StackPanel>
+        <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+          <Button Content="Tile" ctl:Btn.Icon="&#xF0E2;" Click="Tile_Click" ToolTip="Arrange the windows side by side on a screen"/>
+          <Button Content="Minimize all" ctl:Btn.Icon="&#xE921;" Command="{Binding MinimizeAllCommand}"/>
+          <Button Content="Show all" ctl:Btn.Icon="&#xE8A7;" Command="{Binding ShowAllCommand}"/>
+          <Button Click="Layouts_Click" ToolTip="Save where the windows are now, or put them back">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE737;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Layouts"/>
+              <TextBlock Text="&#xE70D;" FontFamily="{StaticResource Icons}" FontSize="9" Margin="8,1,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource IconBtn}" Content="&#xE74D;" Margin="0" ToolTip="Clear disconnected cards"
+                  Command="{Binding DismissDisconnectedCommand}"/>
+        </WrapPanel>
+      </Grid>
+
       <!-- client cards -->
-      <ItemsControl ItemsSource="{Binding CardsView}" Margin="0,22,0,0">
+      <ItemsControl ItemsSource="{Binding CardsView}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>

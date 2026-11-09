@@ -13,6 +13,8 @@ public partial class MainViewModel
     public ObservableCollection<FriendTile> OnlineFriends { get; } = new();
     public ObservableCollection<GameTile> ContinueGames { get; } = new();
     public ObservableCollection<GameTile> RecommendedGames { get; } = new();
+    /// <summary>Games starred in RoDeck, then the account's favourites on Roblox.</summary>
+    public ObservableCollection<GameTile> FavoriteGames { get; } = new();
 
     public Loader FriendsLoad { get; } = new();
     public Loader GamesLoad { get; } = new();
@@ -82,6 +84,7 @@ public partial class MainViewModel
         OnlineFriends.Clear();
         ContinueGames.Clear();
         RecommendedGames.Clear();
+        FavoriteGames.Clear();
         FriendsTitle = "Friends online";
         OnPropertyChanged(nameof(Greeting));
         HeroGame = null;
@@ -124,9 +127,26 @@ public partial class MainViewModel
             return cont.Count + rec.Count > 0;
         }, "Loading games…");
 
-        await Task.WhenAll(friends, games);
+        var favs = LoadHomeFavoritesAsync(a);
+
+        await Task.WhenAll(friends, games, favs);
         if (FriendsLoad.State == LoadState.Error) Log(ActivityLog.Error, "Home friends: " + FriendsLoad.Message);
         if (GamesLoad.State == LoadState.Error) Log(ActivityLog.Error, "Home games: " + GamesLoad.Message);
+    }
+
+    private async Task LoadHomeFavoritesAsync(Account a)
+    {
+        var list = Settings.FavouriteGames.Select(s => s.Tile).ToList();
+        try { list.AddRange(await RobloxHome.GetFavoriteGamesAsync(a.UserId, CancellationToken.None)); }
+        catch (RobloxException) { }
+        catch (System.Text.Json.JsonException) { }
+        list = list.GroupBy(t => t.UniverseId).Select(g => g.First()).ToList();
+        try { await RobloxHome.FillMissingAsync(list, CancellationToken.None); }
+        catch (RobloxException) { }
+        catch (System.Text.Json.JsonException) { }
+        if (a != CurrentAccount) return;
+        FavoriteGames.Clear();
+        foreach (var t in list.Where(t => t.PlaceId > 0)) FavoriteGames.Add(t);
     }
 
     /// <summary>Play a game with the account top right.</summary>

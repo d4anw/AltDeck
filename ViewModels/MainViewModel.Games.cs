@@ -16,9 +16,46 @@ public partial class MainViewModel
     public ObservableCollection<GameSort> GameCharts { get; } = new();
     public ObservableCollection<ChartChip> ChartChips { get; } = new();
 
+    /// <summary>The overview: every chart as a row, like Home. Each row's arrow opens the whole chart.</summary>
+    public ObservableCollection<GameRow> GameRows { get; } = new();
+    public bool GamesOverview => GamesView.Length == 0;
+    private const int RowPreview = 24;
+
     partial void OnGamesViewChanged(string value)
     {
         foreach (var c in ChartChips) c.IsSelected = c.Id == value;
+        OnPropertyChanged(nameof(GamesOverview));
+    }
+
+    /// <summary>The rows: Roblox's charts, then your favourites and recently played (when there are any).</summary>
+    private async Task BuildGameRowsAsync()
+    {
+        var rows = GameCharts.Select(s => new GameRow { Id = s.Id, Name = s.Name, Games = s.Games.Take(RowPreview).ToList() }).ToList();
+        var fav = Settings.FavouriteGames.Select(s => s.Tile).Take(RowPreview).ToList();
+        var recent = Settings.RecentGames.Select(s => s.Tile).Take(RowPreview).ToList();
+        if (fav.Count > 0) rows.Insert(0, new GameRow { Id = "favourites", Name = "My favourites", Icon = "", Games = fav });
+        if (recent.Count > 0) rows.Insert(fav.Count > 0 ? 1 : 0, new GameRow { Id = "recent", Name = "Recently played", Icon = "", Games = recent });
+        GameRows.Clear();
+        foreach (var r in rows) GameRows.Add(r);
+        var all = rows.SelectMany(r => r.Games).ToList();
+        try
+        {
+            if (fav.Count + recent.Count > 0) await RobloxHome.FillMissingAsync(fav.Concat(recent).ToList(), CancellationToken.None);
+            var icons = await Thumbnails.GetAsync("GameIcon", all.Where(t => t.IconUrl.Length == 0).Select(t => t.UniverseId).Distinct(), "256x256");
+            foreach (var t in all) if (icons.TryGetValue(t.UniverseId, out var url)) t.IconUrl = url;
+        }
+        catch { }
+    }
+
+    /// <summary>Back from a chart, search or favourites to the rows.</summary>
+    [RelayCommand]
+    private void ShowGameRows()
+    {
+        GamesView = "";
+        GamesTitle = "Games";
+        GamesInfo = "";
+        ShownGames.Clear();
+        _ = BuildGameRowsAsync();
     }
 
     private void RebuildChips()
@@ -65,9 +102,9 @@ public partial class MainViewModel
             foreach (var s in sorts) GameCharts.Add(s);
             RebuildChips();
             _chartsLoadedAt = DateTime.Now;
-            var keep = GameCharts.FirstOrDefault(s => s.Id == GamesView) ?? GameCharts.FirstOrDefault();
-            if (GamesView is "favourites" or "recent" or "search") { ShowSaved(GamesView); return true; }
-            if (keep != null) await ShowChartAsync(keep);
+            _ = BuildGameRowsAsync();
+            if (GamesView is "favourites" or "recent") { ShowSaved(GamesView); return true; }
+            if (GameCharts.FirstOrDefault(s => s.Id == GamesView) is { } keep) await ShowChartAsync(keep);
             return GameCharts.Count > 0;
         }, "Loading charts…");
     }
@@ -103,7 +140,7 @@ public partial class MainViewModel
     private Task SearchGamesAsync()
     {
         var q = (GameSearchText ?? "").Trim();
-        if (q.Length == 0) return LoadChartsAsync();
+        if (q.Length == 0) { ShowGameRows(); return Task.CompletedTask; }
         return ChartsLoad.RunAsync(async ct =>
         {
             var found = await RobloxGames.SearchAsync(q, ct);
@@ -220,6 +257,7 @@ public partial class MainViewModel
         StatusMessage = existing == null ? $"Added {g.Name} to your favourites." : $"Removed {g.Name} from your favourites.";
         QueueSettingsSave();
         if (GamesView == "favourites") ShowSaved("favourites");
+        else if (GamesOverview) _ = BuildGameRowsAsync();
     }
 
     [RelayCommand]

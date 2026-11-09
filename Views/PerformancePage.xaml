@@ -4,7 +4,7 @@
              xmlns:ctl="clr-namespace:RoDeck.Controls"
              FontSize="14">
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="32,18,32,32" MaxWidth="1000" HorizontalAlignment="Left">
+    <StackPanel Margin="32,18,32,32">
       <TextBlock Text="FPS &amp; FastFlags" FontSize="28" FontWeight="Bold"/>
       <TextBlock Margin="0,4,0,24" Style="{StaticResource MutedText}" TextWrapping="Wrap"
                  Text="FPS, graphics and your own FastFlags for every client RoDeck starts, one account or many. Your normal Roblox settings are put back afterwards."/>
@@ -103,8 +103,16 @@
         </RadioButton>
       </Grid>
 
+      <!-- fine-tune and your own FastFlags next to each other, together the whole width -->
+      <Grid Margin="0,24,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="24"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
       <!-- ===== fine-tune ===== -->
-      <Border Style="{StaticResource CardBox}" Margin="0,24,0,0" Padding="20,18,20,4">
+      <Border Style="{StaticResource CardBox}" Padding="20,18,20,4" VerticalAlignment="Top">
         <StackPanel>
           <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,16">
             <Grid>
@@ -124,7 +132,7 @@
           <ctl:SettingRow Title="FPS cap" DescriptionSize="13"
                           Description="The most frames per second each client draws. Lower uses less of your PC.">
             <StackPanel Orientation="Horizontal">
-              <Slider x:Name="FpsSlider" Style="{StaticResource PerfSlider}" Width="340"
+              <Slider x:Name="FpsSlider" Style="{StaticResource PerfSlider}" Width="200"
                       IsEnabled="{Binding Settings.UnlimitedFps, Converter={StaticResource Not}}"
                       Minimum="5" Maximum="240" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True"
                       Value="{Binding Settings.FpsCap, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"/>
@@ -192,21 +200,21 @@
       </Border>
 
       <!-- ===== your own FastFlags ===== -->
-      <Border Style="{StaticResource CardBox}" Margin="0,24,0,0" Padding="26,22">
+      <Border Grid.Column="2" Style="{StaticResource CardBox}" Padding="20,18,20,18" VerticalAlignment="Top">
         <StackPanel>
-          <Grid>
+          <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,16">
             <StackPanel>
               <TextBlock Text="Your FastFlags" FontSize="16" FontWeight="SemiBold"/>
               <TextBlock Text="{Binding CustomFlagsSummary}" FontSize="13" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-              <Button Content="Paste JSON" Command="{Binding PasteFlagsCommand}"
-                      ToolTip="Add the flags on your clipboard, like {&quot;FFlagSomething&quot;: true}"/>
-              <Button Content="Copy as JSON" Command="{Binding CopyFlagsCommand}"/>
-              <Button Content="Clear all" Command="{Binding ClearFlagsCommand}" ToolTip="Removes them (they're copied to the clipboard first)"/>
-              <Button Content="+ Add flag" Style="{StaticResource Primary}" Margin="0" Command="{Binding AddFlagCommand}"/>
-            </StackPanel>
-          </Grid>
+          </Border>
+          <WrapPanel Margin="0,14,0,0">
+            <Button Content="Paste JSON" ctl:Btn.Icon="&#xE77F;" Margin="0,0,8,8" Command="{Binding PasteFlagsCommand}"
+                    ToolTip="Add the flags on your clipboard, like {&quot;FFlagSomething&quot;: true}"/>
+            <Button Content="Copy as JSON" ctl:Btn.Icon="&#xE8C8;" Margin="0,0,8,8" Command="{Binding CopyFlagsCommand}"/>
+            <Button Content="Clear all" ctl:Btn.Icon="&#xE74D;" Margin="0,0,8,8" Command="{Binding ClearFlagsCommand}" ToolTip="Removes them (they're copied to the clipboard first)"/>
+            <Button Content="Add flag" ctl:Btn.Icon="&#xE710;" Style="{StaticResource Primary}" Margin="0,0,0,8" Command="{Binding AddFlagCommand}"/>
+          </WrapPanel>
           <TextBlock FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap" Style="{StaticResource MutedText}"
                      Text="Written to Roblox together with the settings above while each client starts, then put back. Yours win when both set the same flag. Roblox only listens to flags on its own allow-list, so some flags you find online do nothing anymore. Skipped under Bloxstrap and the like."/>
 
@@ -216,7 +224,7 @@
               <ColumnDefinition Width="64"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="12"/>
-              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="150"/>
               <ColumnDefinition Width="44"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="On" FontSize="12" Style="{StaticResource MutedText}"/>
@@ -232,7 +240,7 @@
                       <ColumnDefinition Width="64"/>
                       <ColumnDefinition Width="*"/>
                       <ColumnDefinition Width="12"/>
-                      <ColumnDefinition Width="200"/>
+                      <ColumnDefinition Width="150"/>
                       <ColumnDefinition Width="44"/>
                     </Grid.ColumnDefinitions>
                     <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Enabled}" VerticalAlignment="Center"/>
@@ -251,6 +259,7 @@
           </ItemsControl>
         </StackPanel>
       </Border>
+      </Grid>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

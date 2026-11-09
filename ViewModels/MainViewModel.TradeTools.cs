@@ -198,18 +198,20 @@ public partial class MainViewModel
     /// <summary>Started once: the saved list, checked every second (even with RoDeck in the tray).</summary>
     private void SetupWatchlist()
     {
-        foreach (var e in Settings.Watchlist) AddWatchRow(e.AssetId, e.MaxPrice, e.Name);
+        foreach (var e in Settings.Watchlist) AddWatchRow(e.AssetId, e.MaxPrice, e.Name, e.Percent);
         WatchRows.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasWatchRows));
         _watchTimer.Tick += (_, _) => WatchTick();
         _watchTimer.Start();
     }
 
-    private WatchRow AddWatchRow(long id, long maxPrice, string name)
+    private WatchRow AddWatchRow(long id, long maxPrice, string name, int percent = 0)
     {
         var v = LimitedValues.Get(id);
-        var row = new WatchRow { AssetId = id, Name = v?.Name is { Length: > 0 } n ? n : name, Rap = v?.Rap ?? 0, Value = v?.Value ?? -1, MaxPrice = maxPrice };
+        var row = new WatchRow { AssetId = id, Name = v?.Name is { Length: > 0 } n ? n : name, Rap = v?.Rap ?? 0, Value = v?.Value ?? -1, MaxPrice = maxPrice, Percent = percent };
+        row.Follow();
         row.PropertyChanged += (_, e) =>
         {
+            if (e.PropertyName == nameof(WatchRow.Percent)) { SaveWatchlist(); return; }
             if (e.PropertyName != nameof(WatchRow.MaxPrice)) return;
             row.NotifiedPrice = 0;
             SaveWatchlist();
@@ -234,7 +236,7 @@ public partial class MainViewModel
         if (t == null) return;
         if (WatchRows.Any(r => r.AssetId == t.AssetId)) { StatusMessage = $"{t.Name} is already on your watchlist."; return; }
         long start = Math.Max(1, (long)Math.Round(t.Worth * 0.9 / 10.0) * 10);   // 10 % under what it's worth; change it any time
-        AddWatchRow(t.AssetId, start, t.Name);
+        AddWatchRow(t.AssetId, start, t.Name, percent: t.Worth > 0 ? 10 : 0);
         WatchSearch = "";
         SaveWatchlist();
         await WatchFullCheckAsync();
@@ -253,7 +255,7 @@ public partial class MainViewModel
 
     private void SaveWatchlist()
     {
-        Settings.Watchlist = WatchRows.Select(r => new WatchEntry { AssetId = r.AssetId, MaxPrice = r.MaxPrice, Name = r.Name }).ToList();
+        Settings.Watchlist = WatchRows.Select(r => new WatchEntry { AssetId = r.AssetId, MaxPrice = r.MaxPrice, Percent = r.Percent, Name = r.Name }).ToList();
         _saveTimer.Stop();
         _saveTimer.Start();
     }

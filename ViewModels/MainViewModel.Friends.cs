@@ -63,7 +63,12 @@ public partial class MainViewModel
 
     private void MaybeLoadFriends()
     {
-        if (Page != "Friends") return;
+        if (Page != "Friends")
+        {
+            // leaving Friends forgets "Show more": coming back shows the first page again
+            if (_friendsShown > FriendsPageSize) { _friendsShown = FriendsPageSize; ShowFriendsPage(); }
+            return;
+        }
         if (_friendsLoadedFor == CurrentAccount && DateTime.Now - _friendsLoadedAt < TimeSpan.FromMinutes(2)) return;
         _ = LoadFriendsPageAsync();
     }
@@ -74,6 +79,8 @@ public partial class MainViewModel
     private async Task LoadFriendsPageAsync(bool force = false)
     {
         var a = CurrentAccount;
+        // the refresh button keeps "Show more"; another account or a fresh visit starts at the first page
+        bool keepShown = force && _friendsLoadedFor == a;
         _friendsLoadedFor = a;
         _friendsLoadedAt = DateTime.Now;
         AllFriends.Clear();
@@ -88,7 +95,7 @@ public partial class MainViewModel
             return;
         }
 
-        _friendsShown = FriendsPageSize;
+        if (!keepShown) _friendsShown = FriendsPageSize;
         var friends = AllFriendsLoad.RunAsync(async ct =>
         {
             // names first: the list shows right away, the status dots fill in when Roblox answers

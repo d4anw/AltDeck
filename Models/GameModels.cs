@@ -48,6 +48,15 @@ public partial class ChartChip : ObservableObject
     [ObservableProperty] private bool isSelected;
 }
 
+/// <summary>A row on the Games overview: a chart (or favourites / recently played) with its first games.</summary>
+public sealed class GameRow
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string Icon { get; init; } = "";
+    public List<GameTile> Games { get; init; } = new();
+}
+
 /// <summary>One stat card on a game's page. <paramref name="Ratio"/> (0–1) draws a like bar; -1 none.</summary>
 public sealed record GameStat(string Glyph, string Value, string Label, string Sub, double Ratio = -1, bool Live = false)
 {

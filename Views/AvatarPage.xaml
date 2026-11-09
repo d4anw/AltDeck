@@ -545,8 +545,8 @@
               </Grid>
               <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0"
                           Visibility="{Binding ScalesChanged, Converter={StaticResource BoolVis}}">
-                <Button Content="Undo" Command="{Binding ResetScalesCommand}"/>
-                <Button Content="Save" Style="{StaticResource Primary}" Margin="0" Command="{Binding ApplyScalesCommand}"/>
+                <Button Content="Undo" ctl:Btn.Icon="&#xE7A7;" Command="{Binding ResetScalesCommand}"/>
+                <Button Content="Save" ctl:Btn.Icon="&#xE74E;" Style="{StaticResource Primary}" Margin="0" Command="{Binding ApplyScalesCommand}"/>
               </StackPanel>
             </StackPanel>
           </Border>
@@ -556,7 +556,7 @@
         <StackPanel Visibility="{Binding AvatarTab, Converter={StaticResource PageVis}, ConverterParameter=Outfits}">
           <Grid Margin="0,0,0,14">
             <TextBlock Text="Click an outfit to wear it. Right-click to rename or delete." Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
-            <Button Content="+ Save current look" Style="{StaticResource Primary}" HorizontalAlignment="Right" Margin="0"
+            <Button Content="Save current look" ctl:Btn.Icon="&#xE710;" Style="{StaticResource Primary}" HorizontalAlignment="Right" Margin="0"
                     Command="{Binding SaveOutfitCommand}"/>
           </Grid>
           <ctl:StateView State="{Binding OutfitsLoad.State}" Message="{Binding OutfitsLoad.Message}" MinHeight="220"

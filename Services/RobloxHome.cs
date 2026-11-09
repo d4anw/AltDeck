@@ -116,6 +116,17 @@ public static class RobloxHome
         return (c.Where(t => t.PlaceId > 0).ToList(), r.Where(t => t.PlaceId > 0).ToList());
     }
 
+    /// <summary>The games an account favourited on Roblox, newest first (public, up to 50).</summary>
+    public static async Task<List<GameTile>> GetFavoriteGamesAsync(long userId, CancellationToken ct)
+    {
+        using var doc = await RobloxHttp.GetJsonAsync($"https://games.roblox.com/v2/users/{userId}/favorite/games?limit=50&sortOrder=Desc", null, ct);
+        var list = new List<GameTile>();
+        if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            foreach (var g in data.EnumerateArray())
+                if (Long(g, "id") is > 0 and var id) list.Add(new GameTile { UniverseId = id });
+        return list;
+    }
+
     /// <summary>Fills name / place / players / likes from the public games service where Roblox didn't include them, then icons.</summary>
     public static async Task FillMissingAsync(List<GameTile> tiles, CancellationToken ct)
     {

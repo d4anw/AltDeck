@@ -86,9 +86,17 @@
               <!-- the hover colour, faded in and out -->
               <Border x:Name="hov" Background="{DynamicResource Card2}" BorderBrush="{DynamicResource AccentLine}"
                       BorderThickness="1" CornerRadius="10" Opacity="0"/>
-              <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+              <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center">
+                <TextBlock x:Name="ic" Text="{TemplateBinding ctl:Btn.Icon}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13" FontWeight="Normal"
+                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ContentPresenter VerticalAlignment="Center"/>
+                <TextBlock x:Name="ext" Text="&#xE8A7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="11" FontWeight="Normal"
+                           VerticalAlignment="Center" Margin="8,1,0,0" Opacity="0.7" Visibility="Collapsed"/>
+              </StackPanel>
             </Grid>
             <ControlTemplate.Triggers>
+              <Trigger Property="ctl:Btn.Icon" Value=""><Setter TargetName="ic" Property="Visibility" Value="Collapsed"/></Trigger>
+              <Trigger Property="ctl:Btn.External" Value="True"><Setter TargetName="ext" Property="Visibility" Value="Visible"/></Trigger>
               <Trigger Property="IsMouseOver" Value="True">
                 <Trigger.EnterActions>
                   <BeginStoryboard>
@@ -125,9 +133,17 @@
               <Border.Effect>
                 <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="18" ShadowDepth="0" Opacity="0"/>
               </Border.Effect>
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock x:Name="ic" Text="{TemplateBinding ctl:Btn.Icon}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="13" FontWeight="Normal"
+                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ContentPresenter VerticalAlignment="Center"/>
+                <TextBlock x:Name="ext" Text="&#xE8A7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="11" FontWeight="Normal"
+                           VerticalAlignment="Center" Margin="8,1,0,0" Opacity="0.7" Visibility="Collapsed"/>
+              </StackPanel>
             </Border>
             <ControlTemplate.Triggers>
+              <Trigger Property="ctl:Btn.Icon" Value=""><Setter TargetName="ic" Property="Visibility" Value="Collapsed"/></Trigger>
+              <Trigger Property="ctl:Btn.External" Value="True"><Setter TargetName="ext" Property="Visibility" Value="Visible"/></Trigger>
               <Trigger Property="IsMouseOver" Value="True">
                 <Trigger.EnterActions>
                   <BeginStoryboard>
@@ -272,6 +288,31 @@
                 <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
                 <Setter TargetName="thumb" Property="Margin" Value="0,0,4,0"/>
                 <Setter TargetName="thumb" Property="Fill" Value="{DynamicResource AccentFg}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- the same switch in red, for settings that spend Robux without asking (insta-buy) -->
+    <Style x:Key="DangerSwitch" TargetType="ToggleButton">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border x:Name="track" Width="46" Height="26" CornerRadius="13" Background="{DynamicResource Card2}"
+                    BorderBrush="{DynamicResource Line}" BorderThickness="1">
+              <Ellipse x:Name="thumb" Width="18" Height="18" Fill="{DynamicResource Muted}"
+                       HorizontalAlignment="Left" Margin="4,0,0,0"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="track" Property="Background" Value="{DynamicResource Red}"/>
+                <Setter TargetName="track" Property="BorderBrush" Value="{DynamicResource Red}"/>
+                <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
+                <Setter TargetName="thumb" Property="Margin" Value="0,0,4,0"/>
+                <Setter TargetName="thumb" Property="Fill" Value="White"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -518,7 +559,7 @@
           <ControlTemplate TargetType="RadioButton">
             <Border x:Name="b" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1.5"
                     CornerRadius="18" Padding="20">
-              <ContentPresenter VerticalAlignment="Center"/>
+              <ContentPresenter VerticalAlignment="Top"/>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/></Trigger>
@@ -986,10 +1027,14 @@
                 </MenuItem.Header>
               </MenuItem>
               <MenuItem Header="Play with several alts…" Command="{Binding PlayGameWithAltsCommand}"
-                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                <MenuItem.Icon><TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+              </MenuItem>
               <Separator/>
               <MenuItem Header="Open on roblox.com" Command="{Binding OpenGameOnWebCommand}"
-                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                <MenuItem.Icon><TextBlock Text="&#xE8A7;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+              </MenuItem>
             </ContextMenu>
           </Button.ContextMenu>
           <StackPanel>

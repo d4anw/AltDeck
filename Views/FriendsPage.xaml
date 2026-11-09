@@ -110,11 +110,13 @@
         <ctl:StateView Visibility="{Binding FriendsTab, Converter={StaticResource PageVis}, ConverterParameter=Requests}"
                        State="{Binding RequestsLoad.State}" Message="{Binding RequestsLoad.Message}" MinHeight="200"
                        EmptyText="No friend requests right now." RetryCommand="{Binding RefreshFriendsCommand}">
-          <ItemsControl ItemsSource="{Binding Requests}">
+          <!-- as many columns as fit (about 460 px each), so a wide window isn't half empty -->
+          <ItemsControl ItemsSource="{Binding Requests}" SizeChanged="Requests_SizeChanged" Margin="0,0,-10,0">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="1" VerticalAlignment="Top" Loaded="RequestsGrid_Loaded"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate>
                 <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
-                        CornerRadius="14" Padding="14,10" Margin="0,0,0,8" Width="720" HorizontalAlignment="Left">
+                        CornerRadius="14" Padding="14,10" Margin="0,0,10,10">
                   <Grid>
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto"/>
@@ -249,7 +251,7 @@
                           Visibility="{Binding ProfileCanJoin, Converter={StaticResource BoolVis}}">
                     <TextBlock><Run Text="Join as"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay}"/></TextBlock>
                   </Button>
-                  <Button Content="Join with alts…" Margin="0,0,8,8" Command="{Binding ProfileJoinWithAltsCommand}"
+                  <Button Content="Join with alts…" ctl:Btn.Icon="&#xE716;" Margin="0,0,8,8" Command="{Binding ProfileJoinWithAltsCommand}"
                           Visibility="{Binding ProfileCanJoin, Converter={StaticResource BoolVis}}"/>
                   <Button Margin="0,0,8,8" Command="{Binding ProfileToggleFavouriteCommand}">
                     <StackPanel Orientation="Horizontal">
@@ -269,7 +271,7 @@
                       <TextBlock Text="Favourite"/>
                     </StackPanel>
                   </Button>
-                  <Button Content="Roblox.com" Margin="0,0,8,8" Command="{Binding ProfileOnWebCommand}"/>
+                  <Button Content="Roblox.com" ctl:Btn.External="True" Margin="0,0,8,8" Command="{Binding ProfileOnWebCommand}"/>
                 </WrapPanel>
               </StackPanel>
             </Grid>

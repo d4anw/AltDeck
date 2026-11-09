@@ -50,10 +50,26 @@ public partial class MainViewModel
     partial void OnMarketPriceChanged(MarketOption? value) { if (_marketReady) _ = SearchMarketAsync(); }
     partial void OnMarketLimitedsOnlyChanged(bool value) { if (_marketReady) _ = SearchMarketAsync(); }
 
+    private bool _marketDirect;
+    /// <summary>The item page on the Marketplace shows a limited that Trades doesn't know about: forget it when leaving.</summary>
+    private bool _limitedFromMarket;
+
     private void MaybeLoadMarket()
     {
-        if (Page != "Marketplace" || MarketCats.Count > 0 || MarketLoad.State == LoadState.Loading) return;
-        _ = LoadMarketAsync();
+        if (Page == "Trades" && _limitedFromMarket) { _limitedFromMarket = false; OpenLimited = null; }
+        if (Page != "Marketplace") return;
+        OnPropertyChanged(nameof(LimitedBackText));
+        if (MarketCats.Count == 0) { if (MarketLoad.State != LoadState.Loading) _ = LoadMarketAsync(); return; }
+        if (_restoring || _marketDirect) return;
+        // every visit starts on All items
+        if (IsMarketItemOpen) CloseMarketItem();
+        bool moved = _marketCat != MarketCats.FirstOrDefault() || _marketSub != null || (MarketSearchText ?? "").Trim().Length > 0;
+        if (!moved) return;
+        _marketReady = false;   // no search per change while resetting
+        MarketSearchText = "";
+        SelectCat(MarketCats.FirstOrDefault());
+        _marketReady = true;
+        _ = SearchMarketAsync();
     }
 
     private async Task LoadMarketAsync()
@@ -162,6 +178,8 @@ public partial class MainViewModel
 
     partial void OnOpenMarketItemChanged(MarketItem? value)
     {
+        OnPropertyChanged(nameof(IsMarketLimitedOpen));
+        OnPropertyChanged(nameof(IsMarketPlainItemOpen));
         RecordNav();
         if (value == null || value.Id != _sellersFor) { MarketSellers.Clear(); SellersNote = ""; SellersHasMore = false; }
         _sellersFor = value?.Id ?? 0;
@@ -181,6 +199,16 @@ public partial class MainViewModel
         StopTryOn();
         ShowBuyConfirm = false;
         MarketItemPicture = item.ThumbUrl;
+        if (item.IsLimited)
+        {
+            // a limited: the same item page as Trades (numbers, graph, sellers), from the trading services
+            MarketItemLoad.State = LoadState.Ready;
+            OpenMarketItem = item;
+            var tile = LimitedTile.From(item.Id, item.Name, 0, bundle: item.IsBundle);
+            tile.ThumbUrl = item.ThumbUrl;
+            await OpenLimitedTile(tile);
+            return;
+        }
         OpenMarketItem = item;   // show what we know at once; the details fill in
         await MarketItemLoad.RunAsync(async ct =>
         {
@@ -269,6 +297,7 @@ public partial class MainViewModel
     {
         StopTryOn();
         ShowBuyConfirm = false;
+        if (OpenMarketItem is { IsLimited: true } && _limitedFromMarket) { OpenLimited = null; _limitedFromMarket = false; }
         OpenMarketItem = null;
     }
 

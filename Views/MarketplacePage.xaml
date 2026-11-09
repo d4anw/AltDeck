@@ -1,7 +1,8 @@
 <UserControl x:Class="RoDeck.Views.MarketplacePage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ctl="clr-namespace:RoDeck.Controls">
+             xmlns:ctl="clr-namespace:RoDeck.Controls"
+             xmlns:local="clr-namespace:RoDeck.Views">
   <UserControl.Resources>
     <!-- a selected chip: accent border and text -->
     <Style x:Key="MarketChipBtn" TargetType="Button" BasedOn="{StaticResource Chip}">
@@ -161,9 +162,15 @@
       </StackPanel>
     </ScrollViewer>
 
+    <!-- ================= a limited: the item page shared with Trades ================= -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Visibility="{Binding IsMarketLimitedOpen, Converter={StaticResource BoolVis}}">
+      <local:ItemPageView Margin="32,22,32,32"/>
+    </ScrollViewer>
+
     <!-- ================= one item ================= -->
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                  Visibility="{Binding IsMarketItemOpen, Converter={StaticResource BoolVis}}">
+                  Visibility="{Binding IsMarketPlainItemOpen, Converter={StaticResource BoolVis}}">
       <StackPanel Margin="32,22,32,32">
         <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseMarketItemCommand}" Margin="-8,0,0,10">
           <StackPanel Orientation="Horizontal">
@@ -260,7 +267,7 @@
                 <Grid>
                   <Button Content="Wear now" Margin="0" Command="{Binding WearMarketItemCommand}" ToolTip="Put it on this account's avatar"
                           Visibility="{Binding OpenMarketItem.IsOwned, Converter={StaticResource BoolVis}}"/>
-                  <Button Content="Open on roblox.com" Margin="0" Command="{Binding OpenMarketOnWebCommand}"
+                  <Button Content="Open on roblox.com" ctl:Btn.External="True" Margin="0" Command="{Binding OpenMarketOnWebCommand}"
                           Visibility="{Binding OpenMarketItem.IsOwned, Converter={StaticResource BoolVisInv}}"/>
                 </Grid>
               </UniformGrid>
@@ -309,7 +316,7 @@
                            Visibility="{Binding SellersLoading, Converter={StaticResource BoolVis}}"/>
                 <TextBlock Text="{Binding SellersNote}" Style="{StaticResource MutedText}" Margin="2,6,0,0" TextWrapping="Wrap"
                            Visibility="{Binding SellersNote, Converter={StaticResource EmptyCollapsed}}"/>
-                <Button Content="More sellers" HorizontalAlignment="Center" Margin="0,8,0,0" Command="{Binding LoadMoreSellersCommand}"
+                <Button Content="More sellers" ctl:Btn.Icon="&#xE70D;" HorizontalAlignment="Center" Margin="0,8,0,0" Command="{Binding LoadMoreSellersCommand}"
                         Visibility="{Binding SellersHasMore, Converter={StaticResource BoolVis}}"/>
               </StackPanel>
 
@@ -392,5 +399,8 @@
         </StackPanel>
       </Border>
     </Grid>
+
+    <!-- buying a seller's copy of a limited -->
+    <local:BuyCardView/>
   </Grid>
 </UserControl>

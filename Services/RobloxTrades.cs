@@ -462,6 +462,10 @@ public static class RobloxTrades
         return (rap, sold30, points);
     }
 
+    /// <summary>The marketplace ID of a limited whose stats were loaded (for its sellers and buying); "" when not known.</summary>
+    public static string CollectibleIdOf(long id, bool bundle) =>
+        (bundle ? BundleCollectibleIds : CollectibleIds).TryGetValue(id, out var cid) ? cid : "";
+
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> BundleCollectibleIds = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, List<(DateTime, long)> Points)> BundleHistories = new();
     static readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> CollectibleIds = new();
