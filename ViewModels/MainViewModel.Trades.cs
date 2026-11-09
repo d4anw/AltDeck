@@ -96,9 +96,59 @@ public partial class MainViewModel
     private void StartDeals()
     {
         DealThreshold ??= DealThresholds[1];
-        DealSort ??= DealSorts[1];   // newest first
-        if (!_dealTimerHooked) { _dealTimer.Tick += async (_, _) => await Quietly("Deals", async () => { await PollDealsAsync(); MaybeScan(); }); _dealTimerHooked = true; }
-        if (!_dealTimer.IsEnabled) { _dealTimer.Start(); _ = PollDealsAsync(); MaybeScan(); }
+        DealSort ??= DealSorts[1];   // newest first, like Rolimons' deals
+        if (!_dealTimerHooked) { _dealTimer.Tick += (_, _) => { MaybeScan(); FilterDeals(); }; _dealTimerHooked = true; }
+        if (!_dealTimer.IsEnabled) { _dealTimer.Start(); MaybeScan(); FilterDeals(); _ = FillDealThumbsAsync(_allDeals.Values.ToList()); }
+    }
+
+    // ---- new listings, collected from the moment RoDeck starts (Rolimons' feed only goes back about two minutes),
+    // and remembered on disk, so the list is full when you open Deals, also after a restart
+    private readonly DispatcherTimer _dealFeedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private static string DealsFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoDeck", "cache", "deals.json");
+    private DateTime _dealsSavedAt;
+    private bool _dealsChanged;
+    private static readonly TimeSpan KeepListings = TimeSpan.FromHours(12);
+
+    private void SetupDealFeed()
+    {
+        LoadSavedDeals();
+        _dealFeedTimer.Tick += async (_, _) => await Quietly("Deals", PollDealsAsync);
+        _dealFeedTimer.Start();
+    }
+
+    private sealed record SavedDeal(long Id, long Price, DateTime At);
+
+    private void LoadSavedDeals()
+    {
+        try
+        {
+            if (!File.Exists(DealsFile)) return;
+            var list = System.Text.Json.JsonSerializer.Deserialize<List<SavedDeal>>(File.ReadAllText(DealsFile)) ?? new();
+            foreach (var d in list.Where(d => DateTime.Now - d.At < KeepListings))
+                AddDeal(d.Id, d.Price, d.At, scanned: false);
+        }
+        catch { }
+    }
+
+    private void SaveDealsSoon()
+    {
+        _dealsChanged = true;
+        if (DateTime.Now - _dealsSavedAt < TimeSpan.FromSeconds(30)) return;
+        SaveDealsNow();
+    }
+
+    private void SaveDealsNow()
+    {
+        if (!_dealsChanged) return;
+        _dealsChanged = false;
+        _dealsSavedAt = DateTime.Now;
+        try
+        {
+            var list = _allDeals.Values.Where(d => d.Listed && DateTime.Now - d.At < KeepListings).Select(d => new SavedDeal(d.AssetId, d.Price, d.At)).ToList();
+            Directory.CreateDirectory(Path.GetDirectoryName(DealsFile)!);
+            File.WriteAllText(DealsFile, System.Text.Json.JsonSerializer.Serialize(list));
+        }
+        catch { }
     }
 
     // ---- the full scan: every limited's cheapest price, non-stop while Deals is open
@@ -139,8 +189,9 @@ public partial class MainViewModel
     private void ScanResult(long id, long price, DateTime now, List<DealTile> added)
     {
         _scanDone++;
-        if (price <= 0) { _allDeals.Remove(id); return; }   // nobody sells it anymore
-        if (AddDeal(id, price, now, scanned: true) is { } d) added.Add(d);
+        if (!_allDeals.TryGetValue(id, out var listed)) return;   // only real listings are shown; nothing to check
+        if (price <= 0 || price > listed.Price) { _allDeals.Remove(id); _dealsChanged = true; return; }   // that copy was bought
+        if (price < listed.Price && AddDeal(id, price, now, scanned: false) is { } d) added.Add(d);      // cheaper listed since
     }
 
     /// <summary>100 at a time through the batch service, as often as Roblox allows.</summary>
@@ -208,15 +259,15 @@ public partial class MainViewModel
     /// <summary>Records a best price; returns the new tile when it changed (null when it's the same as before).</summary>
     private DealTile? AddDeal(long id, long price, DateTime at, bool scanned)
     {
+        if (scanned) return null;   // the list is listings only (like Rolimons' deals), never "seen by a price check"
         var v = LimitedValues.Get(id);
         if (v == null || v.Worth <= 0) return null;
         if (_allDeals.TryGetValue(id, out var old) && old.Price == price) return null;
         var d = new DealTile
         {
             AssetId = id, Name = v.Name, Price = price, Rap = v.Rap, Value = v.Value, Demand = v.Demand, Projected = v.Projected,
-            // a scan only knows the price is this low now, not when it was listed: keep the older time if the price only went up
-            At = scanned && old != null && price >= old.Price ? old.At : at,
-            Listed = !scanned || (old?.Listed == true && price >= old.Price),
+            At = at,
+            Listed = true,
             ByRap = DealBasis == "RAP",
             ThumbUrl = old?.ThumbUrl ?? ""
         };
@@ -249,10 +300,14 @@ public partial class MainViewModel
                 if (AddDeal(id, price, at, scanned: false) is { } d) added.Add(d);
             }
             if (_seenDeals.Count > 4000) _seenDeals.Clear();
+            foreach (var old in _allDeals.Where(kv => DateTime.Now - kv.Value.At > KeepListings).Select(kv => kv.Key).ToList())
+                _allDeals.Remove(old);   // older than half a day: off the list
             _dealErrors = 0;
             _dealsCheckedAt = DateTime.Now;
-            await FillDealThumbsAsync(added);
-            FilterDeals();
+            if (added.Count > 0) SaveDealsSoon();
+            else if (_dealsChanged && DateTime.Now - _dealsSavedAt > TimeSpan.FromSeconds(30)) SaveDealsNow();
+            // pictures and the list only matter while Deals is on screen (they're fetched when it opens otherwise)
+            if (_dealTimer.IsEnabled) { await FillDealThumbsAsync(added); FilterDeals(); }
         }
         catch (Exception ex) when (ex is RobloxException or System.Text.Json.JsonException)
         {

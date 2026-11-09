@@ -84,6 +84,7 @@ public partial class MainViewModel
         RecordNav();   // the first page is a step too, so back from the next page returns to it
         SetupNotifications();
         SetupTradeAds();
+        SetupDealFeed();
     }
 
     private Account? DefaultAccount() =>

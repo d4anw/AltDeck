@@ -211,6 +211,7 @@ public partial class MainViewModel : ObservableObject
         try { _store.Save(Settings); } catch { }
         // a change made a moment ago (a name, a group, a new picture) is still waiting to be saved: save it now
         if (_vaultTimer.IsEnabled) { _vaultTimer.Stop(); try { _vault.Save(Accounts); } catch { } }
+        try { SaveDealsNow(); } catch { }
         try { _perf.RestoreNow(); } catch { }
         try { SignInIsolation.Restore(); } catch { }
         try { _sizeKeeper?.Dispose(); } catch { }
