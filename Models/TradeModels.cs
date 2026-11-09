@@ -177,7 +177,7 @@ public partial class DealTile : ObservableObject
     {
         var s = (DateTime.Now - At).TotalSeconds;
         var ago = s < 60 ? $"{Math.Max(1, (int)s)}s ago" : s < 3600 ? $"{(int)(s / 60)}m ago" : $"{(int)(s / 3600)}h ago";
-        AgoText = "listed " + ago;
+        AgoText = Listed ? "listed " + ago : "";   // found by the price check: when it was listed isn't known
     }
 }
 

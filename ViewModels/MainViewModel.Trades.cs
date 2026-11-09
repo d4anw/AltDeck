@@ -189,12 +189,21 @@ public partial class MainViewModel
     private void ScanResult(long id, long price, DateTime now, List<DealTile> added)
     {
         _scanDone++;
-        if (!_allDeals.TryGetValue(id, out var listed)) return;   // only real listings are shown; nothing to check
-        // Roblox's price lists lag a little behind new listings: a listing gets two minutes before a check may take it off
-        if (now - listed.At < TimeSpan.FromMinutes(2)) return;
-        // that copy was bought: the cheapest is more now, or nobody sells it anymore (Roblox said so, it's not a missing answer)
-        if (price == 0 || price > listed.Price) { _allDeals.Remove(id); _dealsChanged = true; return; }
-        if (price < listed.Price && AddDeal(id, price, now, scanned: false) is { } d) added.Add(d);      // cheaper listed since
+        if (!_allDeals.TryGetValue(id, out var known))
+        {
+            // a deal that was there before RoDeck was watching: shown too, after the ones with a listing time
+            if (price > 0 && AddDeal(id, price, now, scanned: true) is { } d) added.Add(d);
+            return;
+        }
+        // Roblox's price lists lag a little behind new listings: a listing gets two minutes before a check may change it
+        if (known.Listed && now - known.At < TimeSpan.FromMinutes(2)) return;
+        // that copy was bought: nobody sells it anymore (Roblox said so, not a missing answer)
+        if (price == 0) { _allDeals.Remove(id); _dealsChanged = true; return; }
+        if (price == known.Price) return;
+        // another price now: a listing whose copy was bought goes back to "time unknown" at the new price;
+        // a cheaper copy than the one we know was listed while we weren't looking (time unknown too)
+        if (AddDeal(id, price, now, scanned: true) is { } changed) added.Add(changed);
+        if (known.Listed) _dealsChanged = true;
     }
 
     /// <summary>100 at a time through the batch service, as often as Roblox allows.</summary>
@@ -268,7 +277,6 @@ public partial class MainViewModel
     /// <summary>Records a best price; returns the new tile when it changed (null when it's the same as before).</summary>
     private DealTile? AddDeal(long id, long price, DateTime at, bool scanned)
     {
-        if (scanned) return null;   // the list is listings only (like Rolimons' deals), never "seen by a price check"
         var v = LimitedValues.Get(id);
         if (v == null || v.Worth <= 0) return null;
         if (_allDeals.TryGetValue(id, out var old) && old.Price == price) return null;
@@ -276,7 +284,8 @@ public partial class MainViewModel
         {
             AssetId = id, Name = v.Name, Price = price, Rap = v.Rap, Value = v.Value, Demand = v.Demand, Projected = v.Projected,
             At = at,
-            Listed = true,
+            // from the live feed: its listing time; from the price check: a deal that's there, listing time unknown
+            Listed = !scanned,
             ByRap = DealBasis == "RAP",
             ThumbUrl = old?.ThumbUrl ?? ""
         };
