@@ -69,7 +69,7 @@ public partial class MainViewModel
     partial void OnMultiTabChanged(string value) { if (Page == "Multi") RecordNav(); }
     partial void OnIsGameOpenChanged(bool value) => RecordNav();
     partial void OnIsProfileOpenChanged(bool value) => RecordNav();
-    partial void OnFriendsTabChanged(string value) { OnPropertyChanged(nameof(ShowDeclineAll)); if (Page == "Friends") RecordNav(); }
+    partial void OnFriendsTabChanged(string value) { if (Page == "Friends") RecordNav(); }
 
     public void GoBack() => Go(back: true);
     public void GoForward() => Go(back: false);
