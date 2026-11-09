@@ -86,7 +86,9 @@ public static class RobloxHttp
     static string GateKey(string url)
     {
         var u = new Uri(url);
-        return u.Host + System.Text.RegularExpressions.Regex.Replace(u.AbsolutePath, @"/\d+(?=/|$)", "/{id}");
+        // numbers and marketplace IDs (GUIDs) are the item, not the service: one gate for all of them
+        return u.Host + System.Text.RegularExpressions.Regex.Replace(u.AbsolutePath,
+            @"/(\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?=/|$)", "/{id}");
     }
 
     static int? Header(HttpResponseMessage resp, string name) =>

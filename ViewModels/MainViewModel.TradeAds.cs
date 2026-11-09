@@ -40,7 +40,7 @@ public partial class MainViewModel
             AdOfferSlots.Add(new AdSlot { Index = i, IsOffer = true });
             AdWantSlots.Add(new AdSlot { Index = i, IsOffer = false });
         }
-        _adTimer.Tick += async (_, _) => await AdTickAsync();
+        _adTimer.Tick += async (_, _) => await Quietly("Trade ad", () => AdTickAsync());
         _adTimer.Start();
     }
 

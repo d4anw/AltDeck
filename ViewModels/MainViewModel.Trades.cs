@@ -97,7 +97,7 @@ public partial class MainViewModel
     {
         DealThreshold ??= DealThresholds[1];
         DealSort ??= DealSorts[1];   // newest first
-        if (!_dealTimerHooked) { _dealTimer.Tick += async (_, _) => { await PollDealsAsync(); MaybeScan(); }; _dealTimerHooked = true; }
+        if (!_dealTimerHooked) { _dealTimer.Tick += async (_, _) => await Quietly("Deals", async () => { await PollDealsAsync(); MaybeScan(); }); _dealTimerHooked = true; }
         if (!_dealTimer.IsEnabled) { _dealTimer.Start(); _ = PollDealsAsync(); MaybeScan(); }
     }
 

@@ -43,7 +43,8 @@ public static class RobloxTrades
         var url = $"{Trades}/v1/trades/{type}?limit=25&sortOrder=Desc" + (string.IsNullOrEmpty(cursor) ? "" : "&cursor=" + Uri.EscapeDataString(cursor));
         using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
         var rows = new List<TradeRow>();
-        foreach (var t in doc.RootElement.GetProperty("data").EnumerateArray())
+        if (!doc.RootElement.TryGetProperty("data", out var list) || list.ValueKind != JsonValueKind.Array) return (rows, null);
+        foreach (var t in list.EnumerateArray())
         {
             var u = t.TryGetProperty("user", out var uu) ? uu : default;
             rows.Add(new TradeRow
@@ -177,8 +178,9 @@ public static class RobloxTrades
                     + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
             using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
             var got = new List<LimitedTile>();
-            foreach (var x in doc.RootElement.GetProperty("data").EnumerateArray())
-                got.Add(LimitedTile.From(Long(x, "assetId"), Str(x, "name"), Long(x, "recentAveragePrice"), Long(x, "serialNumber"),
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                foreach (var x in data.EnumerateArray())
+                    got.Add(LimitedTile.From(Long(x, "assetId"), Str(x, "name"), Long(x, "recentAveragePrice"), Long(x, "serialNumber"),
                                          "", x.TryGetProperty("isOnHold", out var h) && h.ValueKind == JsonValueKind.True));
             list.AddRange(got);
             arrived?.Invoke(got);

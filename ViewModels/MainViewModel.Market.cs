@@ -199,7 +199,7 @@ public partial class MainViewModel
         StopTryOn();
         ShowBuyConfirm = false;
         MarketItemPicture = item.ThumbUrl;
-        if (item.IsLimited)
+        if (item.ShowsAsLimited)
         {
             // a limited: the same item page as Trades (numbers, graph, sellers), from the trading services
             MarketItemLoad.State = LoadState.Ready;
@@ -331,7 +331,7 @@ public partial class MainViewModel
     {
         StopTryOn();
         ShowBuyConfirm = false;
-        if (OpenMarketItem is { IsLimited: true } && _limitedFromMarket) { OpenLimited = null; _limitedFromMarket = false; }
+        if (OpenMarketItem is { ShowsAsLimited: true } && _limitedFromMarket) { OpenLimited = null; _limitedFromMarket = false; }
         OpenMarketItem = null;
     }
 

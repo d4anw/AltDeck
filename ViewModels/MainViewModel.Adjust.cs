@@ -167,7 +167,7 @@ public partial class MainViewModel
         if (!live) { PreviewUpdating = true; _pendingVisibleChange = true; }
         UpdateLive();
 
-        if (!_wearTimerHooked) { _wearSaveTimer.Tick += async (_, _) => { _wearSaveTimer.Stop(); await SaveWearingAsync(); }; _wearTimerHooked = true; }
+        if (!_wearTimerHooked) { _wearSaveTimer.Tick += async (_, _) => { _wearSaveTimer.Stop(); await Quietly("Saving the avatar", SaveWearingAsync); }; _wearTimerHooked = true; }
         _wearSaveTimer.Stop();
         _wearSaveTimer.Start();
     }

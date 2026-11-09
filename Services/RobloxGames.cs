@@ -85,9 +85,8 @@ public static class RobloxGames
     public static async Task<GameDetails> GetDetailsAsync(long universeId, CancellationToken ct)
     {
         using var doc = await RobloxHttp.GetJsonAsync($"https://games.roblox.com/v1/games?universeIds={universeId}", null, ct);
-        var data = doc.RootElement.GetProperty("data");
-        if (data.GetArrayLength() == 0) throw new RobloxException("Roblox couldn't find that game.");
-        var g = data[0];
+        var g = doc.RootElement.Arr("data").FirstOrDefault();
+        if (g.ValueKind != JsonValueKind.Object) throw new RobloxException("Roblox couldn't find that game.");
         var creator = g.TryGetProperty("creator", out var cr) ? cr : default;
         var d = new GameDetails
         {
@@ -119,8 +118,8 @@ public static class RobloxGames
         {
             using var m = await RobloxHttp.GetJsonAsync(
                 $"https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds={universeId}&countPerUniverse=10&size=768x432&format=Png", null, ct);
-            foreach (var u in m.RootElement.GetProperty("data").EnumerateArray())
-                foreach (var t in u.GetProperty("thumbnails").EnumerateArray())
+            foreach (var u in m.RootElement.Arr("data"))
+                foreach (var t in u.Arr("thumbnails"))
                     if (Str(t, "state") == "Completed" && Str(t, "imageUrl") is { Length: > 0 } url) d.Media.Add(url);
         });
         var icon = Safe(async () =>

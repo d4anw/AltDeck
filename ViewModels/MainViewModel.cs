@@ -209,6 +209,8 @@ public partial class MainViewModel : ObservableObject
     public void Shutdown()
     {
         try { _store.Save(Settings); } catch { }
+        // a change made a moment ago (a name, a group, a new picture) is still waiting to be saved: save it now
+        if (_vaultTimer.IsEnabled) { _vaultTimer.Stop(); try { _vault.Save(Accounts); } catch { } }
         try { _perf.RestoreNow(); } catch { }
         try { SignInIsolation.Restore(); } catch { }
         try { _sizeKeeper?.Dispose(); } catch { }
@@ -664,9 +666,11 @@ public partial class MainViewModel : ObservableObject
         if (!ok) return;
         Accounts.Remove(a);
         if (SelectedAccount == a) SelectedAccount = null;
-        _vault.Save(Accounts);
+        try { _vault.Save(Accounts); }
+        catch (Exception ex) { StatusMessage = "Couldn't save the vault: " + ex.Message; }
         RebuildGroups();
         UpdatePicked();
+        UpdateHomeTexts();
     }
 
     [RelayCommand]

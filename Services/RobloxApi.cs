@@ -60,9 +60,9 @@ public static class RobloxApi
         if (!resp.IsSuccessStatusCode) throw new HttpRequestException($"Roblox answered {(int)resp.StatusCode}. Try again in a moment.");
         using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
         var e = doc.RootElement;
-        return new UserInfo(e.GetProperty("id").GetInt64(),
-                            e.GetProperty("name").GetString() ?? "",
-                            e.GetProperty("displayName").GetString() ?? "");
+        return new UserInfo(e.Num("id"),
+                            e.Text("name"),
+                            e.Text("displayName"));
     }
 
     public static async Task<string> GetAvatarUrlAsync(long userId)
@@ -182,7 +182,6 @@ public static class RobloxApi
 
     public record Presence(int Type, string Location, long PlaceId, string? GameId = null, long RootPlaceId = 0);
 
-    /// <summary>Online / in game / in Studio status for one account, fetched with that account's own session.</summary>
     /// <summary>The account's Robux balance, or null when Roblox didn't say (signed out, rate limited, down).</summary>
     public static async Task<long?> GetRobuxAsync(string cookie, long userId)
     {
@@ -211,6 +210,7 @@ public static class RobloxApi
         catch { return null; }
     }
 
+    /// <summary>Online / in game / in Studio status for one account, fetched with that account's own session.</summary>
     public static async Task<Presence?> GetPresenceAsync(string cookie, long userId)
     {
         string? csrf = null;
@@ -227,10 +227,9 @@ public static class RobloxApi
             }
             if (!resp.IsSuccessStatusCode) return null;
             using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-            var arr = doc.RootElement.GetProperty("userPresences");
-            if (arr.GetArrayLength() == 0) return null;
-            var e = arr[0];
-            int type = e.GetProperty("userPresenceType").GetInt32();
+            var e = doc.RootElement.Arr("userPresences").FirstOrDefault();
+            if (e.ValueKind != JsonValueKind.Object) return null;
+            int type = (int)e.Num("userPresenceType");
             string loc = e.TryGetProperty("lastLocation", out var l) && l.ValueKind == JsonValueKind.String ? l.GetString() ?? "" : "";
             long place = e.TryGetProperty("placeId", out var pi) && pi.ValueKind == JsonValueKind.Number ? pi.GetInt64() : 0;
             long root = e.TryGetProperty("rootPlaceId", out var ri) && ri.ValueKind == JsonValueKind.Number ? ri.GetInt64() : 0;
@@ -336,7 +335,7 @@ public static class RobloxApi
                 using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
                 var data = doc.RootElement.GetProperty("data");
                 if (data.GetArrayLength() == 0) return (0, $"No Roblox user is called “{input}”.");
-                return (data[0].GetProperty("id").GetInt64(), null);
+                return (data[0].Num("id"), null);
             }
             return (0, "Roblox refused the request. Try again.");
         }

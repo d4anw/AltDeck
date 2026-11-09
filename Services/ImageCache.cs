@@ -96,9 +96,12 @@ public static class Thumbnails
     static readonly ConcurrentDictionary<string, string> Known = new();
 
     public static async Task<Dictionary<long, string>> GetAsync(string type, IEnumerable<long> ids, string size = "150x150",
-                                                              CancellationToken ct = default)
+                                                              CancellationToken ct = default) => await GetAsync(type, ids, size, ct, retry: true);
+
+    static async Task<Dictionary<long, string>> GetAsync(string type, IEnumerable<long> ids, string size, CancellationToken ct, bool retry)
     {
         var result = new Dictionary<long, string>();
+        var pending = new List<long>();
         var missing = new List<long>();
         foreach (var id in ids.Distinct())
         {
@@ -120,17 +123,27 @@ public static class Thumbnails
             try
             {
                 using var doc = await RobloxHttp.PostJsonAsync("https://thumbnails.roblox.com/v1/batch", null, body, ct);
-                foreach (var e in doc.RootElement.GetProperty("data").EnumerateArray())
+                foreach (var e in doc.RootElement.Arr("data"))
                 {
-                    if (e.TryGetProperty("state", out var st) && st.GetString() != "Completed") continue;   // still rendering
+                    if (e.Text("state") is { Length: > 0 } state && state != "Completed")
+                    {
+                        if (state == "Pending") pending.Add(e.Num("targetId"));   // still being drawn: asked again below
+                        continue;
+                    }
                     if (!e.TryGetProperty("imageUrl", out var u) || u.ValueKind != System.Text.Json.JsonValueKind.String) continue;
-                    long id = e.GetProperty("targetId").GetInt64();
+                    long id = e.Num("targetId");
                     var url = u.GetString()!;
                     result[id] = url;
                     Known[$"{type}:{size}:{id}"] = url;
                 }
             }
             catch (RobloxException) { }   // pictures are a nicety: the page still works without them
+        }
+        // Roblox draws a picture it doesn't have yet on request: ask once more a moment later
+        if (retry && pending.Count > 0)
+        {
+            try { await Task.Delay(1500, ct); } catch (OperationCanceledException) { return result; }
+            foreach (var (id, url) in await GetAsync(type, pending, size, ct, retry: false)) result[id] = url;
         }
         return result;
     }

@@ -43,14 +43,16 @@ public static class RolimonsAds
         {
             Content = new StringContent(body, Encoding.UTF8, "application/json")
         };
-        req.Headers.TryAddWithoutValidation("Cookie", "_RoliVerification=" + verification.Trim());
+        req.Headers.TryAddWithoutValidation("Cookie", "_RoliVerification=" + CleanVerification(verification));
         req.Headers.TryAddWithoutValidation("User-Agent", "RoDeck");
         HttpResponseMessage resp;
         try { resp = await Http.SendAsync(req, ct); }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { return new(false, "Rolimons isn't answering. Trying again later."); }
         using (resp)
         {
-            var text = await resp.Content.ReadAsStringAsync(ct);
+            string text;
+            try { text = await resp.Content.ReadAsStringAsync(ct); }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { return new(false, "Rolimons isn't answering. Trying again later."); }
             string msg = "";
             bool success = false;
             try
@@ -68,6 +70,15 @@ public static class RolimonsAds
                 return new(false, (msg.Length > 0 ? msg : "Rolimons didn't accept the verification cookie") + ". Paste a fresh one from rolimons.com.");
             return new(false, msg.Length > 0 ? $"Rolimons: {msg}" : $"Rolimons answered {(int)resp.StatusCode}.");
         }
+    }
+
+    /// <summary>What was pasted, without "_RoliVerification=", quotes, ";" or line breaks around it.</summary>
+    public static string CleanVerification(string raw)
+    {
+        var v = (raw ?? "").Trim().Trim('"');
+        const string prefix = "_RoliVerification=";
+        if (v.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) v = v[prefix.Length..];
+        return new string(v.TrimEnd(';').Where(c => !char.IsWhiteSpace(c)).ToArray());
     }
 
     // ---- the verification cookie, encrypted for this Windows user (like the vault without a master password)

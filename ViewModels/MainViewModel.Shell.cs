@@ -64,6 +64,7 @@ public partial class MainViewModel
         MarketAccountChanged();
         TradesAccountChanged();
         _ = RefreshRequestCountAsync();
+        if (GameRows.Count > 0) _ = BuildGameRowsAsync();   // "My favourites" is per account
     }
 
     [RelayCommand]

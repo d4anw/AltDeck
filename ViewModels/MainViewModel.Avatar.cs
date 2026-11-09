@@ -512,7 +512,7 @@ public partial class MainViewModel
         PreviewUpdating = true;
         _pendingVisibleChange = true;   // the preview has to wait for Roblox's new render
 
-        if (!_wearTimerHooked) { _wearSaveTimer.Tick += async (_, _) => { _wearSaveTimer.Stop(); await SaveWearingAsync(); }; _wearTimerHooked = true; }
+        if (!_wearTimerHooked) { _wearSaveTimer.Tick += async (_, _) => { _wearSaveTimer.Stop(); await Quietly("Saving the avatar", SaveWearingAsync); }; _wearTimerHooked = true; }
         _wearSaveTimer.Stop();
         _wearSaveTimer.Start();
     }

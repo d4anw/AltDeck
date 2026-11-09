@@ -44,6 +44,7 @@ public static class LimitedValues
                 }
             }
             catch (RobloxException) when (Items.Count > 0) { }   // keep the last values; try again next time
+            catch (JsonException) when (Items.Count > 0) { }     // a broken answer: the same
         }
         finally { Gate.Release(); }
     }
@@ -68,7 +69,7 @@ public static class LimitedValues
         {
             if (!long.TryParse(p.Name, out var id) || p.Value.ValueKind != JsonValueKind.Array) continue;
             var a = p.Value.EnumerateArray().ToList();
-            long L(int i) => i < a.Count && a[i].ValueKind == JsonValueKind.Number ? a[i].GetInt64() : -1;
+            long L(int i) => i < a.Count && a[i].ValueKind == JsonValueKind.Number && a[i].TryGetInt64(out var v) ? v : -1;
             string S(int i) => i < a.Count && a[i].ValueKind == JsonValueKind.String ? a[i].GetString() ?? "" : "";
             Items[id] = new LimitedInfo
             {
@@ -173,7 +174,10 @@ public static class LimitedValues
         foreach (var a in acts.EnumerateArray())
         {
             if (a.ValueKind != JsonValueKind.Array || a.GetArrayLength() < 4) continue;
-            long at = a[0].GetInt64(), kind = a[1].GetInt64(), id = a[2].GetInt64(), price = a[3].GetInt64();
+            static long N(JsonElement e) => e.ValueKind == JsonValueKind.Number && e.TryGetInt64(out var v) ? v
+                                          : e.ValueKind == JsonValueKind.String && long.TryParse(e.GetString(), out var s) ? s : -1;
+            long at = N(a[0]), kind = N(a[1]), id = N(a[2]), price = N(a[3]);
+            if (at <= 0 || id <= 0) continue;
             if (kind == 1) SetRap(id, price);
             else if (kind == 0 && price > 0) list.Add((id, price, DateTimeOffset.FromUnixTimeSeconds(at).LocalDateTime));
         }

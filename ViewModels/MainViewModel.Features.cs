@@ -38,6 +38,16 @@ public partial class MainViewModel
     private readonly ActivityLog _log = ActivityLog.Shared;
 
     private void Log(string kind, string message) => _log.Add(kind, message);
+
+    /// <summary>
+    /// For work that runs on its own (timers, background checks): an unexpected error is written to the activity log
+    /// instead of interrupting with an error window, and the next run simply tries again.
+    /// </summary>
+    private async Task Quietly(string what, Func<Task> work)
+    {
+        try { await work(); }
+        catch (Exception ex) { Log(ActivityLog.Error, $"{what}: {ex.Message}"); }
+    }
     private void QueueSettingsSave() { _saveTimer.Stop(); _saveTimer.Start(); }
 
     /// <summary>Called once from the constructor.</summary>
@@ -63,7 +73,7 @@ public partial class MainViewModel
     {
         var place = _placeNames.TryGetValue(t.PlaceId, out var n) ? n : "place " + t.PlaceId;
         if (t.PrivateCode != null) return place + " (private server)";
-        if (t.JobId != null) return place + " (server " + t.JobId[..8] + ")";
+        if (t.JobId != null) return place + " (server " + t.JobId[..Math.Min(8, t.JobId.Length)] + ")";
         return place;
     }
 

@@ -38,6 +38,11 @@ public partial class MarketItem : ObservableObject
     public bool ForSale => Price != null;
     /// <summary>Not sold by Roblox / the creator anymore, only by players reselling theirs.</summary>
     public bool IsResaleOnly => Price == null && LowestResale > 0;
+    /// <summary>
+    /// A limited only players sell now: it gets the limited's item page (values, graph, sellers). A new limited the
+    /// creator still sells keeps the normal page, with Buy and Try on.
+    /// </summary>
+    public bool ShowsAsLimited => IsLimited && !ForSale;
     /// <summary>Can be bought one way or another: new, or from a reseller.</summary>
     public bool Buyable => ForSale || IsResaleOnly;
 

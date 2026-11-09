@@ -28,7 +28,7 @@ public static class RobloxMarket
         {
             using var doc = await RobloxHttp.GetJsonAsync($"{Catalog}/v1/search/navigation-menu-items", null, ct);
             var list = new List<MarketChip>();
-            foreach (var c in doc.RootElement.GetProperty("categories").EnumerateArray())
+            foreach (var c in doc.RootElement.Arr("categories"))
             {
                 var tax = Str(c, "taxonomy");
                 if (tax.Length == 0) continue;

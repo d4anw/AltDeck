@@ -24,11 +24,11 @@ public static class RobloxHome
         await Task.WhenAll(ids.Chunk(50).Select(async chunk =>
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://presence.roblox.com/v1/presence/users", cookie, new { userIds = chunk }, ct);
-            foreach (var p in doc.RootElement.GetProperty("userPresences").EnumerateArray())
+            foreach (var p in doc.RootElement.Arr("userPresences"))
             {
                 int type = p.TryGetProperty("userPresenceType", out var t) && t.ValueKind == JsonValueKind.Number ? t.GetInt32() : 0;
                 if (type is < 1 or > 3) continue;   // 0 = offline (4 = invisible)
-                online.Add((p.GetProperty("userId").GetInt64(), type, Str(p, "lastLocation"),
+                online.Add((p.Num("userId"), type, Str(p, "lastLocation"),
                             Long(p, "rootPlaceId") is > 0 and var root ? root : Long(p, "placeId"),
                             Str(p, "gameId") is { Length: > 0 } g ? g : null));
             }
@@ -41,8 +41,8 @@ public static class RobloxHome
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://users.roblox.com/v1/users", null,
                 new { userIds = chunk, excludeBannedUsers = false }, ct);
-            foreach (var u in doc.RootElement.GetProperty("data").EnumerateArray())
-                names[u.GetProperty("id").GetInt64()] = (Str(u, "name"), Str(u, "displayName"));
+            foreach (var u in doc.RootElement.Arr("data"))
+                names[u.Num("id")] = (Str(u, "name"), Str(u, "displayName"));
         }
 
         var tiles = online
@@ -77,7 +77,7 @@ public static class RobloxHome
 
         // metadata: contentMetadata.Game["<universeId>"] = { name, rootPlaceId, playerCount, totalUpVotes, totalDownVotes }
         JsonElement meta = default;
-        bool hasMeta = root.TryGetProperty("contentMetadata", out var cm) && cm.TryGetProperty("Game", out meta);
+        bool hasMeta = root.TryGetProperty("contentMetadata", out var cm) && cm.ValueKind == JsonValueKind.Object && cm.TryGetProperty("Game", out meta);
 
         var rows = new List<(string Topic, List<long> Ids)>();
         if (root.TryGetProperty("sorts", out var sorts) && sorts.ValueKind == JsonValueKind.Array)
@@ -86,7 +86,7 @@ public static class RobloxHome
                 if (!s.TryGetProperty("recommendationList", out var list) || list.ValueKind != JsonValueKind.Array) continue;
                 var ids = list.EnumerateArray()
                     .Where(r => Str(r, "contentType") == "Game" && r.TryGetProperty("contentId", out var c) && c.ValueKind == JsonValueKind.Number)
-                    .Select(r => r.GetProperty("contentId").GetInt64())
+                    .Select(r => r.Num("contentId"))
                     .ToList();
                 if (ids.Count > 0) rows.Add((Str(s, "topic"), ids));
             }
@@ -150,15 +150,15 @@ public static class RobloxHome
             foreach (var chunk in missing.Chunk(50))
             {
                 using var doc = await RobloxHttp.GetJsonAsync("https://games.roblox.com/v1/games?universeIds=" + string.Join(",", chunk), null, ct);
-                foreach (var g in doc.RootElement.GetProperty("data").EnumerateArray())
-                    info[g.GetProperty("id").GetInt64()] = (Str(g, "name"), Long(g, "rootPlaceId"), Long(g, "playing"));
+                foreach (var g in doc.RootElement.Arr("data"))
+                    info[g.Num("id")] = (Str(g, "name"), Long(g, "rootPlaceId"), Long(g, "playing"));
             }
             var votes = new Dictionary<long, (long Up, long Down)>();
             foreach (var chunk in missing.Chunk(50))
             {
                 using var doc = await RobloxHttp.GetJsonAsync("https://games.roblox.com/v1/games/votes?universeIds=" + string.Join(",", chunk), null, ct);
-                foreach (var v in doc.RootElement.GetProperty("data").EnumerateArray())
-                    votes[v.GetProperty("id").GetInt64()] = (Long(v, "upVotes"), Long(v, "downVotes"));
+                foreach (var v in doc.RootElement.Arr("data"))
+                    votes[v.Num("id")] = (Long(v, "upVotes"), Long(v, "downVotes"));
             }
             foreach (var t in tiles)
             {

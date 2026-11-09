@@ -22,7 +22,7 @@ public partial class MainViewModel
     private long _limitedAutoBuy;
 
     /// <summary>The item page is showing on the Marketplace (a limited opened there).</summary>
-    public bool IsMarketLimitedOpen => OpenMarketItem is { IsLimited: true };
+    public bool IsMarketLimitedOpen => OpenMarketItem is { ShowsAsLimited: true };
     /// <summary>The Marketplace's own item page (everything that isn't a limited).</summary>
     public bool IsMarketPlainItemOpen => IsMarketItemOpen && !IsMarketLimitedOpen;
 

@@ -32,9 +32,10 @@ public static class RobloxAvatar
         using var doc = await RobloxHttp.GetJsonAsync($"{Avatar}/v1/avatar-rules", null, ct);
         var r = new AvatarRules();
         var root = doc.RootElement;
-        foreach (var w in root.GetProperty("wearableAssetTypes").EnumerateArray())
+        foreach (var w in root.Arr("wearableAssetTypes"))
             r.Wearable[(int)Long(w, "id")] = (Str(w, "name"), (int)Long(w, "maxNumber"));
-        foreach (var s in root.GetProperty("scales").EnumerateObject())
+        if (root.TryGetProperty("scales", out var scales) && scales.ValueKind == JsonValueKind.Object)
+        foreach (var s in scales.EnumerateObject())
             r.Scales[s.Name] = (Dbl(s.Value, "min"), Dbl(s.Value, "max"), Dbl(s.Value, "increment"));
         // accessory adjustment: limits are listed by type name; map them to the type IDs we use
         var names = new Dictionary<string, int> { ["Hat"] = 8, ["FaceAccessory"] = 42, ["NeckAccessory"] = 43,
@@ -98,7 +99,7 @@ public static class RobloxAvatar
                 + (string.IsNullOrEmpty(cursor) ? "" : "&cursor=" + Uri.EscapeDataString(cursor));
         using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
         var items = new List<WardrobeItem>();
-        foreach (var x in doc.RootElement.GetProperty("data").EnumerateArray())
+        foreach (var x in doc.RootElement.Arr("data"))
         {
             long id = Long(x, "assetId");
             if (id > 0 && items.All(i => i.AssetId != id))   // limiteds can be owned more than once
@@ -117,7 +118,7 @@ public static class RobloxAvatar
             var url = $"{Avatar}/v2/avatar/users/{userId}/outfits?outfitType=Avatar&page=1&itemsPerPage=50&isEditable=true"
                     + (token != null ? "&paginationToken=" + Uri.EscapeDataString(token) : "");
             using var doc = await RobloxHttp.GetJsonAsync(url, null, ct);
-            foreach (var o in doc.RootElement.GetProperty("data").EnumerateArray())
+            foreach (var o in doc.RootElement.Arr("data"))
                 list.Add(new OutfitInfo { Id = Long(o, "id"), Name = Str(o, "name") });
             token = Str(doc.RootElement, "paginationToken");
             if (string.IsNullOrEmpty(token)) break;

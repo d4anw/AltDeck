@@ -44,9 +44,20 @@ public partial class App : Application
         // Show errors instead of closing silently.
         DispatcherUnhandledException += (_, ex) =>
         {
-            ActivityLog.Shared.Add(ActivityLog.Error, "Unexpected error: " + ex.Exception.Message);
-            MessageBox.Show(ex.Exception.ToString(), "RoDeck error");
+            var where = ex.Exception.StackTrace?.Split('\n').FirstOrDefault()?.Trim() ?? "";
+            ActivityLog.Shared.Add(ActivityLog.Error, $"Unexpected error ({ex.Exception.GetType().Name}): {ex.Exception.Message} {where}");
             ex.Handled = true;
+            // with the app up, a short note in its toast; the full details are in Multi-launch → Activity
+            if (MainWindow is MainWindow { IsLoaded: true, DataContext: ViewModels.MainViewModel vm })
+                vm.StatusMessage = "Something went wrong: " + ex.Exception.Message + " (details in the Activity log)";
+            else
+                MessageBox.Show(ex.Exception.Message, "RoDeck error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        };
+        // background work nobody waited for: note the error instead of losing it
+        TaskScheduler.UnobservedTaskException += (_, ex) =>
+        {
+            ActivityLog.Shared.Add(ActivityLog.Error, "Background error: " + ex.Exception.GetBaseException().Message);
+            ex.SetObserved();
         };
         base.OnStartup(e);
         TitleBar.HookAllWindows();

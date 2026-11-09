@@ -101,7 +101,7 @@ public static class RobloxFriends
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://presence.roblox.com/v1/presence/users", cookie, new { userIds = chunk }, ct);
             var results = new List<(long Id, int Type, string Loc, long Place, string? Job)>();
-            foreach (var p in doc.RootElement.GetProperty("userPresences").EnumerateArray())
+            foreach (var p in doc.RootElement.Arr("userPresences"))
             {
                 int type = p.TryGetProperty("userPresenceType", out var t) && t.ValueKind == JsonValueKind.Number ? t.GetInt32() : 0;
                 if (type > 3) type = 0;   // 4 = invisible: shows as offline
@@ -227,13 +227,26 @@ public static class RobloxFriends
     {
         query = query.Trim().TrimStart('@');
         var hits = new List<PlayerHit>();
+        // a user ID (or a profile link): that player straight away
+        var link = System.Text.RegularExpressions.Regex.Match(query, @"roblox\.com/(?:[a-z]{2}/)?users/(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (link.Success) query = link.Groups[1].Value;
+        if (long.TryParse(query, out var asId) && asId > 0)
+        {
+            try
+            {
+                var p = await GetProfileAsync(asId, null, 0, ct);
+                hits.Add(new PlayerHit { UserId = asId, Name = p.Name, DisplayName = p.DisplayName, Verified = p.Verified });
+            }
+            catch (RobloxException) { }
+        }
         if (query.Length >= 3)
         {
             try
             {
                 using var exact = await RobloxHttp.PostJsonAsync("https://users.roblox.com/v1/usernames/users", null,
                     new { usernames = new[] { query }, excludeBannedUsers = false }, ct);
-                foreach (var u in exact.RootElement.GetProperty("data").EnumerateArray())
+                foreach (var u in exact.RootElement.Arr("data"))
+                    if (!hits.Any(h => h.UserId == Long(u, "id")))
                     hits.Add(new PlayerHit { UserId = Long(u, "id"), Name = Str(u, "name"), DisplayName = Str(u, "displayName"), Verified = Bool(u, "hasVerifiedBadge") });
             }
             catch (RobloxException) { }
@@ -242,7 +255,7 @@ public static class RobloxFriends
             {
                 using var doc = await RobloxHttp.GetJsonAsync(
                     $"https://users.roblox.com/v1/users/search?keyword={Uri.EscapeDataString(query)}&limit=25", cookie, ct);
-                foreach (var u in doc.RootElement.GetProperty("data").EnumerateArray())
+                foreach (var u in doc.RootElement.Arr("data"))
                 {
                     long id = Long(u, "id");
                     if (hits.Any(h => h.UserId == id)) continue;
@@ -250,11 +263,6 @@ public static class RobloxFriends
                 }
             }
             catch (RobloxException) when (hits.Count > 0) { }   // the exact match is enough
-        }
-        else if (long.TryParse(query, out var id) && id > 0)
-        {
-            var p = await GetProfileAsync(id, null, 0, ct);
-            hits.Add(new PlayerHit { UserId = id, Name = p.Name, DisplayName = p.DisplayName, Verified = p.Verified });
         }
 
         var heads = await Thumbnails.GetAsync("AvatarHeadShot", hits.Select(h => h.UserId), "150x150", ct);
@@ -291,7 +299,7 @@ public static class RobloxFriends
             Safe(async () =>
             {
                 using var x = await RobloxHttp.GetJsonAsync($"https://games.roblox.com/v2/users/{userId}/games?accessFilter=Public&limit=10&sortOrder=Desc", null, ct);
-                var games = x.RootElement.GetProperty("data").EnumerateArray()
+                var games = x.RootElement.Arr("data")
                     .Select(g => new GameTile { UniverseId = Long(g, "id"), PlaceId = g.TryGetProperty("rootPlace", out var rp) ? Long(rp, "id") : 0, Name = Str(g, "name") })
                     .Where(g => g.UniverseId > 0).ToList();
                 await RobloxHome.FillMissingAsync(games, ct);
@@ -303,13 +311,13 @@ public static class RobloxFriends
             tasks.Add(Safe(async () =>
             {
                 using var x = await RobloxHttp.GetJsonAsync($"https://friends.roblox.com/v1/users/{meId}/friends/statuses?userIds={userId}", cookie, ct);
-                var e = x.RootElement.GetProperty("data").EnumerateArray().FirstOrDefault();
+                var e = x.RootElement.Arr("data").FirstOrDefault();
                 p.Friendship = e.ValueKind == JsonValueKind.Object ? Str(e, "status") : "";
             }));
             tasks.Add(Safe(async () =>
             {
                 using var x = await RobloxHttp.PostJsonAsync("https://presence.roblox.com/v1/presence/users", cookie, new { userIds = new[] { userId } }, ct);
-                var e = x.RootElement.GetProperty("userPresences")[0];
+                var e = x.RootElement.Arr("userPresences").FirstOrDefault();
                 int type = e.TryGetProperty("userPresenceType", out var t) && t.ValueKind == JsonValueKind.Number ? t.GetInt32() : 0;
                 p.PresenceType = type > 3 ? 0 : type;
                 p.Location = Str(e, "lastLocation") is var loc && loc != "Website" ? loc : "";
@@ -335,7 +343,7 @@ public static class RobloxFriends
         await Task.WhenAll(missing.Chunk(100).Select(async chunk =>
         {
             using var doc = await RobloxHttp.PostJsonAsync("https://users.roblox.com/v1/users", null, new { userIds = chunk, excludeBannedUsers = false }, ct);
-            foreach (var u in doc.RootElement.GetProperty("data").EnumerateArray())
+            foreach (var u in doc.RootElement.Arr("data"))
                 names[Long(u, "id")] = NameCache[Long(u, "id")] = (Str(u, "name"), Str(u, "displayName"));
         }));
         return new Dictionary<long, (string?, string?)>(names);

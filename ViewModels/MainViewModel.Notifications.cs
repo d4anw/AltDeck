@@ -46,9 +46,9 @@ public partial class MainViewModel
     /// <summary>Started once; does nothing while every notification is off.</summary>
     private void SetupNotifications()
     {
-        _notifyTimer.Tick += async (_, _) => await NotifyTickAsync();
+        _notifyTimer.Tick += async (_, _) => await Quietly("Notifications", NotifyTickAsync);
         _notifyTimer.Start();
-        _declineTimer.Tick += async (_, _) => await AutoDeclineTickAsync();
+        _declineTimer.Tick += async (_, _) => await Quietly("Auto-decline", AutoDeclineTickAsync);
         _declineTimer.Start();
         SetupWatchlist();
         Settings.PropertyChanged += (_, e) =>
