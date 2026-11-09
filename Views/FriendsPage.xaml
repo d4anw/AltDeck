@@ -71,7 +71,8 @@
                   ToolTip="Refresh" Command="{Binding RefreshFriendsCommand}"/>
         </Grid>
 
-        <StackPanel Orientation="Horizontal" Margin="0,18,0,16">
+        <Grid Margin="0,18,0,16">
+        <StackPanel Orientation="Horizontal">
           <RadioButton Style="{StaticResource Seg}" Content="Friends" GroupName="friendstab"
                        IsChecked="{Binding FriendsTab, Converter={StaticResource Eq}, ConverterParameter=Friends, Mode=TwoWay}"/>
           <RadioButton Style="{StaticResource Seg}" GroupName="friendstab"
@@ -87,6 +88,25 @@
           <RadioButton Style="{StaticResource Seg}" Content="Find players" GroupName="friendstab" Margin="0"
                        IsChecked="{Binding FriendsTab, Converter={StaticResource Eq}, ConverterParameter=Find, Mode=TwoWay}"/>
         </StackPanel>
+        <!-- every request at once (one request to Roblox); a second click confirms -->
+        <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0" Padding="16,8" Command="{Binding DeclineAllRequestsCommand}"
+                Visibility="{Binding ShowDeclineAll, Converter={StaticResource BoolVis}}">
+          <Button.Style>
+            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding DeclineAllArmed}" Value="True">
+                  <Setter Property="Background" Value="{DynamicResource Red}"/>
+                  <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Button.Style>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE711;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock Text="{Binding DeclineAllText}"/>
+          </StackPanel>
+        </Button>
+        </Grid>
 
         <!-- friends -->
         <StackPanel Visibility="{Binding FriendsTab, Converter={StaticResource PageVis}, ConverterParameter=Friends}">

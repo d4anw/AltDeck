@@ -214,6 +214,44 @@ public partial class MainViewModel
         catch (Exception ex) { StatusMessage = "Couldn't decline: " + ex.Message; }
     }
 
+    // ---- decline all
+
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(DeclineAllText))] private bool declineAllArmed;
+    private DateTime _declineAllArmedAt;
+    public bool ShowDeclineAll => FriendsTab == "Requests" && RequestCount > 0;
+    public string DeclineAllText => DeclineAllArmed ? $"Click again to decline {RequestCount:N0}" : $"Decline all ({RequestCount:N0})";
+
+    partial void OnRequestCountChanged(int value) { OnPropertyChanged(nameof(ShowDeclineAll)); OnPropertyChanged(nameof(DeclineAllText)); }
+
+    /// <summary>Declines every request of the account top right with one request (Roblox's "Ignore all"). The first
+    /// click only asks; a second click within 5 seconds does it.</summary>
+    [RelayCommand]
+    private async Task DeclineAllRequestsAsync()
+    {
+        if (CurrentAccount is not { } a || string.IsNullOrEmpty(a.Cookie) || RequestCount == 0) return;
+        if (!DeclineAllArmed || DateTime.Now - _declineAllArmedAt > TimeSpan.FromSeconds(5))
+        {
+            DeclineAllArmed = true;
+            _declineAllArmedAt = DateTime.Now;
+            await Task.Delay(5000);
+            if (DateTime.Now - _declineAllArmedAt >= TimeSpan.FromSeconds(5)) DeclineAllArmed = false;
+            return;
+        }
+        DeclineAllArmed = false;
+        int n = RequestCount;
+        try
+        {
+            await RobloxFriends.DeclineAllAsync(a.Cookie);
+            if (a != CurrentAccount) return;
+            _requestsStore.Remove(a.Id);
+            Requests.Clear();
+            RequestCount = 0;
+            StatusMessage = $"Declined {n:N0} friend request{(n == 1 ? "" : "s")}.";
+            Log(ActivityLog.Info, $"Declined all {n:N0} friend requests on {a.Label}.");
+        }
+        catch (RobloxException ex) { StatusMessage = ex.TooMany ? "Roblox is busy, try again in a moment." : "Couldn't decline them: " + ex.Message; }
+    }
+
     // ================================================================== find players
 
     public ObservableCollection<PlayerHit> PlayerHits { get; } = new();
