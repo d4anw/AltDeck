@@ -76,7 +76,9 @@ public partial class MainViewModel
 
     partial void OnAdPickerSlotChanged(AdSlot? value) { OnPropertyChanged(nameof(AdPickerShowsTags)); OnPropertyChanged(nameof(AdPickerTitle)); }
     partial void OnAdPickerSearchChanged(string value) => FillAdPicker();
-    partial void OnAdPickerAscendingChanged(bool value) => FillAdPicker();
+    partial void OnAdPickerAscendingChanged(bool value) { OnPropertyChanged(nameof(AdPickerSortText)); FillAdPicker(); }
+    public string AdPickerSortText => AdPickerAscending ? "Lowest first" : "Highest first";
+    [RelayCommand] private void ToggleAdPickerSort() => AdPickerAscending = !AdPickerAscending;
     partial void OnAdPickerMinChanged(string value) => FillAdPicker();
     partial void OnAdPickerMaxChanged(string value) => FillAdPicker();
 

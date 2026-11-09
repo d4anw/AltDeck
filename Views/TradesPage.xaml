@@ -253,6 +253,63 @@
       <Setter Property="Padding" Value="20,16"/>
       <Setter Property="Margin" Value="0"/>
     </Style>
+    <!-- a picker over the tab: a raised card with a soft shadow and an accent edge (no dimming behind it) -->
+    <Style x:Key="PickerCard" TargetType="Border" BasedOn="{StaticResource CardBox}">
+      <Setter Property="Background" Value="{DynamicResource Card}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+      <Setter Property="Padding" Value="20,16"/>
+      <Setter Property="Margin" Value="20,0,20,0"/>
+      <Setter Property="VerticalAlignment" Value="Top"/>
+      <Setter Property="MaxWidth" Value="900"/>
+      <Setter Property="Effect">
+        <Setter.Value><DropShadowEffect BlurRadius="40" ShadowDepth="10" Opacity="0.55" Color="Black"/></Setter.Value>
+      </Setter>
+    </Style>
+    <!-- a number box with its name inside, top left (Min value / Max value) -->
+    <Style x:Key="RangeBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+      <Setter Property="Padding" Value="10,17,10,3"/>
+      <Setter Property="FontFamily" Value="Consolas"/>
+      <Setter Property="VerticalAlignment" Value="Stretch"/>
+    </Style>
+    <Style x:Key="RangeLabel" TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="Margin" Value="12,7,0,0"/>
+      <Setter Property="IsHitTestVisible" Value="False"/>
+      <Setter Property="VerticalAlignment" Value="Top"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <!-- the Limiteds table: a header you can click to sort, and a quick-filter chip -->
+    <Style x:Key="TableHeadText" TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="TableHead" TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="Transparent" Padding="0,4"><ContentPresenter VerticalAlignment="Center"/></Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{DynamicResource Fg}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="FilterChip" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource Card}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+    </Style>
   </UserControl.Resources>
 
   <Grid>
@@ -410,8 +467,7 @@
 
           <!-- the picker, over the tab -->
           <Grid Grid.ColumnSpan="3" Visibility="{Binding IsCalcPickerOpen, Converter={StaticResource BoolVis}}">
-            <Border Background="#99000000" CornerRadius="16" Margin="-12,-8,-12,0"/>
-            <Border Style="{StaticResource CardBox}" Background="{DynamicResource Card}" Padding="20,16" Margin="20,0,20,0" VerticalAlignment="Top" MaxWidth="900">
+            <Border x:Name="CalcPickerCard" Style="{StaticResource PickerCard}">
               <StackPanel>
                 <Grid Margin="0,0,0,12">
                   <TextBlock Text="{Binding CalcPickerTitle}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
@@ -435,22 +491,29 @@
                   </RadioButton>
                 </StackPanel>
 
-                <!-- search, sort, value range -->
+                <!-- search, sort, value range: one row, all the same height -->
                 <Grid Margin="0,0,0,12">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                   </Grid.ColumnDefinitions>
-                  <ctl:SearchBox Text="{Binding CalcPickerSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Filter by name, acronym or ID" Margin="0,0,12,0"/>
-                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <RadioButton Style="{StaticResource Seg}" Content="High → Low" GroupName="calcsort"
-                                 IsChecked="{Binding CalcPickerAscending, Converter={StaticResource Not}}"/>
-                    <RadioButton Style="{StaticResource Seg}" Content="Low → High" GroupName="calcsort" Margin="0,0,12,0"
-                                 IsChecked="{Binding CalcPickerAscending}"/>
-                    <TextBox Text="{Binding CalcPickerMin, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Lowest value"/>
-                    <TextBlock Text="–" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                    <TextBox Text="{Binding CalcPickerMax, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Highest value"/>
-                  </StackPanel>
+                  <ctl:SearchBox Text="{Binding CalcPickerSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Filter by name, acronym or ID" Margin="0,0,10,0"/>
+                  <Button Grid.Column="1" Margin="0,0,10,0" Padding="14,0" Command="{Binding ToggleCalcPickerSortCommand}" ToolTip="Sort by value">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE8CB;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource Accent}"/>
+                      <TextBlock Text="{Binding CalcPickerSortText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
+                  <Grid Grid.Column="2" Width="96" Margin="0,0,8,0">
+                    <TextBox Text="{Binding CalcPickerMin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource RangeBox}"/>
+                    <TextBlock Text="Min value" Style="{StaticResource RangeLabel}"/>
+                  </Grid>
+                  <Grid Grid.Column="3" Width="96">
+                    <TextBox Text="{Binding CalcPickerMax, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource RangeBox}"/>
+                    <TextBlock Text="Max value" Style="{StaticResource RangeLabel}"/>
+                  </Grid>
                 </Grid>
 
                 <!-- your inventory still loading -->
@@ -640,46 +703,6 @@
             </Grid>
           </Border>
 
-          <!-- value over time -->
-          <Border Style="{StaticResource CardBox}" Padding="22,18" Margin="0,14,0,0">
-            <StackPanel>
-              <Grid Margin="0,0,0,12">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                  <TextBlock Text="Value over time" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                  <Border Style="{StaticResource DiffPill}" Tag="{Binding TradeProfileChartKind}" Margin="12,0,0,0" VerticalAlignment="Center"
-                          Visibility="{Binding TradeProfileChartChange, Converter={StaticResource EmptyCollapsed}}">
-                    <TextBlock Text="{Binding TradeProfileChartChange}" FontSize="12" FontWeight="SemiBold"/>
-                  </Border>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                  <RadioButton Style="{StaticResource Seg}" Content="1w" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=1w, Mode=TwoWay}"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="1m" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=1m, Mode=TwoWay}"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="3m" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=3m, Mode=TwoWay}"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="6m" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=6m, Mode=TwoWay}"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="1y" GroupName="profrange" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=1y, Mode=TwoWay}"/>
-                  <RadioButton Style="{StaticResource Seg}" Content="All" GroupName="profrange" Margin="0" IsChecked="{Binding TradeProfileRange, Converter={StaticResource Eq}, ConverterParameter=All, Mode=TwoWay}"/>
-                </StackPanel>
-              </Grid>
-              <Grid Height="260">
-                <ctl:ValueChart Points="{Binding TradeProfileChart}"/>
-                <!-- still being worked out -->
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="300"
-                            Visibility="{Binding TradeProfileChartLoading, Converter={StaticResource BoolVis}}">
-                  <ProgressBar IsIndeterminate="True" Height="4" BorderThickness="0" Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}"/>
-                  <TextBlock Text="{Binding TradeProfileChartText}" FontSize="12" Style="{StaticResource MutedText}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                </StackPanel>
-              </Grid>
-              <StackPanel Orientation="Horizontal" Margin="54,10,0,0">
-                <Ellipse Width="8" Height="8" Fill="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBlock Text="Value" FontSize="12" Margin="0,0,16,0"/>
-                <Ellipse Width="8" Height="8" Fill="{DynamicResource Blue}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBlock Text="RAP" FontSize="12"/>
-              </StackPanel>
-              <TextBlock Text="{Binding TradeProfileChartNote}" FontSize="11" Style="{StaticResource MutedText}" Margin="54,6,0,0" TextWrapping="Wrap"
-                         Visibility="{Binding TradeProfileChartNote, Converter={StaticResource EmptyCollapsed}}"/>
-            </StackPanel>
-          </Border>
-
           <!-- their limiteds: they appear one by one as they come in -->
           <Grid Margin="2,22,0,12">
             <TextBlock FontSize="18" FontWeight="Bold">
@@ -820,8 +843,7 @@
 
           <!-- the picker, over the tab -->
           <Grid Grid.ColumnSpan="3" Visibility="{Binding IsAdPickerOpen, Converter={StaticResource BoolVis}}">
-            <Border Background="#99000000" CornerRadius="16" Margin="-12,-8,-12,0"/>
-            <Border Style="{StaticResource CardBox}" Background="{DynamicResource Card}" Padding="20,16" Margin="20,0,20,0" VerticalAlignment="Top" MaxWidth="900">
+            <Border x:Name="AdPickerCard" Style="{StaticResource PickerCard}">
               <StackPanel>
                 <Grid Margin="0,0,0,12">
                   <TextBlock Text="{Binding AdPickerTitle}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
@@ -847,22 +869,29 @@
                   <TextBlock Text="ITEMS" FontSize="11" FontWeight="Bold" Style="{StaticResource MutedText}" Margin="0,8,0,8"/>
                 </StackPanel>
 
-                <!-- search, sort, value range -->
+                <!-- search, sort, value range: one row, all the same height -->
                 <Grid Margin="0,0,0,12">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                   </Grid.ColumnDefinitions>
-                  <ctl:SearchBox Text="{Binding AdPickerSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Filter by name or acronym" Margin="0,0,12,0"/>
-                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <RadioButton Style="{StaticResource Seg}" Content="High → Low" GroupName="adsort"
-                                 IsChecked="{Binding AdPickerAscending, Converter={StaticResource Not}}"/>
-                    <RadioButton Style="{StaticResource Seg}" Content="Low → High" GroupName="adsort" Margin="0,0,12,0"
-                                 IsChecked="{Binding AdPickerAscending}"/>
-                    <TextBox Text="{Binding AdPickerMin, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Lowest value"/>
-                    <TextBlock Text="–" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                    <TextBox Text="{Binding AdPickerMax, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource NumBox}" ToolTip="Highest value"/>
-                  </StackPanel>
+                  <ctl:SearchBox Text="{Binding AdPickerSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Filter by name or acronym" Margin="0,0,10,0"/>
+                  <Button Grid.Column="1" Margin="0,0,10,0" Padding="14,0" Command="{Binding ToggleAdPickerSortCommand}" ToolTip="Sort by value">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE8CB;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource Accent}"/>
+                      <TextBlock Text="{Binding AdPickerSortText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
+                  <Grid Grid.Column="2" Width="96" Margin="0,0,8,0">
+                    <TextBox Text="{Binding AdPickerMin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource RangeBox}"/>
+                    <TextBlock Text="Min value" Style="{StaticResource RangeLabel}"/>
+                  </Grid>
+                  <Grid Grid.Column="3" Width="96">
+                    <TextBox Text="{Binding AdPickerMax, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource RangeBox}"/>
+                    <TextBlock Text="Max value" Style="{StaticResource RangeLabel}"/>
+                  </Grid>
                 </Grid>
 
                 <ScrollViewer MaxHeight="430" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -968,28 +997,194 @@
 
         <!-- ================= LIMITEDS ================= -->
         <Grid Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Limiteds}">
-          <!-- the list -->
+          <!-- the list: a table like Rolimons' item list -->
           <StackPanel Visibility="{Binding IsLimitedOpen, Converter={StaticResource BoolVisInv}}">
-            <Grid Margin="0,0,0,16">
-              <ctl:SearchBox Width="320" HorizontalAlignment="Left" Text="{Binding LimitedsSearch}" Placeholder="Search limiteds or acronyms, press Enter"
-                             SubmitCommand="{Binding SearchLimitedsCommand}" SubmitOnClear="True"/>
-              <ComboBox Width="190" HorizontalAlignment="Right" ItemsSource="{Binding LimitedSorts}" SelectedItem="{Binding LimitedsSort}"
-                        DisplayMemberPath="Name" ToolTip="Sort"/>
+            <!-- search, quick filters -->
+            <Grid Margin="0,0,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <ctl:SearchBox Text="{Binding LimitedsSearch, UpdateSourceTrigger=PropertyChanged}" Placeholder="Name, acronym or ID"/>
+              <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Border Style="{StaticResource FilterChip}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Valued only" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding LimitedsValuedOnly}"/>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource FilterChip}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rare only" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding LimitedsRareOnly}"/>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource FilterChip}" Margin="0">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Hide projected" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding LimitedsHideProjected}"/>
+                  </StackPanel>
+                </Border>
+              </WrapPanel>
             </Grid>
-            <ItemsControl ItemsSource="{Binding LimitedsShown}">
-              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Button Style="{StaticResource CardButton}" Content="{Binding}" ContentTemplate="{StaticResource LimitedCard}"
-                          Command="{Binding DataContext.OpenLimitedTileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          CommandParameter="{Binding}"/>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock Text="Loading values…" Style="{StaticResource MutedText}"
-                       Visibility="{Binding LimitedsShown.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
-            <Button Content="Show more" HorizontalAlignment="Center" Padding="22,10" Margin="0,8,0,0" Command="{Binding ShowMoreLimitedsCommand}"
+            <!-- a range on one number -->
+            <Grid Margin="0,0,0,14">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Filter on" VerticalAlignment="Center" Style="{StaticResource MutedText}" Margin="0,0,10,0"/>
+                <ComboBox Width="150" Height="46" ItemsSource="{Binding LimitedFilterFields}" SelectedItem="{Binding LimitedsFilterField}" DisplayMemberPath="Name"
+                          VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                <Grid Width="120" Height="46" Margin="0,0,8,0">
+                  <TextBox Text="{Binding LimitedsMin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource RangeBox}"/>
+                  <TextBlock Text="Min" Style="{StaticResource RangeLabel}"/>
+                </Grid>
+                <Grid Width="120" Height="46">
+                  <TextBox Text="{Binding LimitedsMax, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource RangeBox}"/>
+                  <TextBlock Text="Max" Style="{StaticResource RangeLabel}"/>
+                </Grid>
+              </StackPanel>
+              <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                <TextBlock Text="{Binding LimitedsCount}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                <TextBlock Text="{Binding LimitedsStatus}" FontSize="11" Style="{StaticResource MutedText}" HorizontalAlignment="Right" Margin="0,2,0,0"/>
+              </StackPanel>
+            </Grid>
+
+            <!-- the table (scrolls sideways when the window is narrow) -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+              <Border Style="{StaticResource CardBox}" Padding="10,6,10,10" MinWidth="960">
+                <StackPanel>
+                  <Grid Margin="8,4,8,6">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="44"/><ColumnDefinition Width="*" MinWidth="170"/><ColumnDefinition Width="70"/>
+                  <ColumnDefinition Width="92"/><ColumnDefinition Width="92"/><ColumnDefinition Width="92"/>
+                  <ColumnDefinition Width="76"/><ColumnDefinition Width="80"/><ColumnDefinition Width="42"/><ColumnDefinition Width="76"/>
+                  <ColumnDefinition Width="70"/><ColumnDefinition Width="76"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="1" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="name">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Name"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=name}"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="2" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="acronym">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Acronym"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=acronym}"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="3" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="best">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Best price"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=best}"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="4" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="rap">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="RAP"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=rap}"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="5" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="value">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Value"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=value}"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="6" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="demand">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Demand"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=demand}"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="7" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="trend">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Trend"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=trend}"/>
+                  </StackPanel>
+                </Button>
+                <TextBlock Grid.Column="8" Text="Rare" Style="{StaticResource TableHeadText}"/>
+                <TextBlock Grid.Column="9" Text="Projected" Style="{StaticResource TableHeadText}"/>
+                <Button Grid.Column="10" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="copies">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Copies"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=copies}"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="11" Style="{StaticResource TableHead}" Command="{Binding SortLimitedsCommand}" CommandParameter="favorites">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Favorites"/>
+                    <TextBlock Text="{Binding LimitedsSortArrow}" FontFamily="{StaticResource Icons}" FontSize="9" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Accent}" Visibility="{Binding LimitedsSortKey, Converter={StaticResource PageVis}, ConverterParameter=favorites}"/>
+                  </StackPanel>
+                </Button>
+                  </Grid>
+                  <Border Height="1" Background="{DynamicResource Line}" Margin="0,0,0,4"/>
+                  <ItemsControl ItemsSource="{Binding LimitedRows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Style="{StaticResource CardButton}" Margin="0" HorizontalContentAlignment="Stretch"
+                                Command="{Binding DataContext.OpenLimitedRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                          <Border x:Name="b" CornerRadius="8" Padding="8,5" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
+                            <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="44"/><ColumnDefinition Width="*" MinWidth="170"/><ColumnDefinition Width="70"/>
+                  <ColumnDefinition Width="92"/><ColumnDefinition Width="92"/><ColumnDefinition Width="92"/>
+                  <ColumnDefinition Width="76"/><ColumnDefinition Width="80"/><ColumnDefinition Width="42"/><ColumnDefinition Width="76"/>
+                  <ColumnDefinition Width="70"/><ColumnDefinition Width="76"/>
+                </Grid.ColumnDefinitions>
+                              <Grid Width="34" Height="34" HorizontalAlignment="Left">
+                                <Border CornerRadius="7" Background="{DynamicResource Card2}"/>
+                                <ctl:RemoteImage Url="{Binding ThumbUrl}" CornerRadius="7"/>
+                              </Grid>
+                              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="260"/>
+                                <Border Style="{StaticResource Badge}" Background="{DynamicResource AccentSoft}" Margin="8,0,0,0"
+                                        Visibility="{Binding Hyped, Converter={StaticResource BoolVis}}" ToolTip="Hyped">
+                                  <TextBlock Text="Hyped" Style="{StaticResource BadgeText}" FontSize="10" Foreground="{DynamicResource Accent}"/>
+                                </Border>
+                              </StackPanel>
+                              <TextBlock Grid.Column="2" Text="{Binding Acronym}" Style="{StaticResource MutedText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Grid.Column="3" Text="{Binding BestText}" VerticalAlignment="Center"/>
+                              <TextBlock Grid.Column="4" Text="{Binding RapText}" VerticalAlignment="Center"/>
+                              <TextBlock Grid.Column="5" Text="{Binding ValueText}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                              <TextBlock Grid.Column="6" Text="{Binding DemandText}" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                              <TextBlock Grid.Column="7" Text="{Binding TrendText}" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                              <Rectangle Grid.Column="8" Width="9" Height="9" Fill="{DynamicResource Blue}" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                         Margin="6,0,0,0" ToolTip="Rare" Visibility="{Binding Rare, Converter={StaticResource BoolVis}}">
+                                <Rectangle.RenderTransform><RotateTransform Angle="45" CenterX="4.5" CenterY="4.5"/></Rectangle.RenderTransform>
+                              </Rectangle>
+                              <Border Grid.Column="9" Style="{StaticResource Badge}" Background="{DynamicResource RedBg}" HorizontalAlignment="Left"
+                                      Visibility="{Binding Projected, Converter={StaticResource BoolVis}}" ToolTip="Its RAP was pushed up on purpose">
+                                <TextBlock Text="Projected" Style="{StaticResource BadgeText}" FontSize="10" Foreground="{DynamicResource Red}"/>
+                              </Border>
+                              <TextBlock Grid.Column="10" Text="{Binding CopiesText}" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                              <TextBlock Grid.Column="11" Text="{Binding FavoritesText}" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                            </Grid>
+                          </Border>
+                        </Button>
+                        <DataTemplate.Triggers>
+                          <DataTrigger Binding="{Binding Odd}" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></DataTrigger>
+                          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource AccentLine}"/></Trigger>
+                        </DataTemplate.Triggers>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="Nothing matches these filters." Style="{StaticResource MutedText}" Margin="8,10,0,6"
+                             Visibility="{Binding LimitedRows.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+                </StackPanel>
+              </Border>
+            </ScrollViewer>
+            <Button Content="Show more" HorizontalAlignment="Center" Padding="22,10" Margin="0,12,0,0" Command="{Binding ShowMoreLimitedsCommand}"
                     Visibility="{Binding LimitedsHasMore, Converter={StaticResource BoolVis}}"/>
+            <TextBlock FontSize="11" Style="{StaticResource MutedText}" Margin="2,12,0,0" TextWrapping="Wrap"
+                       Text="Value, RAP, demand, trend, rare, projected and hyped from Rolimons. Best price, copies and favorites from Roblox. Owners, premium copies and hoarded aren't in any public API, so they can't be shown."/>
           </StackPanel>
 
           <!-- one limited -->

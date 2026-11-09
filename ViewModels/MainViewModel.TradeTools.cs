@@ -12,7 +12,7 @@ namespace RoDeck.ViewModels;
 /// <summary>
 /// Trades → Calculator (4 slots per side, like a trade ad: pick from your inventory or browse every limited),
 /// Watchlist (a notification when a limited is listed at or below your price, checked every second), trade profiles
-/// (anyone's limiteds and their value over time, your own too) and the check on open trades that every item is still owned.
+/// (anyone's limiteds, your own too) and the check on open trades that every item is still owned.
 /// </summary>
 public partial class MainViewModel
 {
@@ -46,7 +46,9 @@ public partial class MainViewModel
 
     partial void OnCalcPickerSourceChanged(string value) { FillCalcPicker(); if (value == "Inventory") _ = LoadCalcInventoryAsync(); }
     partial void OnCalcPickerSearchChanged(string value) => FillCalcPicker();
-    partial void OnCalcPickerAscendingChanged(bool value) => FillCalcPicker();
+    partial void OnCalcPickerAscendingChanged(bool value) { OnPropertyChanged(nameof(CalcPickerSortText)); FillCalcPicker(); }
+    public string CalcPickerSortText => CalcPickerAscending ? "Lowest first" : "Highest first";
+    [RelayCommand] private void ToggleCalcPickerSort() => CalcPickerAscending = !CalcPickerAscending;
     partial void OnCalcPickerMinChanged(string value) => FillCalcPicker();
     partial void OnCalcPickerMaxChanged(string value) => FillCalcPicker();
 
@@ -376,17 +378,6 @@ public partial class MainViewModel
     private readonly DispatcherTimer _profilePop = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private int _profileGen;
 
-    // the graph
-    private List<ValuePoint> _profileHistory = new();
-    [ObservableProperty] private IReadOnlyList<ValuePoint>? tradeProfileChart;
-    [ObservableProperty] private string tradeProfileRange = "3m";
-    [ObservableProperty] private bool tradeProfileChartLoading;
-    [ObservableProperty] private string tradeProfileChartText = "";
-    [ObservableProperty] private string tradeProfileChartNote = "", tradeProfileChartChange = "";
-    [ObservableProperty] private int tradeProfileChartKind;
-
-    partial void OnTradeProfileRangeChanged(string value) => ShowProfileRange();
-
     /// <summary>The tab the profile was opened from (its Back button returns there).</summary>
     private string _profileFrom = "";
     public string TradeProfileBackText => _profileFrom switch
@@ -440,9 +431,6 @@ public partial class MainViewModel
     [RelayCommand]
     private void OpenProfileOnRolimons() { if (TradeProfileId > 0) Web($"https://www.rolimons.com/player/{TradeProfileId}"); }
 
-    [RelayCommand]
-    private void SetProfileRange(string? range) { if (range != null) TradeProfileRange = range; }
-
     private async Task ShowTradeProfileAsync(Account a, long id, string name, string user, string head)
     {
         bool same = TradeProfileId == id && (TradeProfileItems.Count > 0 || TradeProfileLoading);
@@ -458,9 +446,6 @@ public partial class MainViewModel
         _profileQueue.Clear();
         TradeProfileValue = TradeProfileRap = TradeProfileCount = "–";
         TradeProfileNote = "";
-        _profileHistory = new();
-        TradeProfileChart = null;
-        TradeProfileChartNote = TradeProfileChartChange = "";
         TradeProfileLoading = true;
         TradeProfileLoadingText = "Loading limiteds…";
         if (!_profilePopSetUp) { _profilePopSetUp = true; _profilePop.Tick += (_, _) => PopProfileItems(); }
@@ -494,9 +479,7 @@ public partial class MainViewModel
         TradeProfileValue = items.Sum(i => i.Worth).ToString("N0");
         TradeProfileRap = items.Sum(i => i.Rap).ToString("N0");
         TradeProfileCount = items.Count.ToString("N0");
-        if (items.Count == 0) { TradeProfileNote = "No limiteds."; return; }
-        ValueHistory.Record(id, items.Sum(i => i.Worth), items.Sum(i => i.Rap));
-        await LoadProfileChartAsync(a, id, gen, items);
+        if (items.Count == 0) TradeProfileNote = "No limiteds.";
     }
 
     private bool _profilePopSetUp;
@@ -533,41 +516,5 @@ public partial class MainViewModel
     {
         var pics = await Thumbnails.GetAsync("AvatarHeadShot", new[] { id }, "150x150");
         if (pics.TryGetValue(id, out var u) && TradeProfileId == id) TradeProfileHead = u;
-    }
-
-    private async Task LoadProfileChartAsync(Account a, long id, int gen, List<LimitedTile> items)
-    {
-        TradeProfileChartLoading = true;
-        TradeProfileChartText = "Working out their value over time…";
-        try
-        {
-            var (points, note) = await ValueHistory.BuildAsync(a.Cookie, id, items, CancellationToken.None,
-                text => { if (gen == _profileGen) TradeProfileChartText = text; });
-            if (gen != _profileGen) return;
-            _profileHistory = points;
-            TradeProfileChartNote = note;
-            ShowProfileRange();
-        }
-        catch (RobloxException ex)
-        {
-            if (gen == _profileGen) TradeProfileChartNote = ex.TooMany ? "Roblox is busy; the graph couldn't be made. Open the profile again in a moment." : ex.Message;
-        }
-        finally { if (gen == _profileGen) TradeProfileChartLoading = false; }
-    }
-
-    /// <summary>The graph for the chosen range (1w, 1m, 3m, 6m, 1y or All), and how much it went up or down in it.</summary>
-    private void ShowProfileRange()
-    {
-        if (_profileHistory.Count == 0) { TradeProfileChart = null; return; }
-        int days = TradeProfileRange switch { "1w" => 7, "1m" => 30, "3m" => 91, "6m" => 182, "1y" => 365, _ => int.MaxValue };
-        var from = days == int.MaxValue ? DateTime.MinValue : DateTime.UtcNow.Date.AddDays(-days);
-        var shown = _profileHistory.Where(p => p.Day >= from).ToList();
-        if (shown.Count < 2) shown = _profileHistory.TakeLast(2).ToList();
-        TradeProfileChart = shown;
-        long first = shown[0].Value, last = shown[^1].Value;
-        double change = first > 0 ? (double)(last - first) / first : 0;
-        TradeProfileChartKind = Math.Abs(change) < 0.005 ? 0 : Math.Sign(change);
-        string label = TradeProfileRange switch { "1w" => "this week", "1m" => "this month", "3m" => "in 3 months", "6m" => "in 6 months", "1y" => "this year", _ => "in all" };
-        TradeProfileChartChange = first > 0 ? $"{(change >= 0 ? "+" : "−")}{Math.Abs(change):0.#%} {label}" : "";
     }
 }

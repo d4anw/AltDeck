@@ -39,7 +39,7 @@ public partial class MainViewModel
             : $"Values from Rolimons, updated {Ago(LimitedValues.LoadedAt)}.";
         switch (TradesTab)
         {
-            case "Limiteds": if (_limitedsAll.Count == 0) BuildLimiteds(); break;
+            case "Limiteds": if (_limitedRowsAll.Count == 0) BuildLimiteds(); else _ = LoadLimitedStatsAsync(); break;
             case "Inventory": if (AccountWorths.Count == 0) _ = LoadWorthsAsync(); break;
             case "Trades": MaybeLoadTradeList(); break;
             case "Ads": LoadTradeAdTab(); break;
@@ -243,25 +243,80 @@ public partial class MainViewModel
     [RelayCommand]
     private Task BuyDeal(DealTile? d) => d == null ? Task.CompletedTask : OpenLimitedInMarketAsync(d.AssetId, d.Name, buy: true);
 
-    // ================================================================== limiteds catalog
+    // ================================================================== limiteds catalog (a table, like Rolimons' item list)
 
-    private List<LimitedTile> _limitedsAll = new();
-    private List<LimitedTile> _limitedsFiltered = new();
-    public ObservableCollection<LimitedTile> LimitedsShown { get; } = new();
+    private List<LimitedRow> _limitedRowsAll = new();
+    private List<LimitedRow> _limitedRowsFiltered = new();
+    public ObservableCollection<LimitedRow> LimitedRows { get; } = new();
     [ObservableProperty] private string limitedsSearch = "";
+    [ObservableProperty] private bool limitedsValuedOnly, limitedsHideProjected, limitedsRareOnly;
     [ObservableProperty] private bool limitedsHasMore;
-    public IReadOnlyList<MarketOption> LimitedSorts { get; } = new List<MarketOption>
+    [ObservableProperty] private string limitedsStatus = "", limitedsCount = "";
+    /// <summary>What Min / Max apply to.</summary>
+    public IReadOnlyList<MarketOption> LimitedFilterFields { get; } = new List<MarketOption>
     {
-        new("Value: high to low", 0), new("RAP: high to low", 1), new("Demand", 2), new("Value: low to high", 3), new("Name", 4)
+        new("Value", 0), new("RAP", 1), new("Best price", 2), new("Copies", 3), new("Favorites", 4)
     };
-    [ObservableProperty] private MarketOption? limitedsSort;
+    [ObservableProperty] private MarketOption? limitedsFilterField;
+    [ObservableProperty] private string limitedsMin = "", limitedsMax = "";
+    /// <summary>The column the table is sorted by ("name", "acronym", "best", "rap", "value", "demand", "trend", "copies", "favorites").</summary>
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(LimitedsSortArrow))] private string limitedsSortKey = "value";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(LimitedsSortArrow))] private bool limitedsSortAsc;
+    public string LimitedsSortArrow => LimitedsSortAsc ? "\uE70E" : "\uE70D";
+    private bool _limitedStatsBusy;
+    private const int LimitedsPage = 100;
 
-    partial void OnLimitedsSortChanged(MarketOption? value) => FilterLimiteds();
+    partial void OnLimitedsSearchChanged(string value) => FilterLimiteds();
+    partial void OnLimitedsValuedOnlyChanged(bool value) => FilterLimiteds();
+    partial void OnLimitedsHideProjectedChanged(bool value) => FilterLimiteds();
+    partial void OnLimitedsRareOnlyChanged(bool value) => FilterLimiteds();
+    partial void OnLimitedsFilterFieldChanged(MarketOption? value) => FilterLimiteds();
+    partial void OnLimitedsMinChanged(string value) => FilterLimiteds();
+    partial void OnLimitedsMaxChanged(string value) => FilterLimiteds();
 
     private void BuildLimiteds()
     {
-        LimitedsSort ??= LimitedSorts[0];
-        _limitedsAll = LimitedValues.All.Select(v => LimitedTile.From(v.AssetId, v.Name, v.Rap)).ToList();
+        LimitedsFilterField ??= LimitedFilterFields[0];
+        _limitedRowsAll = LimitedValues.All.Select(LimitedRow.From).ToList();
+        ApplyLimitedStats();
+        FilterLimiteds();
+        _ = LoadLimitedStatsAsync();
+    }
+
+    /// <summary>Roblox's best price, copies and favorites for every limited: 100 per request, the table fills in as they come.</summary>
+    private async Task LoadLimitedStatsAsync()
+    {
+        if (_limitedStatsBusy || _limitedRowsAll.Count == 0) return;
+        _limitedStatsBusy = true;
+        int total = _limitedRowsAll.Count;
+        try
+        {
+            await LimitedValues.LoadStatsAsync(_limitedRowsAll.Select(r => r.AssetId).ToList(), CancellationToken.None, known =>
+            {
+                LimitedsStatus = $"Loading best prices, copies and favorites from Roblox… {Math.Min(known, total):N0} of {total:N0}";
+                ApplyLimitedStats();
+            });
+            LimitedsStatus = $"Best prices, copies and favorites from Roblox, {DateTime.Now:HH:mm}.";
+            if (LimitedsSortKey is "best" or "copies" or "favorites" || LimitedsFilterField?.Value >= 2) FilterLimiteds();
+        }
+        catch (RobloxException ex) { LimitedsStatus = ex.TooMany ? "Roblox is busy; best prices will fill in later." : "Couldn't load best prices: " + ex.Message; }
+        catch (System.Text.Json.JsonException) { }
+        finally { _limitedStatsBusy = false; }
+    }
+
+    private void ApplyLimitedStats()
+    {
+        foreach (var r in _limitedRowsAll)
+            if (LimitedValues.GetStats(r.AssetId) is { } st) { r.BestPrice = st.BestPrice; r.Copies = st.Copies; r.Favorites = st.Favorites; }
+    }
+
+    /// <summary>A column header: sorts by it; again flips the direction.</summary>
+    [RelayCommand]
+    private void SortLimiteds(string? key)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        if (LimitedsSortKey == key) LimitedsSortAsc = !LimitedsSortAsc;
+        else { LimitedsSortKey = key; LimitedsSortAsc = key is "name" or "acronym"; }
         FilterLimiteds();
     }
 
@@ -271,30 +326,63 @@ public partial class MainViewModel
     private void FilterLimiteds()
     {
         var q = (LimitedsSearch ?? "").Trim();
-        IEnumerable<LimitedTile> list = _limitedsAll;
+        long? min = long.TryParse(LimitedsMin, out var mn) ? mn : null, max = long.TryParse(LimitedsMax, out var mx) ? mx : null;
+        int field = LimitedsFilterField?.Value ?? 0;
+        long FieldOf(LimitedRow r) => field switch { 1 => r.Rap, 2 => r.BestPrice, 3 => r.Copies, 4 => r.Favorites, _ => r.Worth };
+
+        IEnumerable<LimitedRow> list = _limitedRowsAll;
         if (q.Length > 0)
-            list = list.Where(t => t.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
-                                || string.Equals(LimitedValues.Get(t.AssetId)?.Acronym, q, StringComparison.OrdinalIgnoreCase));
-        list = (LimitedsSort?.Value ?? 0) switch
+            list = list.Where(r => r.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
+                                || r.Acronym.Equals(q, StringComparison.OrdinalIgnoreCase) || r.AssetId.ToString() == q);
+        if (LimitedsValuedOnly) list = list.Where(r => r.Value > 0);
+        if (LimitedsHideProjected) list = list.Where(r => !r.Projected);
+        if (LimitedsRareOnly) list = list.Where(r => r.Rare);
+        if (min != null) list = list.Where(r => FieldOf(r) >= min);
+        if (max != null) list = list.Where(r => FieldOf(r) >= 0 && FieldOf(r) <= max);
+
+        Func<LimitedRow, IComparable> key = LimitedsSortKey switch
         {
-            1 => list.OrderByDescending(t => t.Rap),
-            2 => list.OrderByDescending(t => t.Demand).ThenByDescending(t => t.Worth),
-            3 => list.OrderBy(t => t.Worth),
-            4 => list.OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase),
-            _ => list.OrderByDescending(t => t.Worth)
+            "name" => r => r.Name.ToLowerInvariant(),
+            "acronym" => r => r.Acronym.Length == 0 ? "\uffff" : r.Acronym.ToLowerInvariant(),
+            "best" => r => r.BestPrice,
+            "rap" => r => r.Rap,
+            "demand" => r => r.Demand,
+            "trend" => r => r.Trend,
+            "copies" => r => r.Copies,
+            "favorites" => r => r.Favorites,
+            _ => r => r.Worth
         };
-        _limitedsFiltered = list.ToList();
-        LimitedsShown.Clear();
+        list = LimitedsSortAsc ? list.OrderBy(key).ThenByDescending(r => r.Worth) : list.OrderByDescending(key).ThenByDescending(r => r.Worth);
+        _limitedRowsFiltered = list.ToList();
+        LimitedsCount = $"{_limitedRowsFiltered.Count:N0} of {_limitedRowsAll.Count:N0} limiteds";
+        LimitedRows.Clear();
         ShowMoreLimiteds();
     }
 
     [RelayCommand]
     private void ShowMoreLimiteds()
     {
-        var next = _limitedsFiltered.Skip(LimitedsShown.Count).Take(60).ToList();
-        foreach (var t in next) LimitedsShown.Add(t);
-        LimitedsHasMore = LimitedsShown.Count < _limitedsFiltered.Count;
-        _ = FillLimitedThumbsAsync(next);
+        var next = _limitedRowsFiltered.Skip(LimitedRows.Count).Take(LimitedsPage).ToList();
+        foreach (var r in next) { r.Odd = LimitedRows.Count % 2 == 1; LimitedRows.Add(r); }
+        LimitedsHasMore = LimitedRows.Count < _limitedRowsFiltered.Count;
+        _ = FillRowThumbsAsync(next.Where(r => r.ThumbUrl.Length == 0).ToList());
+    }
+
+    private static async Task FillRowThumbsAsync(List<LimitedRow> rows)
+    {
+        if (rows.Count == 0) return;
+        var pics = await Thumbnails.GetAsync("Asset", rows.Select(r => r.AssetId), "150x150");
+        foreach (var r in rows) if (pics.TryGetValue(r.AssetId, out var u)) r.ThumbUrl = u;
+    }
+
+    /// <summary>A line in the table: its item page.</summary>
+    [RelayCommand]
+    private Task OpenLimitedRow(LimitedRow? r)
+    {
+        if (r == null) return Task.CompletedTask;
+        var t = LimitedTile.From(r.AssetId, r.Name, r.Rap);
+        t.ThumbUrl = r.ThumbUrl;
+        return OpenLimitedTile(t);
     }
 
     private static async Task FillLimitedThumbsAsync(IList<LimitedTile> tiles)
@@ -439,7 +527,6 @@ public partial class MainViewModel
                     w.Count = items.Count;
                     w.Rap = items.Sum(i => i.Rap);
                     w.Value = items.Sum(i => i.Worth);
-                    ValueHistory.Record(w.Account.UserId, w.Value, w.Rap);   // a real point for the profile graph
                     w.Note = items.Count == 0 ? "No limiteds" : $"{items.Count} limited{(items.Count == 1 ? "" : "s")}";
                 }
                 catch (RobloxException ex) { w.Note = ex.SignedOut ? "Signed out" : ex.TooMany ? "Roblox is busy, refresh in a moment" : ex.Message; }

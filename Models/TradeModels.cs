@@ -281,3 +281,38 @@ public partial class WatchRow : ObservableObject
         : BestPrice == 0 ? "Not for sale"
         : $"{(double)(BestPrice - MaxPrice) / Math.Max(1, MaxPrice):0%} above";
 }
+
+/// <summary>A line in Trades → Limiteds: the values list's numbers plus Roblox's (best price, copies, favorites).</summary>
+public partial class LimitedRow : ObservableObject
+{
+    public long AssetId { get; init; }
+    public string Name { get; init; } = "";
+    public string Acronym { get; init; } = "";
+    public long Rap { get; init; }
+    public long Value { get; init; } = -1;
+    public int Demand { get; init; } = -1;
+    public int Trend { get; init; } = -1;
+    public bool Rare { get; init; }
+    public bool Projected { get; init; }
+    public bool Hyped { get; init; }
+    public bool Odd { get; set; }
+    [ObservableProperty] private string thumbUrl = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(BestText))] private long bestPrice = -1;    // -1 not loaded yet, 0 nobody sells
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(CopiesText))] private long copies = -1;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(FavoritesText))] private long favorites = -1;
+
+    public long Worth => Value > 0 ? Value : Rap;
+    public string RapText => Rap > 0 ? Rap.ToString("N0") : "–";
+    public string ValueText => Value > 0 ? Value.ToString("N0") : "–";
+    public string BestText => BestPrice < 0 ? "…" : BestPrice == 0 ? "–" : BestPrice.ToString("N0");
+    public string CopiesText => Copies < 0 ? "…" : Copies == 0 ? "–" : Copies.ToString("N0");
+    public string FavoritesText => Favorites < 0 ? "…" : Favorites.ToString("N0");
+    public string DemandText => Limited.DemandText(Demand) is { Length: > 0 } d ? d : "–";
+    public string TrendText => Trend switch { 0 => "Lowering", 1 => "Unstable", 2 => "Stable", 3 => "Raising", 4 => "Fluctuating", _ => "–" };
+
+    public static LimitedRow From(LimitedInfo v) => new()
+    {
+        AssetId = v.AssetId, Name = v.Name, Acronym = v.Acronym, Rap = v.Rap, Value = v.Value, Demand = v.Demand, Trend = v.Trend,
+        Rare = v.Rare, Projected = v.Projected, Hyped = v.Hyped
+    };
+}

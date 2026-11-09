@@ -104,6 +104,38 @@ public static class LimitedValues
         return result;
     }
 
+    /// <summary>Best price (0 = nobody sells), copies that exist, and favorites, from Roblox's batch item details.</summary>
+    public readonly record struct CatalogStats(long BestPrice, long Copies, long Favorites);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, CatalogStats Stats)> Stats = new();
+
+    public static CatalogStats? GetStats(long id) => Stats.TryGetValue(id, out var s) ? s.Stats : null;
+
+    /// <summary>
+    /// Fills <see cref="GetStats"/> for these limiteds, 100 per request, skipping ones fetched in the last 10 minutes.
+    /// <paramref name="done"/> is told after each request (how many are known so far).
+    /// </summary>
+    public static async Task LoadStatsAsync(IReadOnlyList<long> ids, CancellationToken ct, Action<int>? done = null)
+    {
+        var need = ids.Where(id => !Stats.TryGetValue(id, out var s) || DateTime.UtcNow - s.At > TimeSpan.FromMinutes(10)).Distinct().ToList();
+        int known = ids.Count - need.Count;
+        foreach (var chunk in need.Chunk(100))
+        {
+            ct.ThrowIfCancellationRequested();
+            var body = new { items = chunk.Select(id => new { itemType = "Asset", id }).ToArray() };
+            using var doc = await RobloxHttp.PostJsonAsync("https://catalog.roblox.com/v1/catalog/items/details", null, body, ct);
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                foreach (var x in data.EnumerateArray())
+                {
+                    long N(string name) => x.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : 0;
+                    long id = N("id");
+                    if (id > 0) Stats[id] = (DateTime.UtcNow, new CatalogStats(N("lowestResalePrice"), N("totalQuantity"), N("favoriteCount")));
+                }
+            known += chunk.Length;
+            done?.Invoke(known);
+            await Task.Delay(250, ct);   // gentle on Roblox
+        }
+    }
+
     // ------------------------------------------------------------------ deal feed
 
     /// <summary>
