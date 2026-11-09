@@ -77,6 +77,7 @@ public partial class MainWindow : Window
             // A borderless window overflows the screen when maximized (the bottom ends up under the taskbar),
             // so ask for exactly the work area of the monitor it is on.
             ((System.Windows.Interop.HwndSource)PresentationSource.FromVisual(this)).AddHook(MaximizeHook);
+            ((System.Windows.Interop.HwndSource)PresentationSource.FromVisual(this)).AddHook(SideButtonHook);
             RoundCorners();
             _hotkey.Attach(this);
             _hotkey.Pressed += OnPanicHotkey;
@@ -117,12 +118,7 @@ public partial class MainWindow : Window
             else if (e.Key == Key.OemComma) { _vm.Page = "Settings"; e.Handled = true; }
         };
 
-        // back / forward: the mouse's side buttons and Alt+← / Alt+→
-        PreviewMouseDown += (_, e) =>
-        {
-            if (e.ChangedButton == System.Windows.Input.MouseButton.XButton1) { _vm.GoBack(); e.Handled = true; }
-            else if (e.ChangedButton == System.Windows.Input.MouseButton.XButton2) { _vm.GoForward(); e.Handled = true; }
-        };
+        // back / forward: Alt+← / Alt+→ (the mouse's side buttons: SideButtonHook)
         PreviewKeyDown += (_, e) =>
         {
             if (System.Windows.Input.Keyboard.Modifiers != System.Windows.Input.ModifierKeys.Alt) return;
@@ -310,6 +306,48 @@ public partial class MainWindow : Window
 
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int flags);
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+    // ---- the mouse's side buttons: back / forward, anywhere on the window
+    // Read from Windows directly instead of WPF's mouse events, because those miss the title bar (Windows counts it as
+    // the window frame), and some mice send "browser back / forward" commands instead of side-button clicks. One press
+    // can arrive both ways, so a second signal within a moment of the first is ignored.
+    private long _lastSideAt;
+
+    private IntPtr SideButtonHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        const int WM_XBUTTONDOWN = 0x020B, WM_XBUTTONUP = 0x020C, WM_XBUTTONDBLCLK = 0x020D,
+                  WM_NCXBUTTONDOWN = 0x00AB, WM_NCXBUTTONUP = 0x00AC, WM_NCXBUTTONDBLCLK = 0x00AD, WM_APPCOMMAND = 0x0319;
+        switch (msg)
+        {
+            case WM_XBUTTONDOWN or WM_XBUTTONDBLCLK or WM_NCXBUTTONDOWN or WM_NCXBUTTONDBLCLK:
+            {
+                int button = (int)((wParam.ToInt64() >> 16) & 0xFFFF);   // 1 = back, 2 = forward
+                SideNavigate(button == 1);
+                handled = true;
+                return new IntPtr(1);
+            }
+            case WM_XBUTTONUP or WM_NCXBUTTONUP:
+                handled = true;   // no second "browser back" for the same press
+                return new IntPtr(1);
+            case WM_APPCOMMAND:
+            {
+                int cmd = (int)((lParam.ToInt64() >> 16) & 0x0FFF);   // APPCOMMAND_BROWSER_BACKWARD = 1, FORWARD = 2
+                if (cmd is not (1 or 2)) return IntPtr.Zero;
+                SideNavigate(cmd == 1);
+                handled = true;
+                return new IntPtr(1);
+            }
+        }
+        return IntPtr.Zero;
+    }
+
+    private void SideNavigate(bool back)
+    {
+        long now = Environment.TickCount64;
+        if (now - _lastSideAt < 120) return;   // the same press, reported twice
+        _lastSideAt = now;
+        if (back) _vm.GoBack(); else _vm.GoForward();
+    }
 
     private static IntPtr MaximizeHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {

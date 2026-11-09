@@ -25,6 +25,7 @@ public partial class MainViewModel
     {
         foreach (var c in ChartChips) c.IsSelected = c.Id == value;
         OnPropertyChanged(nameof(GamesOverview));
+        if (Page == "Games") RecordNav();
     }
 
     /// <summary>The rows: Roblox's charts, then your favourites and recently played (when there are any).</summary>

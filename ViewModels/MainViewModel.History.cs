@@ -16,7 +16,8 @@ public partial class MainViewModel
 {
     private sealed record NavState(
         string Key, string Page, string MultiTab, string FriendsTab, string AvatarTab, string TradesTab, string TradeType,
-        GameTile? Game, long ProfileId, MarketItem? Item, LimitedTile? Limited, TradeRow? Trade, string SettingsSection = "");
+        GameTile? Game, long ProfileId, MarketItem? Item, LimitedTile? Limited, TradeRow? Trade, string SettingsSection = "",
+        string GamesView = "", string GameSearch = "");
 
     private readonly NavHistory<NavState> _history = new(s => s.Key);
     private bool _restoring, _commitPending;
@@ -33,7 +34,8 @@ public partial class MainViewModel
         string sub = Page switch
         {
             "Multi" => MultiTab,
-            "Games" => game != null ? $"game {game.UniverseId}" : "",
+            "Games" => (GamesView.Length > 0 ? GamesView : "charts") + (GamesView == "search" ? $" {GameSearchText}" : "")
+                       + (game != null ? $" game {game.UniverseId}" : ""),
             "Friends" => FriendsTab + (profile > 0 ? $" profile {profile}" : ""),
             "Avatar" => AvatarTab,
             "Settings" => SettingsSection,
@@ -45,7 +47,7 @@ public partial class MainViewModel
             _ => ""
         };
         return new NavState($"{Page}|{sub}", Page, MultiTab, FriendsTab, AvatarTab, TradesTab, TradeType,
-                            game, profile, item, limited, trade, SettingsSection);
+                            game, profile, item, limited, trade, SettingsSection, GamesView, GameSearchText ?? "");
     }
 
     /// <summary>
@@ -92,6 +94,10 @@ public partial class MainViewModel
     {
         if (ShowTradeConfirm) { if (!TradeBusy) ShowTradeConfirm = false; return true; }
         if (ShowBuyConfirm) { if (!BuyBusy) ShowBuyConfirm = false; return true; }
+        if (ShowInstaBuyWarning) { ShowInstaBuyWarning = false; return true; }
+        if (ShowDealBuy) { if (!DealBuyBusy) { ShowDealBuy = false; DealBuyDeal = null; } return true; }
+        if (IsCalcPickerOpen && Page == "Trades") { IsCalcPickerOpen = false; return true; }
+        if (IsAdPickerOpen && Page == "Trades") { IsAdPickerOpen = false; return true; }
         if (IsBuildingTrade && Page == "Trades") { IsBuildingTrade = false; return true; }
         return false;
     }
@@ -111,6 +117,13 @@ public partial class MainViewModel
                 break;
 
             case "Games":
+                if (s.GamesView != GamesView || (s.GamesView == "search" && s.GameSearch != GameSearchText))
+                {
+                    if (s.GamesView.Length == 0) ShowGameRows();
+                    else if (s.GamesView is "favourites" or "recent") ShowSaved(s.GamesView);
+                    else if (s.GamesView == "search") { GameSearchText = s.GameSearch; _ = SearchGamesAsync(); }
+                    else _ = SelectChart(s.GamesView);
+                }
                 if (s.Game != null) { if (!IsGameOpen || _lastOpened?.UniverseId != s.Game.UniverseId) _ = OpenGameAsync(s.Game); }
                 else if (IsGameOpen) CloseGame();
                 break;
