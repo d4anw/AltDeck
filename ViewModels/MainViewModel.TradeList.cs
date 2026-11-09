@@ -217,6 +217,7 @@ public partial class MainViewModel
         foreach (var x in TradeRows) x.IsSelected = x == r;
         OpenTradeRow = r;
         OpenTrade = null;
+        TradeGoneNote = "";
         TradeGive.Clear(); TradeGet.Clear();
         await TradeLoad.RunAsync(async ct =>
         {
@@ -224,6 +225,7 @@ public partial class MainViewModel
             if (OpenTradeRow != r) return true;
             ShowTrade(d);
             Summarise(r, d);
+            if (r.IsActive) _ = CheckTradeItemsAsync(a, r, d);   // does everyone still have everything?
             return true;
         }, "Loading trade…");
     }
@@ -325,7 +327,8 @@ public partial class MainViewModel
     {
         if (OpenTrade is not { } d || OpenTradeRow is not { } r || CurrentAccount is not { } a) return;
         AskTrade("Accept this trade?",
-            $"{a.Label} gives {Items(d.Mine)} and gets {Items(d.Theirs)} from {r.PartnerLabel}.\n\n{TradeVerdict}",
+            (TradeGoneNote.Length > 0 ? "⚠ " + TradeGoneNote + "\n\n" : "")
+            + $"{a.Label} gives {Items(d.Mine)} and gets {Items(d.Theirs)} from {r.PartnerLabel}.\n\n{TradeVerdict}",
             "Accept trade", false, async () =>
             {
                 await RobloxTrades.AcceptAsync(a.Cookie, d.Id);

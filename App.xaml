@@ -621,6 +621,10 @@
       <Setter Property="TextAlignment" Value="Center"/>
       <Setter Property="FontFamily" Value="Consolas"/>
     </Style>
+    <!-- the same, as tall as a button: for numbers inside a row of buttons -->
+    <Style x:Key="NumBoxSmall" TargetType="TextBox" BasedOn="{StaticResource NumBox}">
+      <Setter Property="Padding" Value="6,8"/>
+    </Style>
     <Style TargetType="ComboBoxItem">
       <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
       <Setter Property="Template">

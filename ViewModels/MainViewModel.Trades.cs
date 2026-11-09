@@ -43,6 +43,8 @@ public partial class MainViewModel
             case "Inventory": if (AccountWorths.Count == 0) _ = LoadWorthsAsync(); break;
             case "Trades": MaybeLoadTradeList(); break;
             case "Ads": LoadTradeAdTab(); break;
+            case "Calculator": _ = OpenCalculatorAsync(); break;
+            case "Watchlist": _ = WatchTickAsync(); break;
         }
     }
 
@@ -350,6 +352,8 @@ public partial class MainViewModel
     private string _limitedFrom = "";
     public string LimitedBackText => _limitedFrom switch
     {
+        "Profile" => $"Back to {TradeProfileName}'s profile",
+        "Calculator" => "Back to the calculator",
         "Trades" => "Back to the trade",
         "Inventory" => "Back to inventory value",
         _ => "Back to limiteds"

@@ -50,6 +50,7 @@ public partial class MainViewModel
         _notifyTimer.Start();
         _declineTimer.Tick += async (_, _) => await AutoDeclineTickAsync();
         _declineTimer.Start();
+        SetupWatchlist();
         Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName?.StartsWith("Notify") != true) return;
@@ -226,6 +227,7 @@ public partial class MainViewModel
             case "Requests": Page = "Friends"; FriendsTab = "Requests"; break;
             case "Trades": Page = "Trades"; TradesTab = "Trades"; TradeType = "Inbound"; break;
             case "Deals": Page = "Trades"; TradesTab = "Deals"; break;
+            case "Watchlist": Page = "Trades"; TradesTab = "Watchlist"; break;
         }
     }
 }

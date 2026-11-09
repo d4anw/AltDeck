@@ -7,6 +7,11 @@
     <Style x:Key="RowScroll" TargetType="ScrollViewer">
       <Setter Property="HorizontalScrollBarVisibility" Value="Hidden"/>
       <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
+      <!-- room above the cards inside the row, so a card that lifts on hover isn't cut off at the top -->
+      <Setter Property="Margin" Value="0,-6,0,0"/>
+      <Style.Resources>
+        <Style TargetType="ItemsControl"><Setter Property="Margin" Value="0,6,0,0"/></Style>
+      </Style.Resources>
     </Style>
     <Style x:Key="HomeStat" TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource Fg}"/>

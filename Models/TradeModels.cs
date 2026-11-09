@@ -91,6 +91,8 @@ public partial class LimitedTile : ObservableObject
 
     [ObservableProperty] private string thumbUrl = "";
     [ObservableProperty] private bool isSelected;
+    /// <summary>In an open trade: its owner doesn't have this copy anymore, so the trade can't go through.</summary>
+    [ObservableProperty] private bool isGone;
 
     public bool HasValue => Value > 0;
     public long Worth => HasValue ? Value : Rap;
@@ -201,6 +203,8 @@ public partial class TradeRow : ObservableObject
     [ObservableProperty] private string getText = "…";
     /// <summary>The partner's whole inventory value (when it's public), under their name.</summary>
     [ObservableProperty] private string partnerWorth = "";
+    /// <summary>Opened and checked: someone doesn't have an item in it anymore.</summary>
+    [ObservableProperty] private bool hasGone;
 
     /// <summary>"2 days", "5 hours", "3 min".</summary>
     public string AgoText
@@ -242,4 +246,38 @@ public sealed class TradeDetail
     public long Get => Theirs.Worth + (long)(Theirs.Robux * 0.7);
     public long Difference => Get - Give;
     public long RapDifference => Theirs.Rap + (long)(Theirs.Robux * 0.7) - Mine.Rap - Mine.Robux;
+}
+
+/// <summary>A watchlist line saved in the settings.</summary>
+public sealed class WatchEntry
+{
+    public long AssetId { get; set; }
+    public long MaxPrice { get; set; }
+    public string Name { get; set; } = "";
+}
+
+/// <summary>A limited on the watchlist: your price, and the cheapest copy for sale right now.</summary>
+public partial class WatchRow : ObservableObject
+{
+    public long AssetId { get; init; }
+    public string Name { get; init; } = "";
+    [ObservableProperty] private string thumbUrl = "";
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsHit), nameof(StatusText), nameof(Kind))] private long maxPrice;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsHit), nameof(BestText), nameof(StatusText), nameof(Kind))] private long bestPrice;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(BestText), nameof(StatusText), nameof(Kind))] private bool @checked;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(RapText))] private long rap;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(ValueText))] private long value = -1;
+    /// <summary>The price a notification was last sent for (0 none), so the same price isn't announced twice.</summary>
+    public long NotifiedPrice { get; set; }
+
+    public bool IsHit => BestPrice > 0 && BestPrice <= MaxPrice;
+    public string BestText => !Checked ? "…" : BestPrice > 0 ? BestPrice.ToString("N0") : "None for sale";
+    public string RapText => Rap > 0 ? Rap.ToString("N0") : "–";
+    public string ValueText => Value > 0 ? Value.ToString("N0") : "–";
+    /// <summary>1 at or below your price, 0 waiting, -1 nobody sells it.</summary>
+    public int Kind => !Checked ? 0 : IsHit ? 1 : BestPrice == 0 ? -1 : 0;
+    public string StatusText => !Checked ? "Checking…"
+        : IsHit ? "At your price"
+        : BestPrice == 0 ? "Not for sale"
+        : $"{(double)(BestPrice - MaxPrice) / Math.Max(1, MaxPrice):0%} above";
 }

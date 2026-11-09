@@ -40,7 +40,8 @@ public partial class MainViewModel
             "Marketplace" => item != null ? $"item {item.ItemType} {item.Id}" : "",
             "Trades" => TradesTab
                         + (limited != null ? $" limited {limited.AssetId}" : "")
-                        + (TradesTab == "Trades" ? $" {TradeType}" + (trade != null ? $" trade {trade.Id}" : "") : ""),
+                        + (TradesTab == "Trades" ? $" {TradeType}" + (trade != null ? $" trade {trade.Id}" : "") : "")
+                        + (TradesTab == "Profile" ? $" {TradeProfileId}" : ""),
             _ => ""
         };
         return new NavState($"{Page}|{sub}", Page, MultiTab, FriendsTab, AvatarTab, TradesTab, TradeType,
@@ -138,6 +139,8 @@ public partial class MainViewModel
                 break;
 
             case "Trades":
+                if (s.TradesTab == "Profile" && long.TryParse(s.Key.Split(' ')[^1], out var pid) && pid != TradeProfileId && CurrentAccount is { } pa)
+                    _ = ShowTradeProfileAsync(pa, pid, "", "", "");
                 TradesTab = s.TradesTab;
                 if (s.TradesTab == "Limiteds")
                 {

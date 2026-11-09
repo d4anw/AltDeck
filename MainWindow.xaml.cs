@@ -30,7 +30,7 @@ public partial class MainWindow : Window
         _vm.Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == "BackgroundImage") ApplyBackground();
-            else if (e.PropertyName is "CloseToTray" or "TradeAdOn" || e.PropertyName?.StartsWith("Notify") == true) _tray.Visible = TrayWanted;
+            else if (e.PropertyName is "CloseToTray" or "TradeAdOn" or "Watchlist" || e.PropertyName?.StartsWith("Notify") == true) _tray.Visible = TrayWanted;
             else if (e.PropertyName == "PanicHotkey") ApplyHotkey();
         };
         ApplyBackground();
@@ -176,7 +176,7 @@ public partial class MainWindow : Window
     }
 
     private string _lastNotificationPage = "";
-    private bool TrayWanted => _vm.Settings.CloseToTray || _vm.AnyNotifications || _vm.AdRunning;
+    private bool TrayWanted => _vm.Settings.CloseToTray || _vm.AnyNotifications || _vm.AdRunning || _vm.Settings.Watchlist.Count > 0;
     /// <summary>Closing the window hides it instead: "Close to tray" is on, or a trade ad is posting (it needs RoDeck running).</summary>
     private bool KeepRunningOnClose => _vm.Settings.CloseToTray || _vm.AdRunning;
     private TrayFlyout? _flyout;

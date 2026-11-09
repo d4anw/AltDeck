@@ -68,6 +68,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool notifyFriendRequests;
     // Friend requests: decline them all automatically (off by default)
     [ObservableProperty] private bool autoDeclineRequests;
+    // Trades → Watchlist: limiteds and the price you'd buy at
+    [ObservableProperty] private List<WatchEntry> watchlist = new();
     [ObservableProperty] private bool autoDeclineAllAccounts;   // false: only the account selected top right
     [ObservableProperty] private bool notifyDeals;
     [ObservableProperty] private int notifyDealPercent = 30;
