@@ -88,7 +88,8 @@ public static class LimitedValues
 
     /// <summary>
     /// The cheapest price right now for these limiteds (Roblox's batch item details, up to 100 per request).
-    /// Items nobody is selling are left out.
+    /// 0 = Roblox answered and nobody sells it. Items Roblox didn't answer about (a busy, half answer) are left out:
+    /// unknown, not "sold out".
     /// </summary>
     public static async Task<Dictionary<long, long>> GetBestPricesAsync(IReadOnlyList<long> assetIds, string? cookie, CancellationToken ct)
     {
@@ -100,20 +101,21 @@ public static class LimitedValues
             {
                 long id = x.TryGetProperty("id", out var i) && i.ValueKind == JsonValueKind.Number ? i.GetInt64() : 0;
                 long p = x.TryGetProperty("lowestResalePrice", out var r) && r.ValueKind == JsonValueKind.Number ? r.GetInt64() : 0;
-                if (id > 0 && p > 0) result[id] = p;
+                if (id > 0) result[id] = Math.Max(0, p);   // 0: Roblox answered, nobody sells it
             }
         return result;
     }
 
     /// <summary>
-    /// One limited's cheapest copy for sale right now (0 = nobody sells), from the economy service: quick, and not the
+    /// One limited's cheapest copy for sale right now (0 = nobody sells, -1 = Roblox didn't say), from the economy service: quick, and not the
     /// catalog's busy batch that the Limiteds table and the deals scan share.
     /// </summary>
     public static async Task<long> GetBestPriceAsync(long assetId, CancellationToken ct)
     {
         using var doc = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct);
-        return doc.RootElement.TryGetProperty("CollectiblesItemDetails", out var c) && c.ValueKind == JsonValueKind.Object
-               && c.TryGetProperty("CollectibleLowestResalePrice", out var p) && p.ValueKind == JsonValueKind.Number ? p.GetInt64() : 0;
+        // -1 when the answer doesn't say (not "nobody sells it")
+        if (!doc.RootElement.TryGetProperty("CollectiblesItemDetails", out var c) || c.ValueKind != JsonValueKind.Object) return -1;
+        return c.TryGetProperty("CollectibleLowestResalePrice", out var p) && p.ValueKind == JsonValueKind.Number ? Math.Max(0, p.GetInt64()) : 0;
     }
 
     /// <summary>A limited's marketplace ID (needed to see its sellers and buy one), remembered. "" when it has none.</summary>

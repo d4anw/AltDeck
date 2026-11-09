@@ -190,7 +190,10 @@ public partial class MainViewModel
     {
         _scanDone++;
         if (!_allDeals.TryGetValue(id, out var listed)) return;   // only real listings are shown; nothing to check
-        if (price <= 0 || price > listed.Price) { _allDeals.Remove(id); _dealsChanged = true; return; }   // that copy was bought
+        // Roblox's price lists lag a little behind new listings: a listing gets two minutes before a check may take it off
+        if (now - listed.At < TimeSpan.FromMinutes(2)) return;
+        // that copy was bought: the cheapest is more now, or nobody sells it anymore (Roblox said so, it's not a missing answer)
+        if (price == 0 || price > listed.Price) { _allDeals.Remove(id); _dealsChanged = true; return; }
         if (price < listed.Price && AddDeal(id, price, now, scanned: false) is { } d) added.Add(d);      // cheaper listed since
     }
 
@@ -216,7 +219,12 @@ public partial class MainViewModel
                 }
                 var now = DateTime.Now;
                 var added = new List<DealTile>();
-                foreach (var id in chunk) ScanResult(id, prices.TryGetValue(id, out var p) ? p : 0, now, added);
+                foreach (var id in chunk)
+                {
+                    if (prices.TryGetValue(id, out var p)) ScanResult(id, p, now, added);
+                    else _scanQueue.Enqueue(id);   // Roblox left it out of its answer: unknown, check it again
+                }
+                if (prices.Count == 0) await Task.Delay(5000);   // an empty answer: Roblox is busy, give it a moment
                 await FillDealThumbsAsync(added);
                 FilterDeals();
             }
@@ -244,8 +252,9 @@ public partial class MainViewModel
                 var added = new List<DealTile>();
                 foreach (var (id, price, ok) in results)
                 {
-                    if (ok) ScanResult(id, price, now, added);
-                    else _scanQueue.Enqueue(id);   // try it again later in this pass
+                    if (ok && price >= 0) ScanResult(id, price, now, added);
+                    else if (!ok) _scanQueue.Enqueue(id);   // try it again later in this pass
+                    else _scanDone++;                       // Roblox didn't say: leave the deal as it is
                 }
                 if (added.Count > 0) { await FillDealThumbsAsync(added); FilterDeals(); }
                 var rest = TimeSpan.FromSeconds(1) - (DateTime.Now - started);

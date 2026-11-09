@@ -322,6 +322,7 @@ public partial class MainViewModel
                 {
                     var p = await LimitedValues.GetBestPriceAsync(r.AssetId, CancellationToken.None);
                     if (LimitedValues.Get(r.AssetId) is { } v) { r.Rap = v.Rap; r.Value = v.Value; }
+                    if (p < 0) return;   // Roblox didn't say: keep what's shown
                     r.BestPrice = p;
                     r.Checked = true;
                     Announce(r);
