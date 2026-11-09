@@ -558,7 +558,7 @@ public sealed class PerformanceService
             // Clients RoDeck didn't start, and "Full quality" accounts, are left exactly as they are.
             bool exempt = c.Owner == null || c.Owner.FullQuality;
 
-            if (!exempt) TuneWindow(c, s);
+            if (!exempt) TuneWindow(c, s, live.Count(x => x.Owner != null && !x.Owner.FullQuality));
 
             int limit = !exempt && s.BackgroundCpuLimit > 0 && c.Pid != foreground ? s.BackgroundCpuLimit : 0;
             SetCpuLimit(c.Pid, limit);
@@ -578,13 +578,17 @@ public sealed class PerformanceService
         if (!_stage.TryGetValue(pid, out var stage) || stage < 1) _stage[pid] = 1;
     }
 
-    private void TuneWindow(ClientInfo c, AppSettings s)
+    /// <summary>Until when new windows are put side by side: set when several accounts launch at once.</summary>
+    public DateTime ArrangeUntil { get; set; }
+
+    private void TuneWindow(ClientInfo c, AppSettings s, int running)
     {
         int pid = c.Pid;
         _stage.TryGetValue(pid, out var stage);
         if (stage >= 2) return;
 
-        bool sideBySide = s.WindowLayout == "Side by side";
+        // Side by side only matters with more than one window: a single game keeps Roblox's own window size
+        bool sideBySide = s.WindowLayout == "Side by side" && (running > 1 || DateTime.Now < ArrangeUntil);
         bool place = s.StartTiny || sideBySide;
         if (!place && !s.MinimizeOnLaunch) { _stage[pid] = 2; return; }
 

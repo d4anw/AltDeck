@@ -202,7 +202,7 @@
                   <TextBlock Text="s" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
                 </StackPanel>
               </ctl:SettingRow>
-              <ctl:SettingRow Title="Window layout" Description="Where new client windows appear: next to each other, or all in the same spot.">
+              <ctl:SettingRow Title="Window layout" Description="Where client windows go when several run at once: next to each other, or all in the same spot. One game on its own keeps Roblox's normal window.">
                 <StackPanel Orientation="Horizontal">
                   <RadioButton Style="{StaticResource Seg}" Content="Side by side" GroupName="winlayout"
                                IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='Side by side', Mode=TwoWay}"/>

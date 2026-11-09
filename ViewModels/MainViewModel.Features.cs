@@ -315,6 +315,8 @@ public partial class MainViewModel
             target = resolved;
         }
 
+        // several at once: their windows go next to each other (one on its own keeps Roblox's size)
+        if (accounts.Count > 1) _perf.ArrangeUntil = DateTime.Now.AddSeconds(30 + accounts.Count * Math.Max(5, Settings.LaunchDelay) * 2);
         RefreshLock();
         if (Settings.MultiInstance && !_launcher.IsActive)
         {
