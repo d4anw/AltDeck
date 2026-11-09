@@ -564,8 +564,7 @@ public partial class MainViewModel : ObservableObject
 
         var known = Accounts.Where(a => a.Robux != null).ToList();
         AccountsSubtitle = $"{Accounts.Count} total"
-            + (known.Count > 0 ? $" · R$ {known.Sum(a => a.Robux ?? 0):N0} across {(known.Count == Accounts.Count ? "all" : known.Count.ToString())}" : "")
-            + (Accounts.Count(a => a.IsPremium) is int p and > 0 ? $" · {p} Premium" : "");
+            + (known.Count > 0 ? $" · R$ {known.Sum(a => a.Robux ?? 0):N0} across {(known.Count == Accounts.Count ? "all" : known.Count.ToString())}" : "");
         var k = Accounts.Count(a => a.StatusKind == "signedout" || a.StatusKind == "check");
         NeedsSignInText = k > 0 ? $"{k} need{(k == 1 ? "s" : "")} sign-in" : "";
         var expired = Accounts.Count(a => a.StatusKind == "signedout");   // only real expiries, not "couldn't reach Roblox"

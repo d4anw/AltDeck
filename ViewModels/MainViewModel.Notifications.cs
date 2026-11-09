@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.Windows.Threading;
 using RoDeck.Models;
 using RoDeck.Services;
@@ -47,6 +48,8 @@ public partial class MainViewModel
     {
         _notifyTimer.Tick += async (_, _) => await NotifyTickAsync();
         _notifyTimer.Start();
+        _declineTimer.Tick += async (_, _) => await AutoDeclineTickAsync();
+        _declineTimer.Start();
         Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName?.StartsWith("Notify") != true) return;
@@ -71,7 +74,7 @@ public partial class MainViewModel
             if (_notifyTick % 12 != 1) return;                                                  // the rest once a minute
             if (Settings.NotifyFriendOnline) await CheckFriendsOnlineAsync(a);
             if (Settings.NotifyTrades) await CheckTradesAsync(a);
-            if (Settings.NotifyFriendRequests) await CheckRequestsAsync(a);
+            if (Settings.NotifyFriendRequests && !AutoDeclines(a)) await CheckRequestsAsync(a);   // they'd be declined anyway
         }
         catch (RobloxException) { }   // Roblox busy or signed out: try again next time
         catch (System.Text.Json.JsonException) { }
@@ -165,6 +168,53 @@ public partial class MainViewModel
                                  $"R$ {price:N0} (RAP {v.Rap:N0}{(v.HasValue ? $", value {v.Value:N0}" : "")})", "Deals");
         }
         if (_seenDealNotes.Count > 2000) _seenDealNotes.Clear();
+    }
+
+    // ================================================================== auto-decline friend requests
+
+    private readonly DispatcherTimer _declineTimer = new() { Interval = TimeSpan.FromMinutes(1) };
+    private bool _declineBusy;
+    private DateTime _declinePausedUntil;
+    [ObservableProperty] private string autoDeclineStatus = "";
+
+    /// <summary>Whether this account's friend requests are declined automatically.</summary>
+    private bool AutoDeclines(Account a) =>
+        Settings.AutoDeclineRequests && (Settings.AutoDeclineAllAccounts || a == CurrentAccount);
+
+    /// <summary>
+    /// Once a minute: each account it applies to that has requests gets them all declined with one request (Roblox's
+    /// "Ignore all"), so even hundreds of requests stay far below Roblox's limits. Accounts without requests cost only
+    /// the count check. When Roblox slows down or wants a captcha, it waits 10 minutes.
+    /// </summary>
+    private async Task AutoDeclineTickAsync()
+    {
+        if (_declineBusy || !Settings.AutoDeclineRequests || DateTime.Now < _declinePausedUntil) return;
+        _declineBusy = true;
+        try
+        {
+            var accounts = Accounts.Where(a => !string.IsNullOrEmpty(a.Cookie) && a.StatusKind != "signedout" && AutoDeclines(a)).ToList();
+            foreach (var a in accounts)
+            {
+                try
+                {
+                    int count = await RobloxFriends.GetRequestCountAsync(a.Cookie, CancellationToken.None);
+                    if (count == 0) continue;
+                    await RobloxFriends.DeclineAllAsync(a.Cookie, CancellationToken.None);
+                    Log(ActivityLog.Info, $"Declined {count} friend request{(count == 1 ? "" : "s")} on {a.Label}.");
+                    AutoDeclineStatus = $"Last: declined {count} on {a.Label} at {DateTime.Now:HH:mm}.";
+                    if (a == CurrentAccount) { RequestCount = 0; Requests.Clear(); }
+                }
+                catch (RobloxException ex) when (ex.TooMany || ex.Status == System.Net.HttpStatusCode.Forbidden)
+                {
+                    _declinePausedUntil = DateTime.Now.AddMinutes(10);
+                    AutoDeclineStatus = ex.TooMany ? "Roblox is busy; trying again in 10 minutes."
+                                                   : "Roblox wants a captcha for this right now; trying again in 10 minutes.";
+                    return;
+                }
+                catch (RobloxException) { }   // signed out or Roblox down: the next minute tries again
+            }
+        }
+        finally { _declineBusy = false; }
     }
 
     /// <summary>A notification was clicked: show what it was about.</summary>

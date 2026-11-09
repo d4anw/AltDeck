@@ -38,7 +38,7 @@
       <Setter Property="Height" Value="34"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
-      <Setter Property="Background" Value="{DynamicResource Card2}"/>
+      <Setter Property="Background" Value="{DynamicResource Pill}"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
       <Setter Property="Template">
@@ -49,7 +49,7 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="b" Property="Background" Value="{DynamicResource Line}"/>
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource PillHover}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>

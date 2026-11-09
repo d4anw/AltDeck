@@ -199,6 +199,10 @@ public static class RobloxFriends
     public static Task DeclineAsync(string cookie, long userId, CancellationToken ct = default) =>
         ActAsync($"https://friends.roblox.com/v1/users/{userId}/decline-friend-request", cookie, null, ct);
 
+    /// <summary>Declines every friend request the account has, in one request (Roblox's own "Ignore all").</summary>
+    public static Task DeclineAllAsync(string cookie, CancellationToken ct = default) =>
+        ActAsync("https://friends.roblox.com/v1/user/friend-requests/decline-all", cookie, null, ct);
+
     public static Task UnfriendAsync(string cookie, long userId, CancellationToken ct = default) =>
         ActAsync($"https://friends.roblox.com/v1/users/{userId}/unfriend", cookie, null, ct);
 
