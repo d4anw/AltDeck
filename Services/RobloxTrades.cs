@@ -181,7 +181,68 @@ public static class RobloxTrades
             cursor = Str(doc.RootElement, "nextPageCursor");
             if (string.IsNullOrEmpty(cursor)) break;
         }
+        // that list only has single items: limited bundles (dynamic heads) come from the bundles the account owns
+        try { list.AddRange(await GetLimitedBundlesAsync(cookie, userId, ct)); }
+        catch (RobloxException ex) when (!ex.TooMany) { }
+        catch (JsonException) { }
         return list;
+    }
+
+    /// <summary>
+    /// The limited bundles someone owns (dynamic heads and the like), one tile per copy. Owned bundles come from the
+    /// catalog; the limited ones are picked out with the batch item details; copies, serials and RAP come from what they
+    /// can trade, and a bundle that isn't in there (on hold) gets its RAP from its sales.
+    /// </summary>
+    public static async Task<List<LimitedTile>> GetLimitedBundlesAsync(string cookie, long userId, CancellationToken ct)
+    {
+        var owned = new List<long>();
+        string? cursor = null;
+        for (int page = 0; page < 10; page++)
+        {
+            var url = $"https://catalog.roblox.com/v1/users/{userId}/bundles?limit=100&sortOrder=Desc"
+                    + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : "");
+            using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+                foreach (var x in data.EnumerateArray()) if (Long(x, "id") is > 0 and var id) owned.Add(id);
+            cursor = Str(doc.RootElement, "nextPageCursor");
+            if (string.IsNullOrEmpty(cursor)) break;
+        }
+        if (owned.Count == 0) return new();
+
+        // which of them are limited
+        var limited = new Dictionary<long, (string Name, string Cid)>();
+        foreach (var chunk in owned.Distinct().Chunk(100))
+        {
+            var body = new { items = chunk.Select(id => new { itemType = "Bundle", id }).ToArray() };
+            using var doc = await RobloxHttp.PostJsonAsync("https://catalog.roblox.com/v1/catalog/items/details", null, body, ct);
+            if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array) continue;
+            foreach (var x in data.EnumerateArray())
+            {
+                var cid = Str(x, "collectibleItemId");
+                bool isLimited = x.TryGetProperty("itemRestrictions", out var rs) && rs.ValueKind == JsonValueKind.Array
+                                 && rs.EnumerateArray().Any(r => r.ValueKind == JsonValueKind.String && r.GetString() is "Limited" or "LimitedUnique" or "Collectible");
+                if (cid.Length > 0 && isLimited) { limited[Long(x, "id")] = (Str(x, "name"), cid); BundleCollectibleIds[Long(x, "id")] = cid; }
+            }
+        }
+        if (limited.Count == 0) return new();
+
+        // copies with serials and RAP, from what they can trade
+        var result = new List<LimitedTile>();
+        List<LimitedTile> tradable;
+        bool tradableKnown = true;
+        try { tradable = (await GetTradableAsync(cookie, userId, ct)).Where(t => t.IsBundle).ToList(); }
+        catch (RobloxException ex) when (!ex.TooMany) { tradable = new(); tradableKnown = false; }
+        int lookups = 0;
+        foreach (var (id, (name, cid)) in limited)
+        {
+            var copies = tradable.Where(t => t.AssetId == id).ToList();
+            if (copies.Count > 0) { result.AddRange(copies); continue; }
+            long rap = 0;
+            if (lookups++ < 40)   // keep a huge collection from flooding Roblox
+                try { rap = (await ReadSalesAsync(cid, ct)).Rap; } catch (RobloxException ex) when (!ex.TooMany) { }
+            result.Add(LimitedTile.From(id, name, rap, onHold: tradableKnown, bundle: true));   // owned but not tradable: on hold
+        }
+        return result;
     }
 
     /// <summary>Roblox's resale numbers for a limited (public).</summary>
