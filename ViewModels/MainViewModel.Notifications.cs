@@ -27,7 +27,8 @@ public partial class MainViewModel
     /// <summary>The number on the bell top right: friend requests plus trades waiting.</summary>
     public int BellCount => RequestCount + InboundCount;
 
-    public bool AnyNotifications => Settings.NotifyFriendOnline || Settings.NotifyTrades || Settings.NotifyFriendRequests || Settings.NotifyDeals;
+    public bool AnyNotifications => Settings.NotifyFriendOnline || Settings.NotifyTrades || Settings.NotifyFriendRequests || Settings.NotifyDeals
+                                    || Settings.NotifyOutbound is "Accepted" or "Declined" or "Both";
 
     /// <summary>For the tray panel: which notifications are on.</summary>
     public string TrayNotifyText
@@ -37,6 +38,7 @@ public partial class MainViewModel
             var on = new List<string>();
             if (Settings.NotifyFriendOnline) on.Add("friends online");
             if (Settings.NotifyTrades) on.Add("trades");
+            if (Settings.NotifyOutbound is "Accepted" or "Declined" or "Both") on.Add("answered trades");
             if (Settings.NotifyFriendRequests) on.Add("requests");
             if (Settings.NotifyDeals) on.Add("deals");
             return on.Count == 0 ? "Notifications are off" : "Notifying about " + string.Join(", ", on);
@@ -59,6 +61,7 @@ public partial class MainViewModel
             // a switch turned on: start fresh, so what's already there isn't announced
             if (e.PropertyName == nameof(AppSettings.NotifyFriendOnline)) _friendPresence = null;
             if (e.PropertyName == nameof(AppSettings.NotifyTrades)) _seenTrades = null;
+            if (e.PropertyName == nameof(AppSettings.NotifyOutbound)) _seenOutbound = null;
             if (e.PropertyName == nameof(AppSettings.NotifyFriendRequests)) _seenRequests = null;
         };
     }
@@ -69,12 +72,13 @@ public partial class MainViewModel
         _notifyBusy = true;
         try
         {
-            if (_notifyFor != a) { _notifyFor = a; _friendPresence = null; _seenTrades = null; _seenRequests = null; }
+            if (_notifyFor != a) { _notifyFor = a; _friendPresence = null; _seenTrades = null; _seenRequests = null; _seenOutbound = null; }
             _notifyTick++;
             if (Settings.NotifyDeals) await CheckDealsAsync();                                 // every 5 s
             if (_notifyTick % 12 != 1) return;                                                  // the rest once a minute
             if (Settings.NotifyFriendOnline) await CheckFriendsOnlineAsync(a);
             if (Settings.NotifyTrades) await CheckTradesAsync(a);
+            if (Settings.NotifyOutbound is "Accepted" or "Declined" or "Both") await CheckOutboundAsync(a);
             if (Settings.NotifyFriendRequests && !AutoDeclines(a)) await CheckRequestsAsync(a);   // they'd be declined anyway
         }
         catch (RobloxException) { }   // Roblox busy or signed out: try again next time
@@ -128,6 +132,37 @@ public partial class MainViewModel
             if (fresh.Count > 0) _ = RefreshInboundCountAsync();
         }
         _seenTrades = rows.Select(r => r.Id).ToHashSet();
+    }
+
+    private HashSet<long>? _seenOutbound;
+    private readonly HashSet<long> _cancelledByMe = new();
+
+    /// <summary>
+    /// Trades this account sent that aren't open anymore: Roblox says whether they were accepted (Completed) or declined.
+    /// Only the kinds picked in Settings are announced. Expired or countered ones aren't.
+    /// </summary>
+    private async Task CheckOutboundAsync(Account a)
+    {
+        var (rows, _) = await RobloxTrades.GetTradesAsync(a.Cookie, "Outbound", null, CancellationToken.None);
+        if (a != CurrentAccount) return;
+        var now = rows.Select(r => r.Id).ToHashSet();
+        if (_seenOutbound != null)
+        {
+            bool accepted = Settings.NotifyOutbound is "Accepted" or "Both", declined = Settings.NotifyOutbound is "Declined" or "Both";
+            foreach (var id in _seenOutbound.Where(id => !now.Contains(id)).Take(5))
+            {
+                TradeDetail d;
+                try { d = await RobloxTrades.GetTradeAsync(a.Cookie, id, a.UserId, CancellationToken.None); }
+                catch (RobloxException) { continue; }
+                var partner = d.Theirs.UserName.Length > 0 ? d.Theirs.UserName : "someone";
+                if (_cancelledByMe.Contains(id)) continue;   // you cancelled it yourself in RoDeck
+                if (d.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) && accepted)
+                    Notification?.Invoke($"{partner} accepted your trade", $"You gave {d.Give:N0} · you got {d.Get:N0} (value)", "Completed");
+                else if (d.Status.Equals("Declined", StringComparison.OrdinalIgnoreCase) && declined)
+                    Notification?.Invoke($"{partner} declined your trade", "Nothing was exchanged.", "Inactive");
+            }
+        }
+        _seenOutbound = now;
     }
 
     private async Task CheckRequestsAsync(Account a)
@@ -226,6 +261,8 @@ public partial class MainViewModel
             case "Friends": Page = "Friends"; FriendsTab = "Friends"; break;
             case "Requests": Page = "Friends"; FriendsTab = "Requests"; break;
             case "Trades": Page = "Trades"; TradesTab = "Trades"; TradeType = "Inbound"; break;
+            case "Completed": Page = "Trades"; TradesTab = "Trades"; TradeType = "Completed"; break;
+            case "Inactive": Page = "Trades"; TradesTab = "Trades"; TradeType = "Inactive"; break;
             case "Deals": Page = "Trades"; TradesTab = "Deals"; break;
             case "Watchlist": Page = "Trades"; TradesTab = "Watchlist"; break;
         }

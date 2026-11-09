@@ -65,6 +65,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool notifyFriendOnline;
     [ObservableProperty] private bool notifyFavouritesOnly = true;   // with friends online: only starred friends
     [ObservableProperty] private bool notifyTrades;
+    /// <summary>A trade you sent was answered: "Off", "Accepted", "Declined" or "Both".</summary>
+    [ObservableProperty] private string notifyOutbound = "Off";
     [ObservableProperty] private bool notifyFriendRequests;
     // Friend requests: decline them all automatically (off by default)
     [ObservableProperty] private bool autoDeclineRequests;

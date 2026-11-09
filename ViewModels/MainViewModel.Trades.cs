@@ -66,7 +66,6 @@ public partial class MainViewModel
     partial void OnDealSortChanged(MarketOption? value) => FilterDeals();
 
     // the full scan: every limited's best price, a batch at a time, again every few minutes while Deals is open
-    private bool _scanRunning;
     private int _scanDone, _scanTotal;
     private DateTime _scanFinishedAt;
     private readonly DispatcherTimer _dealTimer = new() { Interval = TimeSpan.FromSeconds(1) };   // new listings, every second
@@ -102,51 +101,108 @@ public partial class MainViewModel
         if (!_dealTimer.IsEnabled) { _dealTimer.Start(); _ = PollDealsAsync(); MaybeScan(); }
     }
 
+    // ---- the full scan: every limited's cheapest price, non-stop while Deals is open
+    // Two Roblox services at once, each within its own allowance: the batch item details (100 limiteds a request,
+    // about 10 requests a minute) and the per-item details (about 1,000 a minute; Deals uses 12 a second of that, so the
+    // watchlist and item pages keep theirs). Together every limited is checked again about every minute and a half,
+    // the most valuable first; new listings come in every second from the live feed on top of that.
+    private readonly Queue<long> _scanQueue = new();
+    private DateTime _scanPassStarted;
+    private TimeSpan _scanPassTook;
+    private bool _batchScanBusy, _itemScanBusy;
+    private const int ItemChecksPerSecond = 12;
+
     private void MaybeScan()
     {
-        if (_scanRunning || DateTime.Now - _scanFinishedAt < TimeSpan.FromMinutes(2)) return;
-        _ = ScanAllAsync();
+        if (!_dealTimer.IsEnabled) return;
+        if (!_batchScanBusy) _ = BatchScanAsync();
+        if (!_itemScanBusy) _ = ItemScanAsync();
     }
 
-    /// <summary>Checks the best price of every limited (most valuable first), adding each batch's deals as it comes in.</summary>
-    private async Task ScanAllAsync()
+    /// <summary>The next limiteds to check; a new pass starts (most valuable first) when the last one is done.</summary>
+    private List<long> TakeScanIds(int n)
     {
-        _scanRunning = true;
+        if (_scanQueue.Count == 0)
+        {
+            if (_scanPassStarted != default) { _scanFinishedAt = DateTime.Now; _scanPassTook = DateTime.Now - _scanPassStarted; }
+            var ids = LimitedValues.All.Where(v => v.Worth > 0).OrderByDescending(v => v.Worth).Select(v => v.AssetId).ToList();
+            foreach (var id in ids) _scanQueue.Enqueue(id);
+            _scanTotal = ids.Count;
+            _scanDone = 0;
+            _scanPassStarted = DateTime.Now;
+        }
+        var take = new List<long>();
+        while (take.Count < n && _scanQueue.Count > 0) take.Add(_scanQueue.Dequeue());
+        return take;
+    }
+
+    private void ScanResult(long id, long price, DateTime now, List<DealTile> added)
+    {
+        _scanDone++;
+        if (price <= 0) { _allDeals.Remove(id); return; }   // nobody sells it anymore
+        if (AddDeal(id, price, now, scanned: true) is { } d) added.Add(d);
+    }
+
+    /// <summary>100 at a time through the batch service, as often as Roblox allows.</summary>
+    private async Task BatchScanAsync()
+    {
+        _batchScanBusy = true;
         try
         {
             await LimitedValues.EnsureAsync(CancellationToken.None);
-            var ids = LimitedValues.All.Where(v => v.Worth > 0).OrderByDescending(v => v.Worth).Select(v => v.AssetId).ToList();
-            _scanTotal = ids.Count;
-            _scanDone = 0;
-            var chunks = ids.Chunk(100).ToList();
-            int retries = 0;
-            for (int ci = 0; ci < chunks.Count; ci++)
+            while (_dealTimer.IsEnabled)
             {
-                var chunk = chunks[ci];
-                if (!_dealTimer.IsEnabled) return;   // left the Deals tab: stop, carry on next time
+                var chunk = TakeScanIds(100);
+                if (chunk.Count == 0) { await Task.Delay(1000); continue; }
                 Dictionary<long, long> prices;
-                try { prices = await LimitedValues.GetBestPricesAsync(chunk, CurrentAccount?.Cookie, CancellationToken.None); retries = 0; }
-                catch (RobloxException ex) when (ex.TooMany)
+                try { prices = await LimitedValues.GetBestPricesAsync(chunk, CurrentAccount?.Cookie, CancellationToken.None); }
+                catch (Exception ex) when (ex is RobloxException or System.Text.Json.JsonException)
                 {
-                    // Roblox wants a pause: wait, then the same batch again (a few times), instead of skipping it
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(ex.WaitSeconds, 5, 60)));
-                    if (++retries <= 3) ci--; else retries = 0;
+                    // not checked: back in line for the per-item checks; wait as long as Roblox asked
+                    foreach (var id in chunk) _scanQueue.Enqueue(id);
+                    await Task.Delay(TimeSpan.FromSeconds(ex is RobloxException { TooMany: true } re ? Math.Clamp(re.WaitSeconds, 5, 60) : 10));
                     continue;
                 }
-                catch (RobloxException) { continue; }
-                catch (System.Text.Json.JsonException) { continue; }
                 var now = DateTime.Now;
                 var added = new List<DealTile>();
-                foreach (var (id, price) in prices)
-                    if (AddDeal(id, price, now, scanned: true) is { } d) added.Add(d);
-                foreach (var id in chunk) if (!prices.ContainsKey(id)) _allDeals.Remove(id);   // nobody sells it anymore
-                _scanDone += chunk.Length;
+                foreach (var id in chunk) ScanResult(id, prices.TryGetValue(id, out var p) ? p : 0, now, added);
                 await FillDealThumbsAsync(added);
                 FilterDeals();
             }
-            _scanFinishedAt = DateTime.Now;
         }
-        finally { _scanRunning = false; FilterDeals(); }
+        finally { _batchScanBusy = false; }
+    }
+
+    /// <summary>Every second, the next few limiteds one by one through the per-item service (its own allowance).</summary>
+    private async Task ItemScanAsync()
+    {
+        _itemScanBusy = true;
+        try
+        {
+            await LimitedValues.EnsureAsync(CancellationToken.None);
+            while (_dealTimer.IsEnabled)
+            {
+                var started = DateTime.Now;
+                var ids = TakeScanIds(ItemChecksPerSecond);
+                var results = await Task.WhenAll(ids.Select(async id =>
+                {
+                    try { return (id, await LimitedValues.GetBestPriceAsync(id, CancellationToken.None), true); }
+                    catch (Exception ex) when (ex is RobloxException or System.Text.Json.JsonException) { return (id, 0L, false); }
+                }));
+                var now = DateTime.Now;
+                var added = new List<DealTile>();
+                foreach (var (id, price, ok) in results)
+                {
+                    if (ok) ScanResult(id, price, now, added);
+                    else _scanQueue.Enqueue(id);   // try it again later in this pass
+                }
+                if (added.Count > 0) { await FillDealThumbsAsync(added); FilterDeals(); }
+                var rest = TimeSpan.FromSeconds(1) - (DateTime.Now - started);
+                if (results.Any(r => !r.Item3)) rest = TimeSpan.FromSeconds(10);   // Roblox said slow down: give it a moment
+                if (rest > TimeSpan.Zero) await Task.Delay(rest);
+            }
+        }
+        finally { _itemScanBusy = false; }
     }
 
     /// <summary>Records a best price; returns the new tile when it changed (null when it's the same as before).</summary>
@@ -245,8 +301,9 @@ public partial class MainViewModel
             Deals.Clear();
             foreach (var d in shown) Deals.Add(d);
         }
-        var scan = _scanRunning ? $"checking every limited's price: {_scanDone:N0} of {_scanTotal:N0}"
-                 : _scanFinishedAt == default ? "starting" : $"all {_scanTotal:N0} limiteds checked at {_scanFinishedAt:HH:mm}";
+        var scan = _scanTotal == 0 ? "starting the price check"
+                 : $"every limited's price: {Math.Min(_scanDone, _scanTotal):N0} of {_scanTotal:N0} this round"
+                   + (_scanPassTook > TimeSpan.Zero ? $" (a full round takes about {Math.Max(1, (int)Math.Round(_scanPassTook.TotalSeconds)):N0} s)" : "");
         DealsStatus = $"Live · new listings checked {(_dealsCheckedAt == default ? "…" : _dealsCheckedAt.ToString("HH:mm:ss"))} · {scan} · {Deals.Count} shown";
     }
 

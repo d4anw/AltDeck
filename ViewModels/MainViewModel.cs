@@ -339,6 +339,14 @@ public partial class MainViewModel : ObservableObject
             case nameof(AppSettings.PerfPreset):
                 if (!_applyingPreset) ApplyPreset(Settings.PerfPreset);
                 break;
+            // changing a fine-tune setting by hand: it's your own preset now (saved as "My preset")
+            case nameof(AppSettings.FpsCap) or nameof(AppSettings.UnlimitedFps) or nameof(AppSettings.LowestGraphics)
+                 or nameof(AppSettings.LighterRendering) or nameof(AppSettings.Msaa) or nameof(AppSettings.TextureQuality)
+                 or nameof(AppSettings.RenderingMode) or nameof(AppSettings.GraySky) or nameof(AppSettings.NoGrass)
+                 or nameof(AppSettings.StartTiny) or nameof(AppSettings.MinimizeOnLaunch) or nameof(AppSettings.MuteOnStart)
+                 or nameof(AppSettings.BackgroundCpuLimit) or nameof(AppSettings.AntiAfk):
+                if (!_applyingPreset) SaveCustomPerf();
+                break;
             case nameof(AppSettings.ShowOnDiscord):
                 _discord.Reset();
                 break;
@@ -366,9 +374,10 @@ public partial class MainViewModel : ObservableObject
             GraySky = s.GraySky, NoGrass = s.NoGrass, StartTiny = s.StartTiny, MinimizeOnLaunch = s.MinimizeOnLaunch,
             MuteOnStart = s.MuteOnStart, BackgroundCpuLimit = s.BackgroundCpuLimit, AntiAfk = s.AntiAfk,
         };
+        bool was = _applyingPreset;
         _applyingPreset = true;
         s.PerfPreset = "Custom";
-        _applyingPreset = false;
+        _applyingPreset = was;
     }
 
     private void ApplyPreset(string preset)

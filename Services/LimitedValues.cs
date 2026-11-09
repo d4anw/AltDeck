@@ -116,6 +116,17 @@ public static class LimitedValues
                && c.TryGetProperty("CollectibleLowestResalePrice", out var p) && p.ValueKind == JsonValueKind.Number ? p.GetInt64() : 0;
     }
 
+    /// <summary>A limited's marketplace ID (needed to see its sellers and buy one), remembered. "" when it has none.</summary>
+    public static async Task<string> GetCollectibleIdAsync(long assetId, CancellationToken ct)
+    {
+        if (CollectibleIds.TryGetValue(assetId, out var known)) return known;
+        using var doc = await RobloxHttp.GetJsonAsync($"https://economy.roblox.com/v2/assets/{assetId}/details", null, ct);
+        var cid = doc.RootElement.Text("CollectibleItemId");
+        if (cid.Length > 0) CollectibleIds[assetId] = cid;
+        return cid;
+    }
+    private static readonly ConcurrentDictionary<long, string> CollectibleIds = new();
+
     /// <summary>Best price (0 = nobody sells), copies that exist, and favorites, from Roblox's batch item details.</summary>
     public readonly record struct CatalogStats(long BestPrice, long Copies, long Favorites);
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<long, (DateTime At, CatalogStats Stats)> Stats = new();

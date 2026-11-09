@@ -168,6 +168,7 @@ public partial class MainViewModel
         try
         {
             await RobloxTrades.DeclineAsync(a.Cookie, r.Id);
+            if (mine) _cancelledByMe.Add(r.Id);
             TradeRows.Remove(r);
             if (OpenTradeRow == r) CloseTrade();
             StatusMessage = mine ? $"Trade to {r.PartnerLabel} cancelled." : $"Trade from {r.PartnerLabel} declined.";
@@ -350,6 +351,7 @@ public partial class MainViewModel
             mine ? "Cancel trade" : "Decline trade", true, async () =>
             {
                 await RobloxTrades.DeclineAsync(a.Cookie, d.Id);
+                if (mine) _cancelledByMe.Add(d.Id);
                 StatusMessage = mine ? $"Trade to {r.PartnerLabel} cancelled." : $"Trade from {r.PartnerLabel} declined.";
                 TradeRows.Remove(r);
                 CloseTrade();

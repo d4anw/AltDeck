@@ -174,7 +174,7 @@ public partial class MainWindow : Window
     private string _lastNotificationPage = "";
     private bool TrayWanted => _vm.Settings.CloseToTray || _vm.AnyNotifications || _vm.AdRunning || _vm.Settings.Watchlist.Count > 0;
     /// <summary>Closing the window hides it instead: "Close to tray" is on, or a trade ad is posting (it needs RoDeck running).</summary>
-    private bool KeepRunningOnClose => _vm.Settings.CloseToTray || _vm.AdRunning;
+    private bool KeepRunningOnClose => _vm.Settings.CloseToTray || _vm.AdRunning || _vm.Settings.Watchlist.Count > 0;
     private TrayFlyout? _flyout;
 
     private void ShowTrayPanel()

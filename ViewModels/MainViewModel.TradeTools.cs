@@ -200,7 +200,12 @@ public partial class MainViewModel
     /// <summary>Started once: the saved list, checked every second (even with RoDeck in the tray).</summary>
     private void SetupWatchlist()
     {
-        foreach (var e in Settings.Watchlist) AddWatchRow(e.AssetId, e.MaxPrice, e.Name, e.Percent);
+        foreach (var e in Settings.Watchlist)
+        {
+            var row = AddWatchRow(e.AssetId, e.MaxPrice, e.Name, e.Percent);
+            row.AutoBuy = e.AutoBuy && Accounts.Any(a => a.Id == e.BuyerId);
+            row.BuyerId = e.BuyerId;
+        }
         WatchRows.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasWatchRows));
         _watchTimer.Tick += (_, _) => WatchTick();
         _watchTimer.Start();
@@ -263,7 +268,10 @@ public partial class MainViewModel
 
     private void SaveWatchlist()
     {
-        Settings.Watchlist = WatchRows.Select(r => new WatchEntry { AssetId = r.AssetId, MaxPrice = r.MaxPrice, Percent = r.Percent, Name = r.Name }).ToList();
+        Settings.Watchlist = WatchRows.Select(r => new WatchEntry
+        {
+            AssetId = r.AssetId, MaxPrice = r.MaxPrice, Percent = r.Percent, Name = r.Name, AutoBuy = r.AutoBuy, BuyerId = r.BuyerId
+        }).ToList();
         _saveTimer.Stop();
         _saveTimer.Start();
     }
@@ -331,10 +339,116 @@ public partial class MainViewModel
     /// <summary>A Windows notification once per new price at or below yours.</summary>
     private void Announce(WatchRow r)
     {
+        if (r.IsHit && r.AutoBuy) _ = WatchAutoBuyAsync(r);   // before the "already told" check: a failed try may go again
         if (!r.IsHit || r.NotifiedPrice == r.BestPrice) return;
         r.NotifiedPrice = r.BestPrice;
         Notification?.Invoke($"Watchlist: {r.Name} for R$ {r.BestPrice:N0}",
                              $"At or below your price of R$ {r.MaxPrice:N0} (RAP {r.Rap:N0}).", "Watchlist");
+    }
+
+    // ---- auto-buy at your price
+
+    [ObservableProperty] private bool showAutoBuyWarning;
+    [ObservableProperty] private string autoBuyWarningItem = "";
+    private WatchRow? _autoBuyAsk;
+
+    /// <summary>The Auto-buy switch on a row: off at once; on only after the red warning, every time.</summary>
+    [RelayCommand]
+    private void ToggleWatchAutoBuy(WatchRow? r)
+    {
+        if (r == null) return;
+        if (r.AutoBuy)
+        {
+            r.AutoBuy = false;
+            SaveWatchlist();
+            StatusMessage = $"Auto-buy is off for {r.Name}.";
+            return;
+        }
+        if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; r.RefreshAutoBuy(); return; }
+        _autoBuyAsk = r;
+        AutoBuyWarningItem = $"{r.Name} at R$ {r.MaxPrice:N0} or less, with {a.Label}";
+        ShowAutoBuyWarning = true;
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(r.RefreshAutoBuy);   // the switch stays off until confirmed
+    }
+
+    [RelayCommand]
+    private void ConfirmAutoBuy()
+    {
+        ShowAutoBuyWarning = false;
+        if (_autoBuyAsk is not { } r || CurrentAccount is not { } a) return;
+        r.BuyerId = a.Id;
+        r.AutoBuy = true;
+        r.NextBuyTry = default;
+        SaveWatchlist();
+        StatusMessage = $"Auto-buy is on: {a.Label} buys {r.Name} once it's R$ {r.MaxPrice:N0} or less.";
+        Log(ActivityLog.Info, $"Auto-buy on for {r.Name} at R$ {r.MaxPrice:N0} or less ({a.Label}).");
+        _autoBuyAsk = null;
+        if (r.IsHit) _ = WatchAutoBuyAsync(r);
+    }
+
+    [RelayCommand] private void CancelAutoBuy() { ShowAutoBuyWarning = false; _autoBuyAsk = null; }
+
+    /// <summary>
+    /// Buys the cheapest copy for sale when it's at or below the row's price: never above it, never over the spending
+    /// limit or the Robux the account has, never from one of your own accounts. One copy, then auto-buy turns off.
+    /// </summary>
+    private async Task WatchAutoBuyAsync(WatchRow r)
+    {
+        if (r.Buying || DateTime.Now < r.NextBuyTry) return;
+        var a = Accounts.FirstOrDefault(x => x.Id == r.BuyerId);
+        if (a == null || string.IsNullOrEmpty(a.Cookie))
+        {
+            r.AutoBuy = false; SaveWatchlist();
+            Notification?.Invoke($"Auto-buy stopped: {r.Name}", "The account that was buying it isn't in RoDeck anymore.", "Watchlist");
+            return;
+        }
+        r.Buying = true;
+        try
+        {
+            var cid = await LimitedValues.GetCollectibleIdAsync(r.AssetId, CancellationToken.None);
+            if (cid.Length == 0) { r.AutoBuy = false; SaveWatchlist(); StatusMessage = $"{r.Name} can't be bought from players."; return; }
+            var (sellers, _) = await RobloxMarket.GetResellersAsync(cid, null, CancellationToken.None);
+            var mine = Accounts.Select(x => x.UserId).ToHashSet();
+            var seller = sellers.Where(s => !(s.SellerType == "User" && mine.Contains(s.SellerId))).OrderBy(s => s.Price).FirstOrDefault();
+            if (seller == null || seller.Price > r.MaxPrice) { r.NextBuyTry = DateTime.Now.AddSeconds(5); return; }   // gone already
+
+            string? problem = Settings.MarketSpendLimit > 0 && seller.Price > Settings.MarketSpendLimit ? $"over your spending limit of R$ {Settings.MarketSpendLimit:N0}"
+                            : a.Robux is long have && have < seller.Price ? $"{a.Label} has only R$ {have:N0}" : null;
+            if (problem != null)
+            {
+                r.NextBuyTry = DateTime.Now.AddMinutes(1);
+                if (r.NotifiedPrice != -seller.Price)
+                {
+                    r.NotifiedPrice = -seller.Price;
+                    Notification?.Invoke($"Auto-buy waited: {r.Name}", $"R$ {seller.Price:N0} is {problem}.", "Watchlist");
+                }
+                return;
+            }
+
+            var item = new MarketItem { Id = r.AssetId, Name = r.Name, CollectibleItemId = cid, IsLimited = true };
+            var result = await RobloxMarket.BuyResaleAsync(a.Cookie, a.UserId, item, seller, CancellationToken.None);
+            if (result.Ok)
+            {
+                r.AutoBuy = false;
+                SaveWatchlist();
+                var msg = $"{a.Label} bought {r.Name} for R$ {seller.Price:N0} (auto-buy).";
+                StatusMessage = msg;
+                Log(ActivityLog.Purchase, msg);
+                Notification?.Invoke($"Bought {r.Name}", $"R$ {seller.Price:N0} from {seller.Name}, with {a.Label}. Auto-buy is off for it now.", "Watchlist");
+                if (await RobloxApi.GetRobuxAsync(a.Cookie, a.UserId) is long left) a.Robux = left;
+                _ = WatchFullCheckAsync();
+            }
+            else
+            {
+                r.NextBuyTry = DateTime.Now.AddSeconds(10);   // someone was quicker, or Roblox said no: the next listing tries again
+                Log(ActivityLog.Info, $"Auto-buy of {r.Name} didn't go through: {result.Message}");
+            }
+        }
+        catch (Exception ex) when (ex is RobloxException or System.Text.Json.JsonException)
+        {
+            r.NextBuyTry = DateTime.Now.AddSeconds(ex is RobloxException { TooMany: true } ? 30 : 10);
+        }
+        finally { r.Buying = false; }
     }
 
     // ================================================================== items that are gone

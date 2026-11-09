@@ -95,6 +95,7 @@ public partial class MainViewModel
         if (ShowTradeConfirm) { if (!TradeBusy) ShowTradeConfirm = false; return true; }
         if (ShowBuyConfirm) { if (!BuyBusy) ShowBuyConfirm = false; return true; }
         if (ShowInstaBuyWarning) { ShowInstaBuyWarning = false; return true; }
+        if (ShowAutoBuyWarning) { CancelAutoBuy(); return true; }
         if (ShowDealBuy) { if (!DealBuyBusy) { ShowDealBuy = false; DealBuyDeal = null; } return true; }
         if (IsCalcPickerOpen && Page == "Trades") { IsCalcPickerOpen = false; return true; }
         if (IsAdPickerOpen && Page == "Trades") { IsAdPickerOpen = false; return true; }

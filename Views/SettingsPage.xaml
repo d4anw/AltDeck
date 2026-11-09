@@ -165,6 +165,18 @@
               <ctl:SettingRow Title="Trade received" Description="Someone sends the account a trade: what you'd give and get. Checked once a minute.">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyTrades}"/>
               </ctl:SettingRow>
+              <ctl:SettingRow Title="Trade you sent was answered" Description="Someone accepted or declined a trade this account sent. Pick which ones you want to hear about. Checked once a minute.">
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton Style="{StaticResource Seg}" Content="Off" GroupName="outboundnotify"
+                               IsChecked="{Binding Settings.NotifyOutbound, Converter={StaticResource Eq}, ConverterParameter=Off, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="Accepted" GroupName="outboundnotify"
+                               IsChecked="{Binding Settings.NotifyOutbound, Converter={StaticResource Eq}, ConverterParameter=Accepted, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="Declined" GroupName="outboundnotify"
+                               IsChecked="{Binding Settings.NotifyOutbound, Converter={StaticResource Eq}, ConverterParameter=Declined, Mode=TwoWay}"/>
+                  <RadioButton Style="{StaticResource Seg}" Content="Both" GroupName="outboundnotify" Margin="0"
+                               IsChecked="{Binding Settings.NotifyOutbound, Converter={StaticResource Eq}, ConverterParameter=Both, Mode=TwoWay}"/>
+                </StackPanel>
+              </ctl:SettingRow>
               <ctl:SettingRow Title="Limited deals"
                               Description="A limited is listed far below its RAP (or value, as picked on Trades → Deals). Checked every few seconds.">
                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.NotifyDeals}"/>
