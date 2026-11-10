@@ -303,7 +303,7 @@
                             <Grid.ColumnDefinitions>
                               <ColumnDefinition Width="*"/>
                               <ColumnDefinition Width="200"/>
-                              <ColumnDefinition Width="Auto"/>
+                              <ColumnDefinition Width="380"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                               <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -314,7 +314,7 @@
                                            Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}" Margin="0,0,10,0"/>
                               <TextBlock Text="{Binding PlayersText}" FontFamily="Consolas"/>
                             </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                               <Button Content="Settings" ctl:Btn.Icon="&#xE713;" Padding="12,6"
                                       Visibility="{Binding IsMine, Converter={StaticResource BoolVis}}"
                                       ToolTip="Name, joining, friends, members and its link"
