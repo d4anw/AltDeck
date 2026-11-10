@@ -315,6 +315,11 @@
                               <TextBlock Text="{Binding PlayersText}" FontFamily="Consolas"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal">
+                              <Button Content="Settings" ctl:Btn.Icon="&#xE713;" Padding="12,6"
+                                      Visibility="{Binding IsMine, Converter={StaticResource BoolVis}}"
+                                      ToolTip="Name, joining, friends, members and its link"
+                                      Command="{Binding DataContext.OpenPrivateServerSettingsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding}"/>
                               <Button Content="Copy link" ctl:Btn.Icon="&#xE8C8;" Padding="12,6"
                                       Visibility="{Binding IsMine, Converter={StaticResource BoolVis}}"
                                       ToolTip="Its share link: anyone with it can join"

@@ -94,6 +94,8 @@ public partial class MainViewModel
     /// <summary>Closes a confirm card or the trade maker. True when something was closed.</summary>
     private bool CloseOverlay()
     {
+        if (ShowServerConfig) { CloseServerConfig(); return true; }
+        if (ShowTargetPicker) { CloseTargetPicker(); return true; }
         if (ShowPassBuy) { CancelPassBuy(); return true; }
         if (ShowCreateServer) { CancelCreateServer(); return true; }
         if (ShowTradeConfirm) { if (!TradeBusy) ShowTradeConfirm = false; return true; }

@@ -73,14 +73,7 @@
               </Border>
               <TextBlock Text="Where to?" FontSize="16" FontWeight="SemiBold" Margin="14,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-              <Button Style="{StaticResource Subtle}" Content="Browse games" Command="{Binding BrowseGamesForMultiCommand}"
-                      Margin="0,0,8,0" ToolTip="Pick a game from Games: charts, search, favourites and recently played"/>
-              <Button Style="{StaticResource Subtle}" Content="Join someone" Command="{Binding JoinSomeoneCommand}"
-                      ToolTip="Find the server a friend (or anyone who lets you join) is in"/>
-              <Button Style="{StaticResource Subtle}" Content="Browse servers" Command="{Binding BrowseServersCommand}" Margin="8,0,0,0"
-                      ToolTip="Pick one of the game's public servers"/>
-            </StackPanel>
+
           </Grid>
           <TextBlock Text="Game link, private server, or place ID" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8"/>
           <Grid>
@@ -99,7 +92,29 @@
               </TextBlock.Style>
             </TextBlock>
           </Grid>
-          <TextBlock Text="Favourites" FontSize="12" Margin="0,16,0,8" Style="{StaticResource MutedText}"/>
+          <WrapPanel Margin="0,10,0,0">
+            <Button Style="{StaticResource Chip}" Margin="0,0,8,8" Command="{Binding OpenTargetPickerCommand}" CommandParameter="Games"
+                    ToolTip="Find a game by name and fill it in">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="Search games"/></StackPanel>
+            </Button>
+            <Button Style="{StaticResource Chip}" Margin="0,0,8,8" Command="{Binding OpenTargetPickerCommand}" CommandParameter="Servers"
+                    ToolTip="Your private servers in every game: fill one in, or change its settings">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72E;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="My private servers"/></StackPanel>
+            </Button>
+            <Button Style="{StaticResource Chip}" Margin="0,0,8,8" Command="{Binding BrowseGamesForMultiCommand}"
+                    ToolTip="Pick a game from Games: charts, search, favourites and recently played">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="Browse games"/></StackPanel>
+            </Button>
+            <Button Style="{StaticResource Chip}" Margin="0,0,8,8" Command="{Binding JoinSomeoneCommand}"
+                    ToolTip="Find the server a friend (or anyone who lets you join) is in">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="Join someone"/></StackPanel>
+            </Button>
+            <Button Style="{StaticResource Chip}" Margin="0,0,0,8" Command="{Binding BrowseServersCommand}"
+                    ToolTip="Pick one of the game's public servers">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE968;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="Browse servers"/></StackPanel>
+            </Button>
+          </WrapPanel>
+          <TextBlock Text="Favourites" FontSize="12" Margin="0,8,0,8" Style="{StaticResource MutedText}"/>
           <WrapPanel>
             <ItemsControl ItemsSource="{Binding Settings.Favourites}">
               <ItemsControl.ItemsPanel>

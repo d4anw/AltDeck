@@ -230,6 +230,243 @@
             <views:CommunitiesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Communities}"/>
             </Grid>
 
+            <!-- a private server's settings (like roblox.com's Configure Private Server page), over any page -->
+            <Grid Visibility="{Binding ShowServerConfig, Converter={StaticResource BoolVis}}" Background="#B0000000">
+              <Border Style="{StaticResource CardBox}" Width="640" MaxHeight="720" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Background="{DynamicResource Card}">
+                <Grid>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                  <Grid Margin="26,22,22,0">
+                    <TextBlock Text="Private server settings" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Style="{StaticResource IconBtn}" Content="&#xE711;" HorizontalAlignment="Right" Margin="0" ToolTip="Close"
+                            Command="{Binding CloseServerConfigCommand}"/>
+                  </Grid>
+                  <ctl:StateView Grid.Row="1" State="{Binding ServerConfigLoad.State}" Message="{Binding ServerConfigLoad.Message}" MinHeight="260">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                      <StackPanel Margin="26,16,26,24">
+                        <!-- the game, name, price -->
+                        <Grid>
+                          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                          <Grid Width="112" Height="112">
+                            <Border CornerRadius="16" Background="{DynamicResource Card2}"/>
+                            <ctl:RemoteImage Url="{Binding ConfigGameIcon}" CornerRadius="16"/>
+                          </Grid>
+                          <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Name" FontSize="12" Style="{StaticResource MutedText}"/>
+                            <Grid Margin="0,4,0,0">
+                              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                              <TextBox Text="{Binding ConfigName, UpdateSourceTrigger=PropertyChanged}" MaxLength="50" Padding="10,7"/>
+                              <Button Grid.Column="1" Content="Save" Margin="8,0,0,0" Command="{Binding SaveConfigNameCommand}"/>
+                            </Grid>
+                            <TextBlock Margin="0,10,0,0" TextTrimming="CharacterEllipsis">
+                              <Run Text="{Binding ConfigServer.GameName, Mode=OneWay}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding ConfigPriceLine}" Margin="0,3,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
+                          </StackPanel>
+                        </Grid>
+
+                        <!-- joining -->
+                        <Border Background="{DynamicResource Card2}" CornerRadius="14" Padding="16,12" Margin="0,18,0,0">
+                          <Grid>
+                            <StackPanel Margin="0,0,70,0">
+                              <TextBlock Text="Allow joining" FontWeight="SemiBold"/>
+                              <TextBlock FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap" Style="{StaticResource MutedText}"
+                                         Text="Off: nobody can join, you neither, and the current link stops working. You can turn it on again any time."/>
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          IsChecked="{Binding ConfigActive, Mode=OneWay}" Command="{Binding ToggleConfigActiveCommand}"/>
+                          </Grid>
+                        </Border>
+
+                        <!-- renewing (paid servers) -->
+                        <Border Background="{DynamicResource Card2}" CornerRadius="14" Padding="16,12" Margin="0,8,0,0"
+                                Visibility="{Binding ConfigIsPaid, Converter={StaticResource BoolVis}}">
+                          <Grid>
+                            <StackPanel Margin="0,0,70,0">
+                              <TextBlock Text="Renew every month" FontWeight="SemiBold"/>
+                              <TextBlock Text="{Binding ConfigRenewText}" FontSize="12" Margin="0,3,0,0" Style="{StaticResource MutedText}"/>
+                            </StackPanel>
+                            <ToggleButton Style="{StaticResource Switch}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          IsChecked="{Binding ConfigRenewing, Mode=OneWay}" Command="{Binding ToggleConfigRenewingCommand}"/>
+                          </Grid>
+                        </Border>
+
+                        <!-- who can join -->
+                        <Border Background="{DynamicResource Card2}" CornerRadius="14" Padding="16,12" Margin="0,8,0,0">
+                          <StackPanel>
+                            <Grid>
+                              <TextBlock Text="Friends allowed" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                              <ToggleButton Style="{StaticResource Switch}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                            IsChecked="{Binding ConfigFriendsAllowed, Mode=OneWay}" Command="{Binding ToggleConfigFriendsCommand}"/>
+                            </Grid>
+                            <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Margin="0,12,0,0" Padding="0,12,0,0">
+                              <StackPanel>
+                                <TextBlock Text="Server members" FontWeight="SemiBold"/>
+                                <TextBlock Text="None yet." FontSize="12" Margin="0,4,0,0" Style="{StaticResource MutedText}"
+                                           Visibility="{Binding ConfigMembers.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+                                <ItemsControl ItemsSource="{Binding ConfigMembers}" Margin="0,8,0,0">
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                      <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <ctl:AvatarView Width="32" Height="32" Url="{Binding HeadshotUrl}" Initials="{Binding Initials}"/>
+                                        <TextBlock Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                          <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/> <Run Text="{Binding Name, Mode=OneWay, StringFormat=@{0}}" Foreground="{DynamicResource Muted}"/>
+                                        </TextBlock>
+                                        <Button Grid.Column="2" Style="{StaticResource IconBtn}" Content="&#xE711;" Margin="0" Width="30" Height="30" FontSize="11"
+                                                ToolTip="Remove: they can't join anymore"
+                                                Command="{Binding DataContext.RemoveConfigMemberCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                      </Grid>
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Grid Margin="0,6,0,0">
+                                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                  <TextBox Text="{Binding ConfigAddName, UpdateSourceTrigger=PropertyChanged}" Padding="10,7" ToolTip="Their username"/>
+                                  <TextBlock Text="Username to add" Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource Muted}">
+                                    <TextBlock.Style>
+                                      <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers><DataTrigger Binding="{Binding ConfigAddName}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                                      </Style>
+                                    </TextBlock.Style>
+                                  </TextBlock>
+                                  <Button Grid.Column="1" Content="Add people" ctl:Btn.Icon="&#xE8FA;" Margin="8,0,0,0" Command="{Binding AddConfigMemberCommand}"/>
+                                </Grid>
+                              </StackPanel>
+                            </Border>
+                          </StackPanel>
+                        </Border>
+
+                        <!-- the link -->
+                        <Border Background="{DynamicResource Card2}" CornerRadius="14" Padding="16,12" Margin="0,8,0,0">
+                          <StackPanel>
+                            <Grid>
+                              <TextBlock Text="Private server link" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                              <Button HorizontalAlignment="Right" Margin="0" Command="{Binding RegenerateConfigLinkCommand}"
+                                      IsEnabled="{Binding ConfigActive}" Content="{Binding ConfigRegenerateText}">
+                                <Button.Style>
+                                  <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Style.Triggers>
+                                      <DataTrigger Binding="{Binding ConfigRegenerateArmed}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource Red}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Red}"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                      </DataTrigger>
+                                    </Style.Triggers>
+                                  </Style>
+                                </Button.Style>
+                              </Button>
+                            </Grid>
+                            <Grid Margin="0,10,0,0">
+                              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                              <TextBox Text="{Binding ConfigLink, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12" Padding="10,8"/>
+                              <Button Grid.Column="1" Content="Copy" ctl:Btn.Icon="&#xE8C8;" Margin="8,0,0,0" Command="{Binding CopyConfigLinkCommand}"/>
+                            </Grid>
+                            <TextBlock FontSize="12" Margin="0,6,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                       Text="Anyone with this link can join. Regenerate makes a new one and the old one stops working."/>
+                          </StackPanel>
+                        </Border>
+                      </StackPanel>
+                    </ScrollViewer>
+                  </ctl:StateView>
+                </Grid>
+              </Border>
+            </Grid>
+
+            <!-- Multi-launch → Where to?: search a game, or pick one of your private servers -->
+            <Grid Visibility="{Binding ShowTargetPicker, Converter={StaticResource BoolVis}}" Background="#B0000000">
+              <Border Style="{StaticResource CardBox}" Width="640" Height="600" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Background="{DynamicResource Card}">
+                <Grid>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                  <Grid Margin="26,22,22,0">
+                    <StackPanel Orientation="Horizontal">
+                      <RadioButton Style="{StaticResource Seg}" Content="Search games" GroupName="targetpicker"
+                                   IsChecked="{Binding TargetPickerTab, Converter={StaticResource Eq}, ConverterParameter=Games, Mode=TwoWay}"/>
+                      <RadioButton Style="{StaticResource Seg}" Content="My private servers" GroupName="targetpicker" Margin="0"
+                                   IsChecked="{Binding TargetPickerTab, Converter={StaticResource Eq}, ConverterParameter=Servers, Mode=TwoWay}"/>
+                    </StackPanel>
+                    <Button Style="{StaticResource IconBtn}" Content="&#xE711;" HorizontalAlignment="Right" Margin="0" ToolTip="Close"
+                            Command="{Binding CloseTargetPickerCommand}"/>
+                  </Grid>
+                  <Grid Grid.Row="1" Margin="26,14,26,0">
+                    <ctl:SearchBox Text="{Binding TargetGameSearch}" Placeholder="Search games, press Enter" SubmitCommand="{Binding SearchTargetGamesCommand}"
+                                   Visibility="{Binding TargetPickerTab, Converter={StaticResource PageVis}, ConverterParameter=Games}"/>
+                    <Grid Visibility="{Binding TargetPickerTab, Converter={StaticResource PageVis}, ConverterParameter=Servers}">
+                      <TextBlock Text="Pick one to launch into it. Its share link is filled in, so every account you launch can join."
+                                 TextWrapping="Wrap" FontSize="12" Style="{StaticResource MutedText}" Margin="0,0,44,0" VerticalAlignment="Center"/>
+                      <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" HorizontalAlignment="Right" Margin="0" ToolTip="Load again"
+                              Command="{Binding RefreshMyServersCommand}"/>
+                    </Grid>
+                  </Grid>
+
+                  <!-- games -->
+                  <ctl:StateView Grid.Row="2" Margin="0,12,0,0" State="{Binding TargetGamesLoad.State}" Message="{Binding TargetGamesLoad.Message}"
+                                 EmptyText="No games found." Visibility="{Binding TargetPickerTab, Converter={StaticResource PageVis}, ConverterParameter=Games}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                      <ItemsControl ItemsSource="{Binding TargetGameHits}" Margin="26,0,26,20">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Button Margin="0,0,0,6" Padding="10,8" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
+                                    Command="{Binding DataContext.PickTargetGameCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                              <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                  <Border x:Name="b" Background="{DynamicResource Card2}" CornerRadius="12" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+                                  <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource AccentHover}"/></Trigger></ControlTemplate.Triggers>
+                                </ControlTemplate>
+                              </Button.Template>
+                              <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <ctl:RemoteImage Url="{Binding IconUrl}" Width="48" Height="48" CornerRadius="10"/>
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                  <TextBlock Text="{Binding PlayingText}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                                </StackPanel>
+                              </Grid>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                  </ctl:StateView>
+
+                  <!-- your private servers -->
+                  <ctl:StateView Grid.Row="2" Margin="0,12,0,0" State="{Binding MyServersLoad.State}" Message="{Binding MyServersLoad.Message}"
+                                 EmptyText="This account has no private servers yet." RetryCommand="{Binding RefreshMyServersCommand}"
+                                 Visibility="{Binding TargetPickerTab, Converter={StaticResource PageVis}, ConverterParameter=Servers}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                      <ItemsControl ItemsSource="{Binding MyServers}" Margin="26,0,26,20">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Border Background="{DynamicResource Card2}" CornerRadius="12" Padding="10,8" Margin="0,0,0,6">
+                              <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <ctl:RemoteImage Url="{Binding IconUrl}" Width="48" Height="48" CornerRadius="10"/>
+                                <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
+                                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                  <TextBlock FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis">
+                                    <Run Text="{Binding GameName, Mode=OneWay}"/><Run Text="  ·  "/><Run Text="{Binding SubText, Mode=OneWay}"/>
+                                  </TextBlock>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                  <Button Content="Settings" ctl:Btn.Icon="&#xE713;" Padding="12,0" Height="38" VerticalAlignment="Center"
+                                          Command="{Binding DataContext.OpenMyServerSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                  <Button Content="Use" Style="{StaticResource Primary}" Padding="18,0" Height="38" VerticalAlignment="Center" Margin="0"
+                                          Command="{Binding DataContext.PickMyServerCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                </StackPanel>
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                  </ctl:StateView>
+                </Grid>
+              </Border>
+            </Grid>
+
             <!-- toast: bottom centre, or top centre while the launch queue panel is in the corner -->
             <Border Padding="14,10,18,10" Background="{DynamicResource Card}" BorderBrush="{DynamicResource AccentLine}" BorderThickness="1"
                     CornerRadius="12" MaxWidth="620"
