@@ -54,9 +54,8 @@ public sealed record TxTotal(string Label, long Amount)
 }
 
 /// <summary>
-/// The Robux side of an account: its transactions and totals (what roblox.com/transactions shows) and redeeming
-/// promo / item codes. Gift card PINs go through Roblox's payment service (with its own security check), so those are
-/// redeemed on Roblox's own page instead.
+/// The Robux side of an account: its transactions and totals (what roblox.com/transactions shows), and the pictures for
+/// them. Redeeming codes happens on Roblox's own page (gift cards add money there, with Roblox's own steps).
 /// </summary>
 public static class RobloxEconomy
 {
@@ -228,36 +227,5 @@ public static class RobloxEconomy
             left = pending;
         }
         return result;
-    }
-
-    /// <summary>A gift card PIN (digits only), which Roblox redeems through its payment service, not here.</summary>
-    public static bool LooksLikeGiftCard(string code)
-    {
-        var c = code.Replace("-", "").Replace(" ", "");
-        return c.Length >= 8 && c.All(char.IsDigit);
-    }
-
-    /// <summary>
-    /// Redeems a promo or item code. Returns Roblox's own message. <c>Check</c> is true when Roblox wants a security
-    /// check (a captcha) first: then the code has to be redeemed on Roblox's own page, where you do that check yourself.
-    /// </summary>
-    public static async Task<(bool Ok, bool Check, string Message)> RedeemCodeAsync(string cookie, string code, CancellationToken ct)
-    {
-        try
-        {
-            using var doc = await RobloxHttp.PostJsonAsync("https://billing.roblox.com/v1/promocodes/redeem", cookie, new { code = code.Trim() }, ct);
-            var root = doc.RootElement;
-            bool ok = root.ValueKind == JsonValueKind.Object && root.TryGetProperty("success", out var s) && s.ValueKind == JsonValueKind.True;
-            var success = root.Text("successMsg");
-            var error = root.Text("errorMsg");
-            if (error.Contains("captcha", StringComparison.OrdinalIgnoreCase)) return (false, true, "Roblox wants a quick security check first.");
-            if (ok || (success.Length > 0 && error.Length == 0))
-                return (true, false, success.Length > 0 ? success : "Code redeemed.");
-            return (false, false, error.Length > 0 ? error : "Roblox didn't accept that code.");
-        }
-        catch (RobloxException ex) when (ex.Challenge)
-        {
-            return (false, true, "Roblox wants a quick security check first.");
-        }
     }
 }

@@ -78,7 +78,8 @@
               <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
             </StackPanel>
           </Border>
-          <Button Content="Redeem a code" ctl:Btn.Icon="&#xE8EC;" Command="{Binding OpenRedeemCommand}"/>
+          <Button Content="Redeem a code" ctl:Btn.Icon="&#xE8EC;" ctl:Btn.External="True" Command="{Binding OpenRedeemCommand}"
+                  ToolTip="Roblox's redeem page, signed in as this account"/>
           <Button Content="Buy Robux" ctl:Btn.Icon="&#xE8C7;" ctl:Btn.External="True" Style="{StaticResource Primary}" Click="BuyRobux_Click"/>
           <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh" Margin="10,0,0,0" Command="{Binding RefreshTransactionsCommand}"/>
         </StackPanel>

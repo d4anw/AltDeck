@@ -7,7 +7,7 @@ using RoDeck.Services;
 
 namespace RoDeck.ViewModels;
 
-// The Robux pill's menu: My Transactions (a page) and Redeem Roblox Codes (a card), both for the account top right.
+// The Robux pill's menu: My Transactions (a page here) and Redeem Roblox Codes (Roblox's page), for the account top right.
 // Buying Robux stays on Roblox's own payment page (see RobloxWebWindow).
 public partial class MainViewModel
 {
@@ -179,65 +179,17 @@ public partial class MainViewModel
 
     // ================================================================== Redeem Roblox Codes
 
-    [ObservableProperty] private bool showRedeem;
-    [ObservableProperty] private string redeemCode = "";
-    [ObservableProperty] private string redeemResult = "";
-    [ObservableProperty] private int redeemResultKind;   // 1 done, -1 failed, 0 nothing yet
-    [ObservableProperty] private bool redeemBusy;
-
-    /// <summary>Asks the window to open a roblox.com page for the account (Buy Robux, or a gift card on the redeem page).</summary>
+    /// <summary>Asks the window to open a roblox.com page for the account (Buy Robux, Redeem Roblox Codes).</summary>
     public event Action<Account, string, string>? OpenRobloxPageRequested;
 
+    /// <summary>
+    /// Roblox's own redeem page, signed in as the account top right. Gift cards add money to the account there, which you
+    /// then turn into Robux or a subscription with Roblox's own steps (and security check), so RoDeck doesn't redeem itself.
+    /// </summary>
     [RelayCommand]
     private void OpenRedeem()
     {
-        if (CurrentAccount == null) { StatusMessage = "Pick an account top right first."; return; }
-        RedeemCode = "";
-        RedeemResult = "";
-        RedeemResultKind = 0;
-        ShowRedeem = true;
-    }
-
-    [RelayCommand] private void CloseRedeem() { if (!RedeemBusy) ShowRedeem = false; }
-
-    [RelayCommand]
-    private async Task Redeem()
-    {
-        var code = (RedeemCode ?? "").Trim();
-        if (code.Length == 0 || RedeemBusy) return;
-        if (CurrentAccount is not { } a) { RedeemResult = "Pick an account top right first."; RedeemResultKind = -1; return; }
-
-        // a gift card PIN: Roblox's payment service with its own security check, so its own page (the code filled in)
-        if (RobloxEconomy.LooksLikeGiftCard(code))
-        {
-            ShowRedeem = false;
-            OpenRobloxPageRequested?.Invoke(a, "https://www.roblox.com/redeem?code=" + Uri.EscapeDataString(code), "Redeem a gift card");
-            StatusMessage = "Gift cards are redeemed on Roblox's own page: your code is filled in there.";
-            return;
-        }
-
-        RedeemBusy = true;
-        RedeemResult = "";
-        RedeemResultKind = 0;
-        try
-        {
-            var (ok, check, message) = await RobloxEconomy.RedeemCodeAsync(a.Cookie, code, CancellationToken.None);
-            if (check)
-            {
-                ShowRedeem = false;
-                OpenRobloxPageRequested?.Invoke(a, "https://www.roblox.com/redeem?code=" + Uri.EscapeDataString(code), "Redeem Roblox Codes");
-                StatusMessage = "Roblox wants a quick security check: finish redeeming on its page (your code is filled in).";
-                return;
-            }
-            RedeemResult = message;
-            RedeemResultKind = ok ? 1 : -1;
-            if (ok)
-            {
-                Log(ActivityLog.Purchase, $"{a.Label} redeemed a code: {message}");
-                await RefreshRobuxAsync(a);
-            }
-        }
-        catch (RobloxException ex) { RedeemResult = ex.Message; RedeemResultKind = -1; }
-        finally { RedeemBusy = false; }
+        if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; return; }
+        OpenRobloxPageRequested?.Invoke(a, "https://www.roblox.com/redeem", "Redeem Roblox Codes");
     }
 }

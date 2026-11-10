@@ -13,6 +13,7 @@ AltDeck has a new name and is now a whole new Roblox client: RoDeck replaces the
 - **Avatar editor:** wardrobe, body, colours, outfits, R6 / R15, a 3D preview, and copy a look to another account.
 - **Marketplace:** browse, search and try on items; item pages with similar items, more from the creator and every seller for limiteds.
 - **Trades:** live deals (newest first) with a buy card or insta-buy, a watchlist with notifications, a trade calculator, limiteds with values and RAP history, inventory value, your trades with accept / counter / decline, and Rolimons trade ads.
+- **Robux:** click the Robux top right for My Transactions (with totals), Buy Robux and Redeem Roblox Codes.
 - **Notifications:** friends online, trades received, trades you sent being accepted or declined, friend requests and big deals.
 - **FPS & FastFlags:** separate Playing and Multi-launch profiles, each with presets, fine-tune and your own FastFlags. Unlimited FPS is really unlimited.
 - **Multi-launch:** Browse games under Where to?, a full-width Accounts page and a Client windows toolbar.

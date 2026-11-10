@@ -88,11 +88,6 @@ public partial class MainWindow : Window
         };
         _vm.PresetHotkeysChanged += ApplyPresetHotkeys;
         _vm.OpenRobloxPageRequested += (a, url, title) => OpenRobloxPage(a, url, title);
-        _vm.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(MainViewModel.ShowRedeem) && _vm.ShowRedeem)
-                Dispatcher.BeginInvoke(() => { RedeemBox.Focus(); }, System.Windows.Threading.DispatcherPriority.Input);
-        };
 
         Closing += (_, e) =>
         {
@@ -460,11 +455,6 @@ public partial class MainWindow : Window
     {
         if (_vm.CurrentAccount is not { } a || string.IsNullOrEmpty(a.Cookie)) { _vm.StatusMessage = "Pick an account top right first."; return; }
         OpenRobloxPage(a, "https://www.roblox.com/upgrades/robux", "Buy Robux");
-    }
-
-    private void RedeemBox_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter) { _vm.RedeemCommand.Execute(null); e.Handled = true; }
     }
 
     /// <summary>A roblox.com page signed in as this account; its Robux are checked again afterwards.</summary>

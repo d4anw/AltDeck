@@ -69,7 +69,6 @@ public partial class MainViewModel
         if (GameRows.Count > 0) _ = BuildGameRowsAsync();   // "My favourites" is per account
         _txFor = null;
         MaybeLoadTransactions();
-        ShowRedeem = false;
     }
 
     [RelayCommand]
