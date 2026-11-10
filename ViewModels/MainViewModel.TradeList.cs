@@ -387,6 +387,8 @@ public partial class MainViewModel
     public ObservableCollection<LimitedTile> MyTradable { get; } = new();
     public ObservableCollection<LimitedTile> TheirTradable { get; } = new();
     private List<LimitedTile> _myTradableAll = new(), _theirTradableAll = new();
+    /// <summary>The account <see cref="_myTradableAll"/> was loaded for ("" = none yet).</summary>
+    private string _myTradableFor = "";
     public ObservableCollection<LimitedTile> BuildGive { get; } = new();
     public ObservableCollection<LimitedTile> BuildGet { get; } = new();
     [ObservableProperty] private string myTradableFilter = "", theirTradableFilter = "";
@@ -444,7 +446,11 @@ public partial class MainViewModel
         await MyTradableLoad.RunAsync(async ct =>
         {
             var list = await RobloxTrades.GetTradableAsync(a.Cookie, a.UserId, ct);
+            ct.ThrowIfCancellationRequested();
+            if (CurrentAccount?.Id != a.Id) return _myTradableAll.Count > 0;   // switched away meanwhile: not this account's list
             _myTradableAll = list.OrderByDescending(i => i.Worth).ToList();
+            _myTradableFor = a.Id;
+            if (IsAdPickerOpen) FillAdPicker();
             if (from != null)
                 foreach (var i in from.Mine.Items)
                     if (_myTradableAll.FirstOrDefault(x => x.InstanceId == i.InstanceId) is { } same && BuildGive.Count < MaxTradeItems)
@@ -607,6 +613,8 @@ public partial class MainViewModel
     {
         IsBuildingTrade = false;
         ShowTradeConfirm = false;
+        _myTradableAll = new(); _myTradableFor = ""; MyTradable.Clear();
+        TradeAdsAccountChanged();
         InboundCount = 0;
         _tradesLoadedAt = DateTime.MinValue;
         MaybeLoadTradeList();

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using RoDeck.Models;
 using RoDeck.Services;
+using RoDeck.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -22,13 +23,18 @@ public partial class MainViewModel
     [ObservableProperty] private string adOfferValue = "0";
     [ObservableProperty] private string adWantValue = "0";
     public bool HasRoliCookie => Settings.RoliVerification.Length > 0;
-    public bool AdRunning => Settings.TradeAdOn;
+    /// <summary>The ad on screen (this account's) is the one being posted.</summary>
+    public bool AdRunning => Settings.TradeAdOn && Settings.TradeAdAccountId == _adShownFor;
+    /// <summary>An ad is being posted, for any account (the dot on the tab).</summary>
+    public bool AdRunningAnywhere => Settings.TradeAdOn;
     private int OfferCount => AdOfferSlots.Count(s => s.Item != null);
     private int WantCount => AdWantSlots.Count(s => !s.IsEmpty);
     public bool CanStartAd => HasRoliCookie && OfferCount > 0 && WantCount > 0;
 
     private readonly DispatcherTimer _adTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private bool _adPosting, _adSetUp;
+    /// <summary>The account whose ad the slots show (always the current account once the tab has been opened).</summary>
+    private string _adShownFor = "";
     private DateTime _adRetryAt = DateTime.MinValue;
 
     /// <summary>Called once at start: the tags, the slots and the timer (which does nothing while the ad is off).</summary>
@@ -44,22 +50,53 @@ public partial class MainViewModel
         _adTimer.Start();
     }
 
-    /// <summary>When the Trade ads tab opens: fill the slots from the saved ad (with values and pictures).</summary>
+    /// <summary>When the Trade ads tab opens: show the current account's ad (with values and pictures) and its limiteds.</summary>
     private void LoadTradeAdTab()
     {
-        if (!_adSetUp)
+        _adSetUp = true;
+        if (_adShownFor != (CurrentAccount?.Id ?? "")) ShowAdFor(CurrentAccount);
+        else if (CurrentAccount is { } a && _myTradableFor != a.Id) _ = LoadMyTradableAsync(a, null);
+        NotifyAd();
+    }
+
+    /// <summary>The account's own ad, or a new empty one. The old single ad goes to the account it was posted for.</summary>
+    private TradeAdDraft AdDraftFor(string accountId)
+    {
+        if (Settings.TradeAds.Count == 0 && (Settings.TradeAdOffer.Count > 0 || Settings.TradeAdRequest.Count > 0 || Settings.TradeAdTags.Count > 0))
         {
-            _adSetUp = true;
-            var tiles = new List<LimitedTile>();
-            for (int i = 0; i < 4 && i < Settings.TradeAdOffer.Count; i++)
-                tiles.Add(AdOfferSlots[i].Item = LimitedTile.From(Settings.TradeAdOffer[i], $"Item {Settings.TradeAdOffer[i]}", 0));
-            int w = 0;
-            foreach (var id in Settings.TradeAdRequest.Take(4)) tiles.Add(AdWantSlots[w++].Item = LimitedTile.From(id, $"Item {id}", 0));
-            foreach (var tag in Settings.TradeAdTags)
-                if (w < 4 && AdTags.FirstOrDefault(t => t.Tag == tag) is { } t) AdWantSlots[w++].Tag = t;
-            _ = FillLimitedThumbsAsync(tiles);
-            if (CurrentAccount is { } a && _myTradableAll.Count == 0) _ = LoadMyTradableAsync(a, null);
+            var owner = Settings.TradeAdAccountId.Length > 0 ? Settings.TradeAdAccountId : accountId;
+            Settings.TradeAds[owner] = new TradeAdDraft { Offer = Settings.TradeAdOffer, Request = Settings.TradeAdRequest, Tags = Settings.TradeAdTags };
+            Settings.TradeAdOffer = new(); Settings.TradeAdRequest = new(); Settings.TradeAdTags = new();
         }
+        if (!Settings.TradeAds.TryGetValue(accountId, out var d)) Settings.TradeAds[accountId] = d = new TradeAdDraft();
+        return d;
+    }
+
+    /// <summary>Fill the slots with this account's ad and load its limiteds for the Offer picker.</summary>
+    private void ShowAdFor(Account? a)
+    {
+        IsAdPickerOpen = false;
+        _adShownFor = a?.Id ?? "";
+        foreach (var s in AdOfferSlots) s.Clear();
+        foreach (var s in AdWantSlots) s.Clear();
+        if (a == null) return;
+        var d = AdDraftFor(a.Id);
+        var tiles = new List<LimitedTile>();
+        for (int i = 0; i < 4 && i < d.Offer.Count; i++)
+            tiles.Add(AdOfferSlots[i].Item = LimitedTile.From(d.Offer[i], LimitedValues.Get(d.Offer[i])?.Name ?? $"Item {d.Offer[i]}", LimitedValues.Get(d.Offer[i])?.Rap ?? 0));
+        int w = 0;
+        foreach (var id in d.Request.Take(4)) tiles.Add(AdWantSlots[w++].Item = LimitedTile.From(id, LimitedValues.Get(id)?.Name ?? $"Item {id}", LimitedValues.Get(id)?.Rap ?? 0));
+        foreach (var tag in d.Tags)
+            if (w < 4 && AdTags.FirstOrDefault(t => t.Tag == tag) is { } t) AdWantSlots[w++].Tag = t;
+        _ = FillLimitedThumbsAsync(tiles);
+        if (_myTradableFor != a.Id) _ = LoadMyTradableAsync(a, null);
+    }
+
+    /// <summary>Account switched: the ad page follows (only once the tab has been opened).</summary>
+    private void TradeAdsAccountChanged()
+    {
+        if (!_adSetUp) return;
+        ShowAdFor(CurrentAccount);
         NotifyAd();
     }
 
@@ -70,6 +107,7 @@ public partial class MainViewModel
     [ObservableProperty] private string adPickerSearch = "";
     [ObservableProperty] private bool adPickerAscending;
     [ObservableProperty] private string adPickerMin = "", adPickerMax = "";
+    [ObservableProperty] private string adPickerEmptyText = "Nothing matches.";
     public ObservableCollection<LimitedTile> AdPickerItems { get; } = new();
     public bool AdPickerShowsTags => AdPickerSlot is { IsOffer: false };
     public string AdPickerTitle => AdPickerSlot is not { } s ? "" : s.IsOffer ? $"Offer slot {s.Index + 1}: one of your limiteds" : $"Want slot {s.Index + 1}: a tag or any limited";
@@ -91,6 +129,9 @@ public partial class MainViewModel
         AdPickerSlot = slot;
         AdPickerSearch = "";
         IsAdPickerOpen = true;
+        // the limiteds must be this account's: load them if they're missing or another account's
+        if (slot.IsOffer && CurrentAccount is { } a && _myTradableFor != a.Id && MyTradableLoad.State != LoadState.Loading)
+            _ = LoadMyTradableAsync(a, null);
         FillAdPicker();
     }
 
@@ -115,6 +156,11 @@ public partial class MainViewModel
         var shown = list.Take(120).ToList();
         AdPickerItems.Clear();
         foreach (var t in shown) AdPickerItems.Add(t);
+        AdPickerEmptyText = !slot.IsOffer ? "Nothing matches."
+            : _myTradableFor != (CurrentAccount?.Id ?? "") ? "Loading your limiteds…"
+            : MyTradableLoad.State == LoadState.Error ? "Couldn't load your limiteds. Close this and try again."
+            : !_myTradableAll.Any(t => !t.IsBundle) ? "This account has no limiteds it can offer."
+            : "Nothing matches.";
         _ = FillLimitedThumbsAsync(shown.Where(t => t.ThumbUrl.Length == 0).ToList());
     }
 
@@ -152,10 +198,12 @@ public partial class MainViewModel
     /// <summary>The ad changed: save it, update the totals, and stop posting if it isn't a complete ad anymore.</summary>
     private void OnAdChanged()
     {
-        Settings.TradeAdOffer = AdOfferSlots.Where(s => s.Item != null).Select(s => s.Item!.AssetId).ToList();
-        Settings.TradeAdRequest = AdWantSlots.Where(s => s.Item != null).Select(s => s.Item!.AssetId).ToList();
-        Settings.TradeAdTags = AdWantSlots.Where(s => s.Tag != null).Select(s => s.Tag!.Tag).ToList();
-        if (Settings.TradeAdOn && !(OfferCount > 0 && WantCount > 0)) Settings.TradeAdOn = false;
+        if (_adShownFor.Length == 0) return;
+        var d = AdDraftFor(_adShownFor);
+        d.Offer = AdOfferSlots.Where(s => s.Item != null).Select(s => s.Item!.AssetId).ToList();
+        d.Request = AdWantSlots.Where(s => s.Item != null).Select(s => s.Item!.AssetId).ToList();
+        d.Tags = AdWantSlots.Where(s => s.Tag != null).Select(s => s.Tag!.Tag).ToList();
+        if (AdRunning && !(OfferCount > 0 && WantCount > 0)) Settings.TradeAdOn = false;
         _saveTimer.Stop();
         _saveTimer.Start();
         NotifyAd();
@@ -165,7 +213,7 @@ public partial class MainViewModel
     {
         AdOfferValue = AdOfferSlots.Sum(s => s.Item?.Worth ?? 0).ToString("N0");
         AdWantValue = AdWantSlots.Sum(s => s.Item?.Worth ?? 0).ToString("N0");
-        foreach (var n in new[] { nameof(HasRoliCookie), nameof(AdRunning), nameof(CanStartAd) }) OnPropertyChanged(n);
+        foreach (var n in new[] { nameof(HasRoliCookie), nameof(AdRunning), nameof(AdRunningAnywhere), nameof(CanStartAd) }) OnPropertyChanged(n);
         UpdateAdStatus();
     }
 
@@ -195,8 +243,15 @@ public partial class MainViewModel
     [RelayCommand]
     private void StartAd()
     {
-        if (!CanStartAd || CurrentAccount is not { } a) return;
-        Settings.TradeAdAccountId = a.Id;
+        if (!CanStartAd || CurrentAccount is not { } a || a.Id != _adShownFor) return;
+        if (Settings.TradeAdAccountId != a.Id)
+        {
+            // one ad at a time: it moves to this account (Rolimons' wait between ads is per account)
+            Settings.TradeAdAccountId = a.Id;
+            Settings.TradeAdLastPosted = DateTime.MinValue;
+            _adRetryAt = DateTime.MinValue;
+            AdLastResult = "";
+        }
         Settings.TradeAdOn = true;
         NotifyAd();
         _ = AdTickAsync(force: true);
@@ -234,7 +289,8 @@ public partial class MainViewModel
             return;
         }
         var cookie = RolimonsAds.Unprotect(Settings.RoliVerification);
-        if (a == null || cookie.Length == 0 || Settings.TradeAdOffer.Count == 0) { UpdateAdStatus(); return; }
+        var ad = a == null ? null : AdDraftFor(a.Id);
+        if (a == null || ad == null || cookie.Length == 0 || ad.Offer.Count == 0) { UpdateAdStatus(); return; }
 
         _adPosting = true;
         try
@@ -246,7 +302,7 @@ public partial class MainViewModel
             var skipped = new List<string>();
             List<LimitedTile>? mine = null;
             try { mine = await RobloxTrades.GetTradableAsync(a.Cookie, a.UserId, CancellationToken.None); } catch { }
-            foreach (var id in Settings.TradeAdOffer)
+            foreach (var id in ad.Offer)
             {
                 var name = LimitedValues.Get(id)?.Name ?? mine?.FirstOrDefault(t => t.AssetId == id)?.Name ?? $"item {id}";
                 if (LimitedValues.Count > 0 && LimitedValues.Get(id) == null) { skipped.Add($"{name} (not on Rolimons)"); continue; }
@@ -259,7 +315,7 @@ public partial class MainViewModel
                 }
                 offer.Add(id);
             }
-            var want = Settings.TradeAdRequest.Where(id => LimitedValues.Count == 0 || LimitedValues.Get(id) != null).ToList();
+            var want = ad.Request.Where(id => LimitedValues.Count == 0 || LimitedValues.Get(id) != null).ToList();
             string left = skipped.Count == 0 ? "" : " Left out: " + string.Join(", ", skipped) + ".";
             if (offer.Count == 0)
             {
@@ -269,7 +325,7 @@ public partial class MainViewModel
                 UpdateAdStatus();
                 return;
             }
-            var r = await RolimonsAds.PostAsync(cookie, a.UserId, offer, want, Settings.TradeAdTags, CancellationToken.None);
+            var r = await RolimonsAds.PostAsync(cookie, a.UserId, offer, want, ad.Tags, CancellationToken.None);
             if (r.Ok)
             {
                 Settings.TradeAdLastPosted = DateTime.UtcNow;
@@ -311,6 +367,7 @@ public partial class MainViewModel
         AdStatus = !HasRoliCookie ? "Add your Rolimons verification first."
                  : OfferCount == 0 ? "Click an Offer slot to pick one of your limiteds."
                  : WantCount == 0 ? "Click a Want slot to pick an item or a tag."
+                 : Settings.TradeAdOn && !AdRunning ? $"Your ad for {Accounts.FirstOrDefault(x => x.Id == Settings.TradeAdAccountId)?.Label ?? "another account"} is running. Press Start to post this account's ad instead (one ad at a time)."
                  : Settings.TradeAdOn ? $"Posting every {Math.Max(RolimonsAds.MinMinutes, Settings.TradeAdMinutes)} min · next {NextText()} · {Settings.TradeAdPosts} posted so far"
                  : "Ready. Press Start to post it now and every few minutes after.";
     }

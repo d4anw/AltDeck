@@ -386,7 +386,7 @@
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="Trade ads" VerticalAlignment="Center"/>
               <Ellipse Width="7" Height="7" Fill="{DynamicResource Green}" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="Posting"
-                       Visibility="{Binding AdRunning, Converter={StaticResource BoolVis}}"/>
+                       Visibility="{Binding AdRunningAnywhere, Converter={StaticResource BoolVis}}"/>
             </StackPanel>
           </RadioButton>
         </StackPanel>
@@ -965,7 +965,7 @@
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
                 </ScrollViewer>
-                <TextBlock Text="Nothing matches." Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                <TextBlock Text="{Binding AdPickerEmptyText}" Style="{StaticResource MutedText}" Margin="0,4,0,0"
                            Visibility="{Binding AdPickerItems.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
               </StackPanel>
             </Border>

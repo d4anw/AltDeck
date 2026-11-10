@@ -88,6 +88,8 @@ public partial class AppSettings : ObservableObject
     public List<long> TradeAdOffer { get; set; } = new();
     public List<long> TradeAdRequest { get; set; } = new();
     public List<string> TradeAdTags { get; set; } = new();
+    /// <summary>Each account's own trade ad (account id → slots). The lists above are the old single ad, moved in here once.</summary>
+    public Dictionary<string, TradeAdDraft> TradeAds { get; set; } = new();
     public DateTime TradeAdLastPosted { get; set; } = DateTime.MinValue;
     public int TradeAdPosts { get; set; }
     [ObservableProperty] private bool lowestGraphics = true;
@@ -133,4 +135,12 @@ public partial class AppSettings : ObservableObject
     public List<long> FavouriteFriends { get; set; } = new();                    // Roblox user IDs: shown first, with a star
     public ObservableCollection<LaunchPreset> Presets { get; set; } = new();
     public ObservableCollection<LayoutProfile> Layouts { get; set; } = new();
+}
+
+/// <summary>One account's trade ad: what it offers, what it wants (items and tags).</summary>
+public class TradeAdDraft
+{
+    public List<long> Offer { get; set; } = new();
+    public List<long> Request { get; set; } = new();
+    public List<string> Tags { get; set; } = new();
 }
