@@ -241,30 +241,7 @@ public static class RobloxGameExtras
         return result;
     }
 
-    // ------------------------------------------------------------------ players: blocking, your About text
-
-    /// <summary>Whether the account has blocked this player (null when Roblox doesn't say).</summary>
-    public static async Task<bool?> IsBlockedAsync(string cookie, long userId, CancellationToken ct)
-    {
-        try
-        {
-            using var doc = await RobloxHttp.GetJsonAsync($"https://apis.roblox.com/user-blocking-api/v1/users/{userId}/is-blocked", cookie, ct);
-            var r = doc.RootElement;
-            if (r.ValueKind is JsonValueKind.True or JsonValueKind.False) return r.ValueKind == JsonValueKind.True;
-            if (r.ValueKind == JsonValueKind.Object)
-                foreach (var p in r.EnumerateObject())
-                    if (p.Value.ValueKind is JsonValueKind.True or JsonValueKind.False) return p.Value.ValueKind == JsonValueKind.True;
-            return null;
-        }
-        catch (RobloxException) { return null; }
-    }
-
-    public static async Task SetBlockedAsync(string cookie, long userId, bool block, CancellationToken ct)
-    {
-        // the same request as the Block button on a roblox.com profile: a POST without a body
-        using var _ = await RobloxHttp.PostJsonAsync(
-            $"https://apis.roblox.com/user-blocking-api/v1/users/{userId}/{(block ? "block-user" : "unblock-user")}", cookie, NoBody.Instance, ct);
-    }
+    // ------------------------------------------------------------------ your About text
 
     /// <summary>
     /// Changes the account's About text, the way roblox.com's profile editor does (a form to the users service).

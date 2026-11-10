@@ -225,7 +225,7 @@
                 <TextBlock Text="{Binding ProfileCounts}" Margin="0,10,0,0"/>
                 <TextBlock Text="{Binding ProfileJoined}" Margin="0,4,0,0" FontSize="12" Style="{StaticResource MutedText}"/>
 
-                <WrapPanel Margin="0,18,0,0" Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVisInv}}">
+                <WrapPanel Margin="0,18,0,0">
                   <Button x:Name="FriendBtn" Click="FriendBtn_Click" Margin="0,0,8,8" Padding="18,10"
                           Visibility="{Binding ProfileFriendButton, Converter={StaticResource EmptyCollapsed}}">
                     <Button.Style>
@@ -255,7 +255,8 @@
                   </Button>
                   <Button Content="Join with alts…" ctl:Btn.Icon="&#xE716;" Margin="0,0,8,8" Command="{Binding ProfileJoinWithAltsCommand}"
                           Visibility="{Binding ProfileCanJoin, Converter={StaticResource BoolVis}}"/>
-                  <Button Margin="0,0,8,8" Command="{Binding ProfileToggleFavouriteCommand}">
+                  <Button Margin="0,0,8,8" Command="{Binding ProfileToggleFavouriteCommand}"
+                          Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVisInv}}">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,7,0">
                         <TextBlock.Style>
@@ -273,28 +274,10 @@
                       <TextBlock Text="Favourite"/>
                     </StackPanel>
                   </Button>
-                  <Button Content="Edit About" ctl:Btn.Icon="&#xE70F;" Margin="0,0,8,8" Command="{Binding EditAboutCommand}"
-                          Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVis}}"/>
+                  <Button Content="Edit About" ctl:Btn.Icon="&#xE70F;" Style="{StaticResource Primary}" Margin="0,0,8,8" Padding="18,10"
+                          Command="{Binding EditAboutCommand}" Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVis}}"
+                          ToolTip="Change the About text everyone sees on your profile"/>
                   <Button Content="Roblox.com" ctl:Btn.External="True" Margin="0,0,8,8" Command="{Binding ProfileOnWebCommand}"/>
-                  <Button Margin="0,0,8,8" Command="{Binding ToggleBlockCommand}"
-                          Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVisInv}}"
-                          ToolTip="A blocked player can't message, friend or join this account">
-                    <Button.Style>
-                      <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                        <Style.Triggers>
-                          <DataTrigger Binding="{Binding BlockArmed}" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Red}"/>
-                            <Setter Property="BorderBrush" Value="{DynamicResource Red}"/>
-                            <Setter Property="Foreground" Value="White"/>
-                          </DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </Button.Style>
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="&#xE8F8;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding ProfileBlockText}"/>
-                    </StackPanel>
-                  </Button>
                 </WrapPanel>
               </StackPanel>
             </Grid>

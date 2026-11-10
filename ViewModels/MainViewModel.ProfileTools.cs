@@ -4,75 +4,13 @@ using RoDeck.Services;
 
 namespace RoDeck.ViewModels;
 
-// On a profile: block / unblock a player (asked twice), and on your own profile, edit your About text.
+// On your own profile: edit your About text.
 // Account settings (privacy, security…) open Roblox's own page, signed in as the account.
 public partial class MainViewModel
 {
-    /// <summary>Whether the account top right has blocked the open profile (null: unknown yet).</summary>
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ProfileBlockText))] private bool? profileBlocked;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ProfileBlockText))] private bool blockArmed;
-    public string ProfileBlockText => ProfileBlocked == true ? "Unblock" : BlockArmed ? "Click again to block" : "Block";
-
     [ObservableProperty] private bool isEditingAbout;
     [ObservableProperty] private string aboutDraft = "";
     [ObservableProperty] private bool aboutBusy;
-
-    /// <summary>Called when a profile opens: its block state, for someone else's profile.</summary>
-    private async Task LoadBlockStateAsync(long userId)
-    {
-        ProfileBlocked = null;
-        BlockArmed = false;
-        IsEditingAbout = false;
-        if (CurrentAccount is not { UserId: > 0 } a || a.UserId == userId) return;
-        var blocked = await RobloxGameExtras.IsBlockedAsync(a.Cookie, userId, CancellationToken.None);
-        if (OpenProfile?.UserId == userId) ProfileBlocked = blocked ?? false;
-    }
-
-    [RelayCommand]
-    private async Task ToggleBlock()
-    {
-        if (OpenProfile is not { } p || CurrentAccount is not { UserId: > 0 } a || a.UserId == p.UserId) return;
-        bool block = ProfileBlocked != true;
-        if (block && !BlockArmed)
-        {
-            BlockArmed = true;
-            _ = Task.Delay(4000).ContinueWith(_ => BlockArmed = false, TaskScheduler.FromCurrentSynchronizationContext());
-            return;
-        }
-        BlockArmed = false;
-        var who = p.DisplayName.Length > 0 ? p.DisplayName : p.Name;
-        try
-        {
-            await RobloxGameExtras.SetBlockedAsync(a.Cookie, p.UserId, block, CancellationToken.None);
-            ProfileBlocked = block;
-            StatusMessage = block ? $"{a.Label} blocked {who}. They can't message, friend or join you anymore." : $"{a.Label} unblocked {who}.";
-        }
-        catch (RobloxException ex) when (!ex.TooMany && !ex.SignedOut)
-        {
-            // Roblox wants it done on its own site (a security check, or a rule for this account): its profile page,
-            // signed in as the account, where the ⋯ menu has Block
-            Log(ActivityLog.Info, $"{(block ? "Blocking" : "Unblocking")} {who} from RoDeck didn't go through ({(int?)ex.Status}: {ex.Message}); opened Roblox's page instead.");
-            OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/users/{p.UserId}/profile", who);
-            StatusMessage = $"Roblox wants this done on its own page: use the ⋯ menu next to {who}'s name there, then close the window.";
-            _ = RecheckBlockLaterAsync(a, p.UserId);
-        }
-        catch (RobloxException ex) { StatusMessage = ex.Message; }
-    }
-
-    /// <summary>After blocking on Roblox's page: the button shows the new state once the window has been used.</summary>
-    private async Task RecheckBlockLaterAsync(Models.Account a, long userId)
-    {
-        for (int i = 0; i < 12; i++)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(10));
-            if (OpenProfile?.UserId != userId || CurrentAccount != a) return;
-            if (await RobloxGameExtras.IsBlockedAsync(a.Cookie, userId, CancellationToken.None) is bool b && b != ProfileBlocked)
-            {
-                ProfileBlocked = b;
-                return;
-            }
-        }
-    }
 
     [RelayCommand]
     private void EditAbout()

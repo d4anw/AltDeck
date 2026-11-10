@@ -269,12 +269,12 @@ public partial class MainViewModel
         _ => p.Banned ? "Banned" : "Offline"
     };
     public string ProfileStatusKind => OpenProfile?.PresenceType switch { 2 => "ingame", 1 or 3 => "online", _ => "offline" };
-    public bool ProfileCanJoin => OpenProfile is { PresenceType: 2, PlaceId: > 0 };
+    public bool ProfileCanJoin => OpenProfile is { PresenceType: 2, PlaceId: > 0 } && !ProfileIsMe;
     public bool ProfileIsMe => OpenProfile != null && CurrentAccount?.UserId == OpenProfile.UserId;
     public bool ProfileIsFavourite => OpenProfile != null && Settings.FavouriteFriends.Contains(OpenProfile.UserId);
 
     /// <summary>The main friendship button: what it says and does depends on the friendship with the account top right.</summary>
-    public string ProfileFriendButton => OpenProfile?.Friendship switch
+    public string ProfileFriendButton => ProfileIsMe ? "" : OpenProfile?.Friendship switch
     {
         "Friends" => "Friends ✓",
         "RequestSent" => "Request sent",
@@ -305,7 +305,7 @@ public partial class MainViewModel
             var p = await RobloxFriends.GetProfileAsync(id, a?.Cookie, a?.UserId ?? 0, ct);
             OpenProfile = p;
             NotifyProfile();
-            _ = LoadBlockStateAsync(p.UserId);
+            IsEditingAbout = false;
             return true;
         }, "Opening profile…");
     }
