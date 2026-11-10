@@ -125,7 +125,8 @@ public partial class LimitedTile : ObservableObject
     /// <summary>Builds a tile from what Roblox said plus the values list.</summary>
     public static LimitedTile From(long assetId, string name, long robloxRap, long serial = 0, string instanceId = "", bool onHold = false, bool bundle = false)
     {
-        var v = bundle ? null : Services.LimitedValues.Get(assetId);   // the values list only has assets
+        // the values list only has assets; a bundle (an old face Roblox made a dynamic head) goes by its Rolimons twin
+        var v = Services.LimitedValues.RolimonsId(assetId, name, bundle) is { } rid ? Services.LimitedValues.Get(rid) : null;
         return new LimitedTile
         {
             AssetId = assetId,

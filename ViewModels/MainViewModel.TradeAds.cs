@@ -145,8 +145,11 @@ public partial class MainViewModel
         var q = (AdPickerSearch ?? "").Trim();
         long? min = Limited.ParseAmount(AdPickerMin), max = Limited.ParseAmount(AdPickerMax);
         IEnumerable<LimitedTile> source = slot.IsOffer
-            // one tile per item you own; bundles (like dynamic heads) can't go in a Rolimons ad
-            ? _myTradableAll.Where(t => !t.IsBundle).GroupBy(t => t.AssetId).Select(g => g.First())
+            // one tile per item you own, under its Rolimons ID (a face Roblox made a dynamic head is still listed as the old face)
+            ? _myTradableAll.Select(t => (t, id: LimitedValues.RolimonsId(t.AssetId, t.Name, t.IsBundle)))
+                .Where(x => !x.t.IsBundle || x.id != null)
+                .GroupBy(x => x.id ?? x.t.AssetId)
+                .Select(g => g.First() is var (t, id) && id is { } r && r != t.AssetId ? LimitedTile.From(r, t.Name, t.Rap, onHold: t.IsOnHold) : g.First().t)
             : LimitedValues.All.Select(v => LimitedTile.From(v.AssetId, v.Name, v.Rap));
         var list = source.Where(t =>
                 (q.Length == 0 || t.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
@@ -159,7 +162,7 @@ public partial class MainViewModel
         AdPickerEmptyText = !slot.IsOffer ? "Nothing matches."
             : _myTradableFor != (CurrentAccount?.Id ?? "") ? "Loading your limiteds…"
             : MyTradableLoad.State == LoadState.Error ? "Couldn't load your limiteds. Close this and try again."
-            : !_myTradableAll.Any(t => !t.IsBundle) ? "This account has no limiteds it can offer."
+            : !_myTradableAll.Any(t => !t.IsBundle || LimitedValues.RolimonsId(t.AssetId, t.Name, true) != null) ? "This account has no limiteds it can offer."
             : "Nothing matches.";
         _ = FillLimitedThumbsAsync(shown.Where(t => t.ThumbUrl.Length == 0).ToList());
     }
@@ -308,9 +311,9 @@ public partial class MainViewModel
                 if (LimitedValues.Count > 0 && LimitedValues.Get(id) == null) { skipped.Add($"{name} (not on Rolimons)"); continue; }
                 if (mine is { Count: > 0 })
                 {
-                    var copies = mine.Where(t => t.AssetId == id).ToList();
+                    var copies = mine.Where(t => t.AssetId == id || (t.IsBundle && LimitedValues.RolimonsId(t.AssetId, t.Name, true) == id)).ToList();
                     if (copies.Count == 0) { skipped.Add($"{name} (not in this account's inventory)"); continue; }
-                    if (copies.All(t => t.IsBundle)) { skipped.Add($"{name} (a bundle: Rolimons ads only take single items)"); continue; }
+                    if (copies.All(t => t.IsBundle && LimitedValues.RolimonsId(t.AssetId, t.Name, true) != id)) { skipped.Add($"{name} (a bundle: Rolimons ads only take single items)"); continue; }
                     if (copies.All(t => t.IsOnHold)) { skipped.Add($"{name} (on trade hold)"); continue; }
                 }
                 offer.Add(id);

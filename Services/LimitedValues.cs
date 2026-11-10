@@ -24,6 +24,16 @@ public static class LimitedValues
 
     public static List<LimitedInfo> All => Items.Values.ToList();
 
+    /// <summary>The Rolimons ID of an item. Roblox turned old limited faces into dynamic-head bundles with a new ID,
+    /// while Rolimons still lists them under the old face's ID: for a bundle, that's the one limited with the same name.</summary>
+    public static long? RolimonsId(long id, string name, bool bundle)
+    {
+        if (!bundle) return Items.ContainsKey(id) ? id : null;
+        if (name.Length == 0) return null;
+        var same = Items.Values.Where(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)).Take(2).ToList();
+        return same.Count == 1 ? same[0].AssetId : null;
+    }
+
     /// <summary>Makes sure the values are at most 5 minutes old (or uses the last good copy when Rolimons doesn't answer).</summary>
     public static async Task EnsureAsync(CancellationToken ct, bool force = false, TimeSpan? maxAge = null)
     {
