@@ -4,6 +4,7 @@ namespace RoDeck.Models;
 public class PerfSnapshot
 {
     public int FpsCap { get; set; } = 30;
+    public bool UnlimitedFps { get; set; }
     public bool LowestGraphics { get; set; }
     public bool LighterRendering { get; set; }
     public string Msaa { get; set; } = "x1";

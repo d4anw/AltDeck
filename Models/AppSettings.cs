@@ -99,11 +99,12 @@ public partial class AppSettings : ObservableObject
     // The user's own preset, shown next to the three built-in ones (null until they save it)
     [ObservableProperty, NotifyPropertyChangedFor(nameof(HasCustomPerf), nameof(CustomPerfSummary))]
     private PerfSnapshot? customPerf;
+    partial void OnUnlimitedFpsChanged(bool value) => OnPropertyChanged(nameof(UsesFpsCap));
 
     [System.Text.Json.Serialization.JsonIgnore] public bool HasCustomPerf => CustomPerf != null;
     [System.Text.Json.Serialization.JsonIgnore]
     public string CustomPerfSummary => CustomPerf == null ? "Not saved yet"
-        : $"{CustomPerf.FpsCap} FPS"
+        : (CustomPerf.UnlimitedFps ? "Unlimited FPS" : $"{CustomPerf.FpsCap} FPS")
           + (CustomPerf.LowestGraphics ? ", lowest graphics" : "")
           + (CustomPerf.BackgroundCpuLimit > 0 ? $", CPU {CustomPerf.BackgroundCpuLimit}%" : "");
 

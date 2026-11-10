@@ -370,7 +370,7 @@ public partial class MainViewModel : ObservableObject
         var s = Settings;
         s.CustomPerf = new PerfSnapshot
         {
-            FpsCap = s.FpsCap, LowestGraphics = s.LowestGraphics, LighterRendering = s.LighterRendering,
+            FpsCap = s.FpsCap, UnlimitedFps = s.UnlimitedFps, LowestGraphics = s.LowestGraphics, LighterRendering = s.LighterRendering,
             Msaa = s.Msaa, TextureQuality = s.TextureQuality, RenderingMode = s.RenderingMode,
             GraySky = s.GraySky, NoGrass = s.NoGrass, StartTiny = s.StartTiny, MinimizeOnLaunch = s.MinimizeOnLaunch,
             MuteOnStart = s.MuteOnStart, BackgroundCpuLimit = s.BackgroundCpuLimit, AntiAfk = s.AntiAfk,
@@ -403,7 +403,8 @@ public partial class MainViewModel : ObservableObject
             case "Custom":
                 if (Settings.CustomPerf is { } c)
                 {
-                    Settings.FpsCap = c.FpsCap; Settings.LowestGraphics = c.LowestGraphics; Settings.LighterRendering = c.LighterRendering;
+                    Settings.FpsCap = c.FpsCap; Settings.UnlimitedFps = c.UnlimitedFps;
+                    Settings.LowestGraphics = c.LowestGraphics; Settings.LighterRendering = c.LighterRendering;
                     Settings.Msaa = c.Msaa; Settings.TextureQuality = c.TextureQuality; Settings.RenderingMode = c.RenderingMode;
                     Settings.GraySky = c.GraySky; Settings.NoGrass = c.NoGrass;
                     Settings.StartTiny = c.StartTiny; Settings.MinimizeOnLaunch = c.MinimizeOnLaunch;
