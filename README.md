@@ -4,9 +4,9 @@
 
 # RoDeck
 
-### All your Roblox in one app: accounts, games, friends, avatar, marketplace and trades.
+### The new Roblox client for Windows. One app instead of the Roblox app, the website and every tool next to it.
 
-A local-only Roblox app for Windows 10 and 11, with every account you own a click away.<br>
+Games, friends, your avatar, the marketplace, trades and every account you own, in one fast app.<br>
 Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.<br>
 <sub>Formerly <b>AltDeck</b>. Not affiliated with or endorsed by Roblox Corporation.</sub>
 
@@ -22,10 +22,10 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.<br
 <br>
 
 [**⬇ Download**](https://github.com/d4anw/RoDeck/releases/latest) &nbsp;·&nbsp;
+[Features](#-features) &nbsp;·&nbsp;
 [Quick start](#-quick-start) &nbsp;·&nbsp;
 [Privacy](#-safety-and-privacy) &nbsp;·&nbsp;
-[Changelog](#-changelog) &nbsp;·&nbsp;
-[Build from source](#-build-from-source)
+[Changelog](#-changelog)
 
 </div>
 
@@ -35,7 +35,7 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.<br
 
 | For everyone | For developers |
 |---|---|
-| [What is RoDeck?](#-what-is-rodeck) | [Build from source](#-build-from-source) |
+| [Why RoDeck?](#-why-rodeck) | [Build from source](#-build-from-source) |
 | [Features](#-features) | [Project layout](#-project-layout) |
 | [Install](#-install) | [Changelog](#-changelog) |
 | [Quick start](#-quick-start) | [License](#️-license) |
@@ -44,18 +44,20 @@ Your sign-ins stay encrypted on your own PC and are only ever sent to Roblox.<br
 
 <br>
 
-## 💡 What is RoDeck?
+## 💡 Why RoDeck?
 
-RoDeck replaces the Roblox app on your PC, and it's built for people with more than one account.
-Pick an account top right and everything (games, friends, avatar, marketplace, trades) is for that account;
-switch with one click, no signing out.
+**RoDeck replaces the Roblox app on your PC.** Open RoDeck instead of Roblox and everything you'd normally do in
+the Roblox app or on roblox.com is right there: find a game and press Play, see which friends are online and join
+them, change your avatar, shop the marketplace, and trade limiteds. Games still run in Roblox's own player, so
+nothing is modded or injected; RoDeck is everything around it.
 
-- **Play:** game charts, search, favourites and a server finder (best ping, fewest or most players, where your friends are).
-- **Friends:** who's online and where, join them, requests, search players, star your favourites.
-- **Avatar editor:** wardrobe, body, colours, outfits, R6/R15, a 3D preview and accessory adjustment.
-- **Marketplace:** browse and search items, try them on, get free items in one click, buy behind a confirm screen.
-- **Trades:** live deals below RAP or value, a watchlist that tells you when an item hits your price, a trade calculator, every limited with its value and RAP history, inventory value per account, and your trades with a win/loss verdict.
-- **Many accounts at once:** launch one or many into any game, run clients side by side, and RoDeck rejoins when one gets kicked or crashes.
+And it does what the Roblox app can't:
+
+- 👥 **Every account in one place.** Pick an account top right and the whole app is for that account. Switch with one click, no signing out.
+- 🚀 **Many accounts in a game at once.** Launch one or fifty, side by side, with a queue, layouts, and rejoins when one gets kicked or crashes.
+- 🎚️ **Your FPS, your way.** Unlimited FPS or a cap, lighter graphics and your own FastFlags, with a separate profile for playing yourself and for running alts.
+- 💎 **A trading desk.** Live deals, a watchlist, a trade calculator, values, RAP history and your trades with a win/loss verdict.
+- ⚡ **Fast.** A native Windows app: pages open instantly, pictures are cached, and nothing loads twice.
 
 Everything runs on your PC. There's no RoDeck account, no RoDeck server and no tracking.
 RoDeck used to be called **AltDeck**; updating from AltDeck keeps all your accounts and settings.
@@ -64,144 +66,74 @@ RoDeck used to be called **AltDeck**; updating from AltDeck keeps all your accou
 
 ## ✨ Features
 
-<table>
-<tr>
-<td width="50%" valign="top">
+### 🏠 Home
+Your start page: friends who are online and where they are, friend requests, how many clients are running,
+then **continue playing**, your **favourite games** and **recommended for you**.
 
 ### 🎮 Games
-Charts as rows (open any chart for all of it), search, favourites (synced with your Roblox favourites) and
-recently played. Each game has its own page with pictures, stats and a **server finder**: best ping, fewest or
-most players, or where your friends are. Play closes your other client first.
-
-</td>
-<td valign="top">
+- **Charts as rows**, like Roblox's own: Top Trending, Up-and-Coming and more. Open any row for the whole chart.
+- **Search**, **favourites** (synced with your Roblox favourites both ways) and **recently played**.
+- **Game pages** with pictures, players online, visits, likes and the description.
+- **Server finder:** best ping, fewest or most players, or the server your friends are in.
+- **Play** joins with the account top right and closes the game it was in first. **With alts…** sends the game to Multi-launch.
 
 ### 👫 Friends
-Online first, with where they are and a join button. Accept or decline requests in the list,
-find players (by name, user ID or profile link), open profiles and star favourites.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
+- Online friends first, with the game they're in and a **Join** button.
+- **Friend requests** in a grid that fits your window: accept or decline right there.
+- **Find players** by name, user ID or profile link, open their profile, and star your favourite friends.
 
 ### 🧍 Avatar editor
-Wardrobe by category, body colours and scales, outfits, R6 / R15, a turnable 3D preview,
-accessory adjustment and "copy this look to another account".
-
-</td>
-<td valign="top">
+- Your wardrobe by category, body colours and scales, R6 / R15 and your outfits.
+- A **3D preview** you can turn, and accessory adjustment.
+- **Copy a look** from one of your accounts to another.
 
 ### 🛒 Marketplace
-Categories, search, sort and price filters. **Try on** shows it on your avatar first. Every item has its own page
-with similar items and more from its creator; limiteds show every seller. Free items in one click; Robux purchases
-always show item, price, account and balance first, with an optional spending limit.
+- Categories, search, sort and price filters, starting on all items.
+- **Try on** shows an item on your avatar before you buy it.
+- **Item pages** with similar items and more from the same creator; limiteds show their RAP / value chart and every seller.
+- Free items in one click. Robux purchases always show item, price, account and balance first, with an optional spending limit.
 
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 💎 Trades and deals
-**Deals:** limiteds listed below their RAP or value, newest first, live; buy from a card on the page, or turn
-on **insta-buy** (one click, no confirm, at your own risk). **Watchlist:** a price or a % off per item, and a
-notification when it's listed at or below it. **Calculator**, **Limiteds** (values, demand, trend, RAP history),
-**inventory value** per account, and **your trades** with both sides, value/RAP difference and accept / counter / decline.
-
-</td>
-<td valign="top">
+### 💎 Trades
+- **Deals:** limiteds listed below their RAP or value, newest first, like Rolimons' deals. New listings come in every second while you're on Deals, and every limited's cheapest price is checked round after round.
+- **Buy from the Deals page** with a confirm card, or turn on **insta-buy** to buy in one click (at your own risk; it warns you every time).
+- **Watchlist:** a price or a % off under the value per item. RoDeck keeps checking, also from the tray, and notifies you when it's listed at or below your price.
+- **Calculator:** put two sides together and see the value and RAP difference.
+- **Limiteds:** every limited with value, demand, trend, RAP and a hoverable price chart.
+- **Inventory value** per account, with items on trade hold marked.
+- **Your trades:** inbound, outbound, completed and inactive, with both sides, a win / loss verdict, and accept / counter / decline behind a confirm screen.
+- **Trade ads:** a Rolimons trade ad posted again for you every 15+ minutes.
 
 ### 🔔 Notifications
-Optional Windows notifications for friends coming online, new trades, trades you sent that were accepted
-or declined (pick which), friend requests and big deals. All off until you turn them on.
+Windows notifications for friends coming online, trades you receive, trades you sent being **accepted or declined**
+(pick which), friend requests and big deals. All off until you turn them on.
 
-</td>
-</tr>
-</table>
+### 🚀 Multi-launch
+- **Launch many accounts** into any game: a game link, place ID, private server, `roblox.com/share` link, **Browse games**, a server from the server browser, or **join someone**.
+- **Launch presets** with their own global hotkeys: one click picks the accounts and the game.
+- **Launch queue** with pause, skip and cancel; each sign-in is checked right before it launches.
+- **Multi-instance:** many clients at once, side by side. Tile, minimize or show them all, save and restore **window layouts**, and make windows smaller than Roblox's 800×600 minimum.
+- **Auto-rejoin and restart:** catches disconnects (Error 277, 279 and others), crashes and frozen windows, then goes back into the same game. Waits for your internet to come back first.
+- **Running:** a card for every client with a live preview, plus CPU, memory and GPU dials that show how much room your PC has left.
+- **Anti-AFK** (experimental), a panic hotkey, a stop timer and hold-to-stop-all.
 
-<table>
-<tr>
-<td width="50%" valign="top">
+### 🎚️ FPS & FastFlags
+- **Two profiles:** **Playing** for games you start with Play on Home, Games or Friends, and **Multi-launch** for your alts. Your own game can look its best while ten alts stay light, without switching anything.
+- Each profile has **presets** (Max alts, Balanced, Roblox defaults and My preset), **fine-tune** and **your own FastFlags**.
+- **Unlimited FPS** or a real cap from 5 to 240, lowest graphics, MSAA, texture quality, rendering mode, gray sky, no grass, start muted, start tiny, minimize on launch and a CPU limit for background clients.
+- Written to Roblox just before each launch and **put back afterwards**, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap.
 
-### 🔐 Encrypted vault
-Sign-ins are encrypted with **Windows DPAPI**, or with your own **master password**
-(PBKDF2-SHA256, 600,000 rounds + AES-256-GCM). Portable password-locked `.rodeck` backups.
+### 👥 Accounts and the vault
+- Add accounts by **browser login**, paste **many cookies at once**, or **import** an `AccountData.json` file.
+- Robux and Premium per account, your total Robux, live presence, groups, notes and favourites.
+- Sign-ins encrypted with **Windows DPAPI**, or your own **master password** (PBKDF2-SHA256, 600,000 rounds + AES-256-GCM).
+- Password-locked `.rodeck` **backups** that work on another PC. A sign-in check tells you when one expired.
 
-</td>
-<td width="50%" valign="top">
-
-### 👥 Accounts
-Robux and Premium per account, live presence, groups and favourites. Add by browser login,
-paste many cookies at once, or import an `AccountData.json` file.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 🚀 Play anything
-Game links, place IDs, private servers and `roblox.com/share` links, or **Browse games** to pick one from
-Games. Launch presets with their own hotkeys, a server browser and "join someone".
-
-</td>
-<td valign="top">
-
-### 🪟 Multi-instance
-Run many clients at once. A launch queue with pause, skip and cancel. Window layouts
-you can save and restore, and windows smaller than Roblox's 800×600 minimum.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 🔁 Auto-rejoin and restart
-Catches disconnects (Error 277, 279 and others), crashes and frozen windows, then relaunches
-into the same game. Waits for your internet to come back first.
-
-</td>
-<td valign="top">
-
-### 🖥️ Home
-Continue playing and your favourite games, a card for every client with a live preview, plus CPU, memory and
-GPU dials. Show, minimize, tile, Play again and Anti-AFK (experimental).
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 🎚️ Performance
-Two profiles: **Playing** (Play on Home, Games or Friends) and **Multi-launch** (many accounts), so your own
-game can look good while alts stay light. Each has its presets (Max alts / Balanced / Roblox defaults / My preset),
-fine-tune (FPS cap or unlimited, graphics flags, start muted, start tiny, CPU limit) and your own FastFlags.
-
-</td>
-<td valign="top">
-
-### 🎨 Your look
-Black theme with orange accents by default. Change the accent colour, density and background
-image. Your Discord profile shows "Playing RoDeck" automatically.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### ⬆️ Updates itself
-When a new version is out, RoDeck asks as soon as it opens and shows what's new.
-One click downloads it with a progress bar and restarts into the new version.
-
-</td>
-<td valign="top">
-
-### 🐞 Report a bug
-One button opens a GitHub bug report with your versions filled in and copies your
-Activity log to paste in. After every update, "What's new" shows what changed.
-
-</td>
-</tr>
-</table>
+### 🎨 And the rest
+- **Your look:** black with orange accents by default; change the accent colour, density and background image.
+- **Mouse side buttons** go back and forward between pages.
+- **Discord:** "Playing RoDeck" on your profile, with how many alts are running.
+- **Updates itself:** RoDeck asks when a new version is out, shows what's new and restarts into it.
+- **Report a bug** in one click, with your versions filled in and your activity log copied.
 
 <details>
 <summary><b>All features, in detail</b></summary>
@@ -212,18 +144,16 @@ Activity log to paste in. After every update, "What's new" shows what changed.
 | 🔐 **Vault** | `vault.dat` in `%AppData%\RoDeck`, encrypted with Windows DPAPI for your user. Optional master password (asked once at every start, can't be recovered). Export / import an `.rodeck` backup locked with a password you choose; it works on another PC. Import only adds. |
 | 👥 **Accounts** | Sign in through an isolated browser window (the profile is deleted after the session cookie is captured), or paste cookies: one or many at once, one per line. Search, status and group filters, favourites, live presence. A periodic sign-in check (every 30 min by default) tells you when one expired. |
 | 📥 **Import** | Import a list of accounts from an `AccountData.json` file (or a `.txt` with one cookie per line). Names, notes and groups in the file fill in what's empty; accounts you already have are refreshed, not doubled; passwords in the file are ignored. Encrypted files can't be read: save them unencrypted first. |
-| 💰 **Robux & Premium** | Each account's Robux balance and Premium status in the list and its details, plus the total Robux across all your accounts. Refreshed with every sign-in check. |
-| 🚀 **Play** | Game links, place IDs, private server links, `roblox.com/share?code=…&type=Server` links. Favourites. Launch presets: save the ticked accounts and target, then launch them in one click or with a global hotkey. Browse servers (fewest / most players / lowest ping). Join someone by username. |
+| 🚀 **Launching** | Game links, place IDs, private server links, `roblox.com/share?code=…&type=Server` links. Favourites. Launch presets: save the ticked accounts and target, then launch them in one click or with a global hotkey. Browse games, browse servers (fewest / most players / lowest ping), join someone by username. |
 | 🪟 **Launch queue** | "3 of 8 launched, next: Alt4 in 7 s" with Pause / Resume, Skip next and Cancel. Each account's sign-in is checked right before it launches. Launch delay and custom launch arguments (default and per account). |
 | 🔁 **Recovery** | Auto-rejoin reads each client's Roblox log to catch disconnects; the first rejoin goes back to the same server. Auto-restart for crashes and windows "Not responding" for 30 s. Give-up limit, or keep trying every 5 minutes. Sign-ins are kept apart so clients don't sign each other out. |
-| 🖥️ **Home** | Live previews refreshed every second (a minimized window keeps its last picture). GPU load and video memory from Windows' own counters. Windows menu: Tile windows, Minimize all, save / restore layouts. |
-| 🎚️ **Performance** | Two profiles, each with its own presets, fine-tune and FastFlags: **Playing** for games started with Play on Home, Games or Friends, **Multi-launch** for Multi-launch, launch presets and rejoins. FPS cap (or unlimited), MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards, so normal Roblox stays untouched. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
+| 🖥️ **Clients** | Live previews refreshed every second (a minimized window keeps its last picture). GPU load and video memory from Windows' own counters. Client windows toolbar: Tile, Minimize all, Show all, save / restore layouts. |
+| 🎚️ **FPS & FastFlags** | Two profiles, each with its own presets, fine-tune and FastFlags: **Playing** for games started with Play on Home, Games or Friends, **Multi-launch** for Multi-launch, launch presets and rejoins. FPS cap (or unlimited), MSAA, texture quality, rendering mode, gray sky, no grass and lowest graphics, written as FastFlags just before each launch and put back afterwards. Skipped under Bloxstrap / Fishstrap. A "Full quality" account is left alone. |
 | 💎 **Trades** | Deals: Rolimons' live listings (checked every second once you've opened Deals) plus every limited's cheapest price, checked round after round; newest first, with filters. Buy from a card, or with insta-buy on, in one click. Watchlist: a price or a % off under the value per item, checked in the background (also from the tray) with a notification at your price. Item pages with a RAP / value chart and every seller. |
 | ⬆️ **Updates** | When RoDeck opens it checks GitHub Releases. If a new version is out it asks whether to update, shows what's new, downloads with a progress bar, checks the file against GitHub's SHA-256 and restarts into it. "Not now" asks again next start; "Don't notify me about updates again" stops asking. Check by hand anytime under Settings → About. |
 | ⏲️ **Automation** | Panic hotkey to stop every client, a stop timer (30m / 1h / 2h / 4h), hold-to-stop-all button, close to tray. |
-| 📋 **Activity** | Timestamped launches, drops, rejoins and errors, with a "Problems only" filter and Copy. Also written to `%AppData%\RoDeck\logs`, kept for 14 days. |
-| 🐞 **Report a bug** | One button (Activity page, or Settings → About) opens a GitHub issue with your RoDeck and Windows versions filled in, and copies your Activity log so you can paste it in after checking it for names. |
-| 🆕 **What's new** | After an update, RoDeck shows that version's release notes once. |
+| 📋 **Activity** | Timestamped launches, drops, rejoins, purchases and errors, with a "Problems only" filter and Copy. Also written to `%AppData%\RoDeck\logs`, kept for 14 days. |
+| 🐞 **Report a bug** | One button (Activity, or Settings → About) opens a GitHub issue with your RoDeck and Windows versions filled in, and copies your Activity log so you can paste it in after checking it for names. |
 | 💬 **Discord** | "Playing RoDeck" on your Discord profile with how many alts are running. Works out of the box with the Discord desktop app open; switch it off in Settings. |
 
 </details>
@@ -259,7 +189,7 @@ Activity log to paste in. After every update, "What's new" shows what changed.
 
 - **Your data stays on your PC.** Accounts, settings and logs live in `%AppData%\RoDeck`, never in the exe or in this repo.
 - **Sign-ins are encrypted** with Windows DPAPI, or your master password if you set one.
-- **Nothing is sent anywhere except Roblox**, plus your running-alt count to the Discord app on your PC (switch it off in Settings).
+- **Your sign-ins are only ever sent to Roblox.** Limited values, deals and trade ads come from Rolimons (no sign-in sent; a trade ad uses the Rolimons verification you paste in), and your running-alt count goes to the Discord app on your PC (switch it off in Settings).
 - **Updates come only from this repo's GitHub Releases** and are checked against GitHub's SHA-256 before they're installed.
 - **Report a bug only opens GitHub when you click it.** Nothing is sent by itself, and you check the log before pasting it.
 - **No telemetry**, no accounts, no RoDeck server.
@@ -302,7 +232,7 @@ The version shown in the app, the exe's details and backups all come from `<Vers
 
 ```
 RoDeck/
-├─ Views/            Home, Play, Accounts, Performance, Activity and Settings pages
+├─ Views/            Home, Games, Friends, Avatar, Marketplace, Trades, Multi-launch, FPS & FastFlags and Settings
 ├─ ViewModels/       MainViewModel (app state and commands)
 ├─ Services/         Vault, Launcher, RobloxApi, Updater, auto-rejoin, monitors, tray, hotkeys, Discord …
 ├─ Models/           Account, settings, presets, layouts
@@ -423,4 +353,4 @@ RoDeck is open source under the [MIT License](LICENSE).
 RoDeck is an independent, open-source project. It is not affiliated with, endorsed by, sponsored by or connected to
 Roblox Corporation. "Roblox" is a trademark of Roblox Corporation.
 Use it only with accounts you own, and follow Roblox's Terms of Use.
-Limited values come from Rolimons and are estimates; buying and trading always ask you first.
+Limited values come from Rolimons and are estimates. Buying and trading always ask you first, except Deals insta-buy, which you turn on yourself after a warning.
