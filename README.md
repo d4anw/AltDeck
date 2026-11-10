@@ -84,7 +84,7 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 - Online friends first, with the game they're in and a **Join** button.
 - **Friend requests** in a grid that fits your window: accept or decline right there.
 - **Find players** by name, user ID or profile link, open their profile, and star your favourite friends.
-- **Profiles** with tabs: what they're wearing, their friends, communities, badges, favourite games and inventory (when it's public). **Follow** or unfollow from there.
+- **Profiles** with tabs: what they're wearing, their friends, communities, badges, favourite games and inventory (when it's public). **Send trade** and **Trade profile** (their limiteds) right there, and back again.
 - **Edit your own About** text: open your profile (account menu → My profile) and press Edit About.
 - **Roblox settings** (privacy, security…) from the account menu, signed in as that account.
 

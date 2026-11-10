@@ -408,6 +408,7 @@ public partial class MainViewModel
         "Watchlist" => "Back to the watchlist",
         "Deals" => "Back to deals",
         "Ads" => "Back to trade ads",
+        "Profile" => _profileReturnName.Length > 0 ? $"Back to {_profileReturnName}'s profile" : "Back to their profile",
         _ => "Back to limiteds"
     };
 
@@ -424,7 +425,7 @@ public partial class MainViewModel
             _ => OpenTradeRow is { } o ? (o.PartnerId, o.PartnerLabel, o.PartnerName, o.HeadshotUrl) : (0L, "", "", "")
         };
         if (id <= 0) return;
-        if (TradesTab != "Profile") _profileFrom = TradesTab;
+        if (TradesTab != "Profile") { _profileFrom = TradesTab; _profileReturnId = 0; }
         OnPropertyChanged(nameof(TradeProfileBackText));
         _ = ShowTradeProfileAsync(a, id, name, user, head);   // the page shows right away; the items fill in
         TradesTab = "Profile";
@@ -434,7 +435,11 @@ public partial class MainViewModel
     private void OpenMyTradeProfile() { if (CurrentAccount is { } a) OpenTradeProfile(a); }
 
     [RelayCommand]
-    private void CloseTradeProfile() => TradesTab = _profileFrom is { Length: > 0 } f && f != "Profile" ? f : "Trades";
+    private void CloseTradeProfile()
+    {
+        if (_profileFrom == "Profile" && _profileReturnId > 0) { _ = OpenProfileAsync(_profileReturnId); return; }   // opened from a normal profile
+        TradesTab = _profileFrom is { Length: > 0 } f && f != "Profile" ? f : "Trades";
+    }
 
     [RelayCommand]
     private void TradeWithProfile()

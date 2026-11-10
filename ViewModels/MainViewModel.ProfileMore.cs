@@ -8,7 +8,7 @@ using RoDeck.Services;
 namespace RoDeck.ViewModels;
 
 // The fuller profile: tabs under the header (About, Wearing, Friends, Communities, Badges, Favourites, Inventory), each
-// loaded the first time it's opened, and Follow / Unfollow.
+// loaded the first time it's opened; and from a profile to the same player's trade profile, or a new trade with them.
 public partial class MainViewModel
 {
     [ObservableProperty] private string profileTab = "About";
@@ -45,7 +45,7 @@ public partial class MainViewModel
 
     [RelayCommand] private void SelectInventoryCategory(string? key) { if (!string.IsNullOrEmpty(key)) InventoryCategory = key; }
 
-    /// <summary>A profile opened: back to its About tab, nothing of the last one left; and whether you follow them.</summary>
+    /// <summary>A profile opened: back to its About tab, nothing of the last one left.</summary>
     private void ResetProfileTabs(long userId)
     {
         _profileTabsFor = userId;
@@ -56,7 +56,6 @@ public partial class MainViewModel
         ProfileTabInfo = "";
         if (!_restoring) ProfileTab = "About";
         else _ = LoadProfileTabAsync();
-        _ = LoadFollowStateAsync(userId);
     }
 
     [RelayCommand]
@@ -227,67 +226,38 @@ public partial class MainViewModel
     [RelayCommand]
     private Task OpenProfileFriend(FriendTile? f) => f == null ? Task.CompletedTask : OpenProfileAsync(f.UserId);
 
-    // ================================================================== follow
+    // ================================================================== to the trade side
 
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ProfileFollowText))] private bool? profileFollowing;
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(ProfileFollowText))] private bool unfollowArmed;
-    [ObservableProperty] private bool followBusy;
-    public string ProfileFollowText => ProfileFollowing == true ? (UnfollowArmed ? "Click again to unfollow" : "Following ✓") : "Follow";
-
-    private async Task LoadFollowStateAsync(long userId)
-    {
-        ProfileFollowing = null;
-        UnfollowArmed = false;
-        if (CurrentAccount is not { UserId: > 0 } a || a.UserId == userId) return;
-        var f = await RobloxProfiles.IsFollowingAsync(a.Cookie, userId, CancellationToken.None);
-        if (OpenProfile?.UserId == userId || _lastProfileId == userId) ProfileFollowing = f ?? false;
-    }
-
+    /// <summary>The player's trade profile (their limiteds); its Back button comes back to this profile.</summary>
     [RelayCommand]
-    private async Task ToggleFollow()
+    private void OpenTradeProfileFromProfile()
     {
-        if (OpenProfile is not { } p || CurrentAccount is not { UserId: > 0 } a || a.UserId == p.UserId || FollowBusy) return;
-        bool follow = ProfileFollowing != true;
-        if (!follow && !UnfollowArmed)
-        {
-            UnfollowArmed = true;
-            _ = Task.Delay(4000).ContinueWith(_ => UnfollowArmed = false, TaskScheduler.FromCurrentSynchronizationContext());
-            return;
-        }
-        UnfollowArmed = false;
-        FollowBusy = true;
-        var who = p.DisplayName.Length > 0 ? p.DisplayName : p.Name;
-        try
-        {
-            await RobloxProfiles.SetFollowingAsync(a.Cookie, p.UserId, follow, CancellationToken.None);
-            ProfileFollowing = follow;
-            p.Followers = Math.Max(0, p.Followers + (follow ? 1 : -1));
-            OnPropertyChanged(nameof(ProfileCounts));
-            StatusMessage = follow ? $"{a.Label} follows {who} now." : $"{a.Label} unfollowed {who}.";
-        }
-        catch (RobloxException ex) when (!ex.TooMany && !ex.SignedOut)
-        {
-            // following can ask for Roblox's puzzle check, which only its own page can show
-            Log(ActivityLog.Info, $"{(follow ? "Following" : "Unfollowing")} {who} from RoDeck needs Roblox's page ({(int?)ex.Status}: {ex.Message}).");
-            OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/users/{p.UserId}/profile", who);
-            StatusMessage = $"Roblox wants a quick check: press {(follow ? "Follow" : "Unfollow")} on {who}'s page there (the ⋯ menu), then close the window.";
-            _ = RecheckFollowLaterAsync(a, p.UserId);
-        }
-        catch (RobloxException ex) { StatusMessage = ex.Message; }
-        finally { FollowBusy = false; }
+        if (OpenProfile is not { } p || CurrentAccount is not { } a) return;
+        _profileFrom = "Profile";
+        _profileReturnId = p.UserId;
+        _profileReturnName = p.DisplayName.Length > 0 ? p.DisplayName : p.Name;
+        OnPropertyChanged(nameof(TradeProfileBackText));
+        Page = "Trades";
+        _ = ShowTradeProfileAsync(a, p.UserId, _profileReturnName, p.Name, "");
+        TradesTab = "Profile";
     }
 
-    private async Task RecheckFollowLaterAsync(Account a, long userId)
+    /// <summary>A new trade with this player, in the trade maker.</summary>
+    [RelayCommand]
+    private void SendTradeFromProfile()
     {
-        for (int i = 0; i < 18; i++)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(10));
-            if (OpenProfile?.UserId != userId || CurrentAccount != a) return;
-            if (await RobloxProfiles.IsFollowingAsync(a.Cookie, userId, CancellationToken.None) is bool f && f != ProfileFollowing)
-            {
-                ProfileFollowing = f;
-                return;
-            }
-        }
+        if (OpenProfile is not { } p || ProfileIsMe) return;
+        var name = p.DisplayName.Length > 0 ? p.DisplayName : p.Name;
+        Page = "Trades";
+        _counterOf = null;
+        BuildTitle = "New trade";
+        StartBuild(p.UserId, name, "");
     }
+
+    /// <summary>On a trade profile: the same player's normal profile.</summary>
+    [RelayCommand]
+    private Task OpenProfileFromTrade() => TradeProfileId > 0 ? OpenProfileAsync(TradeProfileId) : Task.CompletedTask;
+
+    private long _profileReturnId;
+    private string _profileReturnName = "";
 }

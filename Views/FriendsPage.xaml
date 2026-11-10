@@ -309,29 +309,11 @@
                       <TextBlock Text="Favourite"/>
                     </StackPanel>
                   </Button>
-                  <Button Margin="0,0,8,8" Command="{Binding ToggleFollowCommand}" IsEnabled="{Binding FollowBusy, Converter={StaticResource Not}}"
+                  <Button Content="Send trade" ctl:Btn.Icon="&#xE8AB;" Margin="0,0,8,8" Command="{Binding SendTradeFromProfileCommand}"
                           Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVisInv}}"
-                          ToolTip="Following shows when they're online and what they make, on Roblox">
-                    <Button.Style>
-                      <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                        <Style.Triggers>
-                          <DataTrigger Binding="{Binding ProfileFollowing}" Value="True">
-                            <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
-                          </DataTrigger>
-                          <DataTrigger Binding="{Binding UnfollowArmed}" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Red}"/>
-                            <Setter Property="BorderBrush" Value="{DynamicResource Red}"/>
-                            <Setter Property="Foreground" Value="White"/>
-                          </DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </Button.Style>
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="&#xE8FA;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding ProfileFollowText}"/>
-                    </StackPanel>
-                  </Button>
+                          ToolTip="A new trade with them (Trades → the trade maker)"/>
+                  <Button Content="Trade profile" ctl:Btn.Icon="&#xE8EC;" Margin="0,0,8,8" Command="{Binding OpenTradeProfileFromProfileCommand}"
+                          ToolTip="Their limiteds with value and RAP"/>
                   <Button Content="Edit About" ctl:Btn.Icon="&#xE70F;" Style="{StaticResource Primary}" Margin="0,0,8,8" Padding="18,10"
                           Command="{Binding EditAboutCommand}" Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVis}}"
                           ToolTip="Change the About text everyone sees on your profile"/>

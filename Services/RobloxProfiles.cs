@@ -17,8 +17,8 @@ public sealed partial class EmoteSlot : ObservableObject
 }
 
 /// <summary>
-/// The fuller player profile (what they wear, their friends, communities, badges, favourite games, inventory),
-/// following, and the account's emote wheel.
+/// The fuller player profile (what they wear, their friends, communities, badges, favourite games, inventory)
+/// and the account's emote wheel.
 /// </summary>
 public static class RobloxProfiles
 {
@@ -77,25 +77,6 @@ public static class RobloxProfiles
     {
         using var doc = await RobloxHttp.GetJsonAsync($"https://inventory.roblox.com/v1/users/{userId}/can-view-inventory", null, ct);
         return RobloxCommunities.Bool(doc.RootElement, "canView");
-    }
-
-    // ------------------------------------------------------------------ following (the same requests as a roblox.com profile)
-
-    public static async Task<bool?> IsFollowingAsync(string cookie, long userId, CancellationToken ct)
-    {
-        try
-        {
-            using var doc = await RobloxHttp.PostJsonAsync("https://friends.roblox.com/v1/user/following-exists", cookie, new { targetUserIds = new[] { userId } }, ct);
-            foreach (var f in doc.RootElement.Arr("followings"))
-                if (f.Num("userId") == userId) return RobloxCommunities.Bool(f, "isFollowing");
-            return null;
-        }
-        catch (RobloxException) { return null; }
-    }
-
-    public static async Task SetFollowingAsync(string cookie, long userId, bool follow, CancellationToken ct)
-    {
-        using var _ = await RobloxHttp.PostJsonAsync($"https://friends.roblox.com/v1/users/{userId}/{(follow ? "follow" : "unfollow")}", cookie, NoBody.Instance, ct);
     }
 
     // ------------------------------------------------------------------ the emote wheel

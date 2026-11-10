@@ -721,10 +721,12 @@
                         Visibility="{Binding TradeProfileIsMe, Converter={StaticResource BoolVisInv}}">
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="Trade with them"/>
+                    <TextBlock Text="Send trade"/>
                   </StackPanel>
                 </Button>
                 <StackPanel Orientation="Horizontal">
+                  <Button Content="Profile" ctl:Btn.Icon="&#xE77B;" Padding="14,7" Command="{Binding OpenProfileFromTradeCommand}"
+                          ToolTip="Their profile: what they wear, friends, communities, badges…"/>
                   <Button Content="Roblox" ctl:Btn.External="True" Padding="14,7" Command="{Binding OpenProfileOnRobloxCommand}" ToolTip="Their profile on roblox.com"/>
                   <Button Content="Rolimons" ctl:Btn.External="True" Padding="14,7" Margin="0" Command="{Binding OpenProfileOnRolimonsCommand}" ToolTip="Their page on rolimons.com"/>
                 </StackPanel>
