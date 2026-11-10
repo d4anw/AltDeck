@@ -101,10 +101,6 @@
                     ToolTip="Your private servers in every game: fill one in, or change its settings">
               <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72E;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="My private servers"/></StackPanel>
             </Button>
-            <Button Style="{StaticResource Chip}" Margin="0,0,8,8" Command="{Binding BrowseGamesForMultiCommand}"
-                    ToolTip="Pick a game from Games: charts, search, favourites and recently played">
-              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="Browse games"/></StackPanel>
-            </Button>
             <Button Style="{StaticResource Chip}" Margin="0,0,8,8" Command="{Binding JoinSomeoneCommand}"
                     ToolTip="Find the server a friend (or anyone who lets you join) is in">
               <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="Join someone"/></StackPanel>

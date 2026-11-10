@@ -334,6 +334,22 @@
                                   </TextBlock>
                                   <Button Grid.Column="1" Content="Add people" ctl:Btn.Icon="&#xE8FA;" Margin="8,0,0,0" Command="{Binding AddConfigMemberCommand}"/>
                                 </Grid>
+                                <!-- your friends that match what's typed: one click adds them -->
+                                <ItemsControl ItemsSource="{Binding ConfigSuggestions}" Margin="0,8,0,0">
+                                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                      <Button Style="{StaticResource Chip}" Margin="0,0,8,8" ToolTip="Add them"
+                                              Command="{Binding DataContext.AddSuggestedMemberCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                          <ctl:AvatarView Width="22" Height="22" Url="{Binding HeadshotUrl}" Initials="{Binding Initials}" Margin="0,0,8,0"/>
+                                          <TextBlock VerticalAlignment="Center"><Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/> <Run Text="{Binding Name, Mode=OneWay, StringFormat=@{0}}" Foreground="{DynamicResource Muted}"/></TextBlock>
+                                          <TextBlock Text="&#xE710;" FontFamily="{StaticResource Icons}" FontSize="10" Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Accent}"/>
+                                        </StackPanel>
+                                      </Button>
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                               </StackPanel>
                             </Border>
                           </StackPanel>
@@ -392,7 +408,7 @@
                             Command="{Binding CloseTargetPickerCommand}"/>
                   </Grid>
                   <Grid Grid.Row="1" Margin="26,14,26,0">
-                    <ctl:SearchBox Text="{Binding TargetGameSearch}" Placeholder="Search games, press Enter" SubmitCommand="{Binding SearchTargetGamesCommand}"
+                    <ctl:SearchBox Text="{Binding TargetGameSearch}" Placeholder="Search games" SubmitCommand="{Binding SearchTargetGamesCommand}" SubmitOnClear="True"
                                    Visibility="{Binding TargetPickerTab, Converter={StaticResource PageVis}, ConverterParameter=Games}"/>
                     <Grid Visibility="{Binding TargetPickerTab, Converter={StaticResource PageVis}, ConverterParameter=Servers}">
                       <TextBlock Text="Pick one to launch into it. Its share link is filled in, so every account you launch can join."

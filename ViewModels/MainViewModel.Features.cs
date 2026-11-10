@@ -381,6 +381,18 @@ public partial class MainViewModel
         else _ = RunQueueAsync();
     }
 
+    /// <summary>Tile on launch: once every launched account's window is up (up to 2 minutes), tile them all.</summary>
+    private async Task TileWhenReadyAsync(List<Account> accounts)
+    {
+        for (int i = 0; i < 60; i++)
+        {
+            await Task.Delay(2000);
+            var clients = ClientMon.Clients.Where(c => c.IsAlive && c.Owner != null && accounts.Contains(c.Owner)).ToList();
+            if (clients.Count >= accounts.Count && clients.All(c => Win32.MainWindowOf(c.Pid) != IntPtr.Zero)) break;
+        }
+        TileWindows();
+    }
+
     private async Task RunQueueAsync()
     {
         QueueRunning = true;
@@ -457,6 +469,8 @@ public partial class MainViewModel
             _cancelQueue = false;
 
             int launched = LaunchQueue.Count(q => q.State == "Launched");
+            if (Settings.TileOnLaunch && launched > 1)
+                _ = TileWhenReadyAsync(LaunchQueue.Where(q => q.State == "Launched").Select(q => q.Account).ToList());
             QueueTitle = $"{(cancelled ? "Cancelled" : "Done")}: {launched} of {LaunchQueue.Count} launched";
             QueueSubtitle = perfNote ?? "";
             QueueProgress = 100;

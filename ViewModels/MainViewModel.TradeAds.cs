@@ -27,7 +27,7 @@ public partial class MainViewModel
     private int WantCount => AdWantSlots.Count(s => !s.IsEmpty);
     public bool CanStartAd => HasRoliCookie && OfferCount > 0 && WantCount > 0;
 
-    private readonly DispatcherTimer _adTimer = new() { Interval = TimeSpan.FromSeconds(20) };
+    private readonly DispatcherTimer _adTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private bool _adPosting, _adSetUp;
     private DateTime _adRetryAt = DateTime.MinValue;
 
@@ -241,17 +241,29 @@ public partial class MainViewModel
             // Rolimons refuses the whole ad ("Invalid item ID") for an item it doesn't list, or one the account no longer owns:
             // leave those out instead of failing every time
             try { await LimitedValues.EnsureAsync(CancellationToken.None); } catch { }
-            var offer = Settings.TradeAdOffer.Where(id => LimitedValues.Count == 0 || LimitedValues.Get(id) != null).ToList();
-            try
+            var offer = new List<long>();
+            var skipped = new List<string>();
+            List<LimitedTile>? mine = null;
+            try { mine = await RobloxTrades.GetTradableAsync(a.Cookie, a.UserId, CancellationToken.None); } catch { }
+            foreach (var id in Settings.TradeAdOffer)
             {
-                var owned = (await RobloxTrades.GetTradableAsync(a.Cookie, a.UserId, CancellationToken.None)).Select(t => t.AssetId).ToHashSet();
-                if (owned.Count > 0) offer = offer.Where(owned.Contains).ToList();
+                var name = LimitedValues.Get(id)?.Name ?? mine?.FirstOrDefault(t => t.AssetId == id)?.Name ?? $"item {id}";
+                if (LimitedValues.Count > 0 && LimitedValues.Get(id) == null) { skipped.Add($"{name} (not on Rolimons)"); continue; }
+                if (mine is { Count: > 0 })
+                {
+                    var copies = mine.Where(t => t.AssetId == id).ToList();
+                    if (copies.Count == 0) { skipped.Add($"{name} (not in this account's inventory)"); continue; }
+                    if (copies.All(t => t.IsOnHold)) { skipped.Add($"{name} (on trade hold)"); continue; }
+                }
+                offer.Add(id);
             }
-            catch { }
             var want = Settings.TradeAdRequest.Where(id => LimitedValues.Count == 0 || LimitedValues.Get(id) != null).ToList();
+            string left = skipped.Count == 0 ? "" : " Left out: " + string.Join(", ", skipped) + ".";
             if (offer.Count == 0)
             {
-                Notify?.Invoke("Trade ad: none of the items you offer can be traded right now. Pick them again.");
+                AdLastResult = "None of the items you offer can go in an ad right now." + left;
+                Notify?.Invoke("Trade ad: " + AdLastResult);
+                _adRetryAt = DateTime.UtcNow.AddMinutes(2);
                 UpdateAdStatus();
                 return;
             }
@@ -266,11 +278,15 @@ public partial class MainViewModel
             }
             else
             {
-                _adRetryAt = DateTime.UtcNow.AddSeconds(Math.Max(r.WaitSeconds, 120));
+                // Rolimons' own timer between ads: look again every 30 seconds and post the moment it's allowed
+                bool cooldown = r.WaitSeconds > 0 || r.Message.Contains("wait", StringComparison.OrdinalIgnoreCase)
+                                || r.Message.Contains("cooldown", StringComparison.OrdinalIgnoreCase) || r.Message.Contains("too soon", StringComparison.OrdinalIgnoreCase)
+                                || r.Message.Contains("minute", StringComparison.OrdinalIgnoreCase);
+                _adRetryAt = DateTime.UtcNow.AddSeconds(cooldown ? 30 : 120);
                 Log(ActivityLog.Error, "Trade ad: " + r.Message);
                 if (r.Message.Contains("verification")) { Settings.TradeAdOn = false; Notify?.Invoke(r.Message); }
             }
-            AdLastResult = r.Message;
+            AdLastResult = r.Message + left;
         }
         finally
         {

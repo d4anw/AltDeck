@@ -209,7 +209,7 @@
         <!-- find players -->
         <StackPanel Visibility="{Binding FriendsTab, Converter={StaticResource PageVis}, ConverterParameter=Find}">
           <ctl:SearchBox Width="420" HorizontalAlignment="Left" Margin="0,0,0,14" Text="{Binding PlayerSearchText}"
-                         Placeholder="Username or user ID, press Enter" SubmitCommand="{Binding SearchPlayersCommand}"/>
+                         Placeholder="Username or user ID" SubmitCommand="{Binding SearchPlayersCommand}"/>
           <ctl:StateView State="{Binding PlayersLoad.State}" Message="{Binding PlayersLoad.Message}" MinHeight="160"
                          EmptyText="No players found with that name." RetryCommand="{Binding SearchPlayersCommand}">
             <ItemsControl ItemsSource="{Binding PlayerHits}">

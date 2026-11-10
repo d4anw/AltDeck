@@ -45,7 +45,9 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool keepTrying = true;   // past the give-up limit: one try every 5 minutes instead of stopping
     [ObservableProperty] private int closeGrace = 5;
     [ObservableProperty] private string launchArgs = "";
-    [ObservableProperty] private string windowLayout = "Side by side";   // "Side by side" or "On top of each other"
+    [ObservableProperty] private string windowLayout = "Side by side";
+    /// <summary>When a launch of several accounts is done, tile their windows into a grid (as many cells as clients).</summary>
+    [ObservableProperty] private bool tileOnLaunch;   // "Side by side" or "On top of each other"
 
     // Performance
     public const int FpsMin = 5;

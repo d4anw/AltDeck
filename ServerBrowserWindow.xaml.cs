@@ -77,6 +77,14 @@ public partial class ServerBrowserWindow : Window
         if (ServerList.SelectedItem is ServerRow) Use_Click(sender, e);
     }
 
+    /// <summary>The Select button on a row: that server.</summary>
+    private void Select_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ServerRow row) return;
+        SelectedJobId = row.Id;
+        DialogResult = true;
+    }
+
     private void Use_Click(object sender, RoutedEventArgs e)
     {
         if (ServerList.SelectedItem is not ServerRow row) return;

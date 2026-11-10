@@ -95,7 +95,7 @@ public partial class MainViewModel
         AdjPosX = Read(m, "position", "X", 0); AdjPosY = Read(m, "position", "Y", 0); AdjPosZ = Read(m, "position", "Z", 0);
         AdjRotX = Read(m, "rotation", "X", 0); AdjRotY = Read(m, "rotation", "Y", 0); AdjRotZ = Read(m, "rotation", "Z", 0);
         AdjScaleX = Read(m, "scale", "X", 1); AdjScaleY = Read(m, "scale", "Y", 1); AdjScaleZ = Read(m, "scale", "Z", 1);
-        KeepProportions = Math.Abs(AdjScaleX - AdjScaleY) < 0.001 && Math.Abs(AdjScaleY - AdjScaleZ) < 0.001;
+        KeepProportions = true;   // one Size slider: always even
         foreach (var n in new[] { nameof(PosMin), nameof(PosMax), nameof(RotXMin), nameof(RotXMax), nameof(RotMin), nameof(RotMax), nameof(ScaleMin), nameof(ScaleMax) })
             OnPropertyChanged(n);
         _adjLoading = false;

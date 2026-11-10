@@ -39,12 +39,12 @@
                MouseDoubleClick="List_DoubleClick" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
         <ListBox.ItemTemplate>
           <DataTemplate>
-            <Grid Height="40">
+            <Grid Height="44">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="110"/>
-                <ColumnDefinition Width="90"/>
-                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="100"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="&#xE77B;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"
@@ -52,9 +52,10 @@
                 <TextBlock Text="{Binding PlayersText}" FontWeight="SemiBold"/>
               </StackPanel>
               <TextBlock Grid.Column="1" Text="{Binding PingText}" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="2" Text="{Binding FpsText}" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="3" Text="{Binding ShortId}" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center"
+              <TextBlock Grid.Column="2" Text="{Binding ShortId}" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center"
                          Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+              <Button Grid.Column="3" Content="Select" Style="{StaticResource Primary}" Padding="16,0" Height="32" Margin="0"
+                      VerticalAlignment="Center" Click="Select_Click" ToolTip="Use this server"/>
             </Grid>
           </DataTemplate>
         </ListBox.ItemTemplate>
@@ -62,10 +63,10 @@
     </Border>
 
     <Grid Grid.Row="3" Margin="0,16,0,0">
-      <TextBlock Text="Double-click a server to use it." VerticalAlignment="Center" FontSize="12" Style="{StaticResource MutedText}"/>
+      <TextBlock Text="Press Select on the server you want." VerticalAlignment="Center" FontSize="12" Style="{StaticResource MutedText}"/>
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-        <Button Content="Cancel" IsCancel="True"/>
-        <Button x:Name="UseBtn" Content="Use this server" Style="{StaticResource Primary}" Margin="0" IsEnabled="False" Click="Use_Click"/>
+        <Button Content="Cancel" IsCancel="True" Margin="0"/>
+        <Button x:Name="UseBtn" Visibility="Collapsed" Click="Use_Click"/>
       </StackPanel>
     </Grid>
   </Grid>

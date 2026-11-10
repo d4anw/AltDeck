@@ -824,7 +824,8 @@ public partial class MainViewModel : ObservableObject
 
     // ------------------------------------------------------------------ clients on Home
 
-    [RelayCommand] private void ShowClient(ClientInfo? c) { if (c != null) ClientMon.Show(c); }
+    // showing a window yourself: auto-minimize leaves it alone from then on
+    [RelayCommand] private void ShowClient(ClientInfo? c) { if (c != null) { _perf.LeaveAlone(c.Pid); ClientMon.Show(c); } }
     [RelayCommand] private void MinimizeClient(ClientInfo? c) { if (c != null) ClientMon.Minimize(c); }
     [RelayCommand] private void MinimizeAll() => ClientMon.MinimizeAll();
     /// <summary>Concurrent on purpose: the button is free again at once; the retry checks run in the background.</summary>
@@ -833,6 +834,7 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
+            foreach (var c in ClientMon.Clients.Where(c => c.IsAlive)) _perf.LeaveAlone(c.Pid);
             int left = await ClientMon.ShowAllAsync();
             if (left > 0) StatusMessage = $"{left} window{(left == 1 ? "" : "s")} didn't come back. Try Show all again.";
         }
@@ -867,6 +869,7 @@ public partial class MainViewModel : ObservableObject
     public void TileOn(ScreenChoice screen)
     {
         var a = screen.Area;
+        foreach (var c in ClientMon.Clients.Where(c => c.IsAlive)) _perf.LeaveAlone(c.Pid);
         ClientMon.TileWindows(a.X, a.Y, a.Width, a.Height);
         int n = ClientMon.Clients.Count(c => c.IsAlive);
         StatusMessage = n == 0 ? "Nothing is running." : $"Tiled {n} window{(n == 1 ? "" : "s")} on the {screen.Label.Substring("Tile on ".Length)}.";

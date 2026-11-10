@@ -223,6 +223,9 @@
                                IsChecked="{Binding Settings.WindowLayout, Converter={StaticResource Eq}, ConverterParameter='On top of each other', Mode=TwoWay}"/>
                 </StackPanel>
               </ctl:SettingRow>
+              <ctl:SettingRow Title="Tile on launch" Description="When you launch several accounts, their windows are tiled in a grid once they're all up: as many cells as clients. Tiled windows aren't minimized anymore.">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Settings.TileOnLaunch}"/>
+              </ctl:SettingRow>
               <ctl:SettingRow Title="Close grace" Description="How long a client RoDeck closes gets to close by itself before it's ended.">
                 <StackPanel Orientation="Horizontal">
                   <TextBox Text="{Binding Settings.CloseGrace}" Width="64" Style="{StaticResource NumBox}"/>

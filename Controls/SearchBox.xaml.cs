@@ -5,7 +5,10 @@ using System.Windows.Input;
 
 namespace RoDeck.Controls;
 
-/// <summary>Search field: icon, hint text, ✕ to clear, Enter runs <see cref="SubmitCommand"/>.</summary>
+/// <summary>
+/// Search field: icon, hint text, ✕ to clear. Searches as you type: <see cref="SubmitCommand"/> runs a moment after you
+/// stop typing (Enter runs it at once).
+/// </summary>
 public partial class SearchBox : UserControl
 {
     public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
@@ -28,10 +31,21 @@ public partial class SearchBox : UserControl
     public ICommand? SubmitCommand { get => (ICommand?)GetValue(SubmitCommandProperty); set => SetValue(SubmitCommandProperty, value); }
     public bool SubmitOnClear { get => (bool)GetValue(SubmitOnClearProperty); set => SetValue(SubmitOnClearProperty, value); }
 
+    // typing: the search runs once you pause for a moment, so every keystroke doesn't ask Roblox
+    private readonly System.Windows.Threading.DispatcherTimer _typing = new() { Interval = TimeSpan.FromMilliseconds(450) };
+
     public SearchBox()
     {
         InitializeComponent();
         UpdateParts();
+        _typing.Tick += (_, _) =>
+        {
+            _typing.Stop();
+            var q = (Text ?? "").Trim();
+            if ((q.Length >= 2 || (q.Length == 0 && SubmitOnClear)) && SubmitCommand?.CanExecute(null) == true) SubmitCommand.Execute(null);
+        };
+        // only what the user types starts a search, not text the app puts in
+        Box.TextChanged += (_, _) => { if (Box.IsKeyboardFocusWithin && SubmitCommand != null) { _typing.Stop(); _typing.Start(); } };
     }
 
     private void UpdateParts()
@@ -45,6 +59,7 @@ public partial class SearchBox : UserControl
     {
         if (e.Key == Key.Enter && SubmitCommand?.CanExecute(null) == true)
         {
+            _typing.Stop();
             SubmitCommand.Execute(null);
             e.Handled = true;
         }

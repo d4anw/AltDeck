@@ -19,6 +19,7 @@ internal static class WindowCapture
     [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr hWnd, uint flags);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hWnd);
     [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hWnd);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hWnd, out Rect lpRect);
 
     private const uint PwClientOnly = 0x1;
     private const uint PwRenderFullContent = 0x2;   // also gets GPU-drawn content (Windows 8.1+)
@@ -45,6 +46,29 @@ internal static class WindowCapture
                 var hdc = g.GetHdc();
                 try { PrintWindow(hwnd, hdc, PwClientOnly | PwRenderFullContent); }
                 finally { g.ReleaseHdc(hdc); }
+            }
+
+            // 1b) some GPU-drawn windows only draw when asked for the whole window: try that, and cut the inside out
+            if (LooksBlank(full) && GetWindowRect(hwnd, out var wr))
+            {
+                var origin0 = new Pt();
+                if (ClientToScreen(hwnd, ref origin0))
+                {
+                    int ww = wr.Right - wr.Left, wh = wr.Bottom - wr.Top;
+                    if (ww >= w && wh >= h)
+                    {
+                        using var whole = new Drawing.Bitmap(ww, wh, Imaging.PixelFormat.Format32bppRgb);
+                        using (var gw = Drawing.Graphics.FromImage(whole))
+                        {
+                            var hdc2 = gw.GetHdc();
+                            try { PrintWindow(hwnd, hdc2, PwRenderFullContent); }
+                            finally { gw.ReleaseHdc(hdc2); }
+                        }
+                        using var g2 = Drawing.Graphics.FromImage(full);
+                        g2.DrawImage(whole, new Drawing.Rectangle(0, 0, w, h),
+                                     new Drawing.Rectangle(origin0.X - wr.Left, origin0.Y - wr.Top, w, h), Drawing.GraphicsUnit.Pixel);
+                    }
+                }
             }
 
             // 2) some GPU-drawn windows come back black: copy from the screen instead, but only if the window is

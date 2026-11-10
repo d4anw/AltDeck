@@ -148,7 +148,7 @@
     <!-- one of the ad's slots: dashed and empty ("Offer" / "Want"), an item card, or a tag tile -->
     <DataTemplate x:Key="AdSlotTile">
       <Button Style="{StaticResource CardButton}" Margin="0,0,10,10" ToolTip="Empty: click to choose what goes here. Filled: click to empty it."
-              Command="{Binding DataContext.OpenAdSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+              Click="AdSlot_Click" Command="{Binding DataContext.OpenAdSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
         <Grid Width="104" Height="104">
           <Border CornerRadius="14" BorderThickness="1.5" Background="{DynamicResource Card}"
                   Visibility="{Binding IsEmpty, Converter={StaticResource BoolVis}}">
@@ -796,7 +796,7 @@
         </StackPanel>
 
         <!-- ================= TRADE ADS ================= -->
-        <Grid Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Ads}">
+        <Grid x:Name="AdsTab" Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Ads}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="24"/>
@@ -1660,7 +1660,7 @@
             <Grid>
               <StackPanel Visibility="{Binding BuildPartnerId, Converter={StaticResource CountVis}, ConverterParameter=Inverse}">
                 <TextBlock Text="Who do you want to trade with?" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                <ctl:SearchBox Width="320" HorizontalAlignment="Left" Text="{Binding PartnerSearch}" Placeholder="Their username, press Enter"
+                <ctl:SearchBox Width="320" HorizontalAlignment="Left" Text="{Binding PartnerSearch}" Placeholder="Their username"
                                SubmitCommand="{Binding SearchPartnerCommand}"/>
                 <ItemsControl ItemsSource="{Binding PartnerHits}" Margin="0,10,0,0">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>

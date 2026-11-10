@@ -45,6 +45,23 @@ public partial class TradesPage : UserControl
         }, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
+    /// <summary>A trade ad slot: its picker opens right under the slot, like the calculator's.</summary>
+    private void AdSlot_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement slot) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (DataContext is not MainViewModel { IsAdPickerOpen: true }) return;
+            var below = slot.TranslatePoint(new Point(0, slot.ActualHeight), AdsTab);
+            AdPickerCard.HorizontalAlignment = HorizontalAlignment.Left;
+            AdPickerCard.VerticalAlignment = VerticalAlignment.Top;
+            AdPickerCard.Width = Math.Min(900, AdsTab.ActualWidth);
+            AdPickerCard.Margin = new Thickness(0, Math.Max(0, below.Y + 2), 0, 0);
+            AdPickerCard.UpdateLayout();
+            AdPickerCard.BringIntoView();
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
     // the watchlist's price and % boxes: Enter applies what's typed
     private void WatchBox_KeyDown(object sender, KeyEventArgs e)
     {

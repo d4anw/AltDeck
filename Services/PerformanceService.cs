@@ -591,6 +591,9 @@ public sealed class PerformanceService
         if (!_stage.TryGetValue(pid, out var stage) || stage < 1) _stage[pid] = 1;
     }
 
+    /// <summary>You showed, tiled or moved this window yourself: RoDeck doesn't place or minimize it anymore.</summary>
+    public void LeaveAlone(int pid) => _stage[pid] = 2;
+
     /// <summary>Until when new windows are put side by side: set when several accounts launch at once.</summary>
     public DateTime ArrangeUntil { get; set; }
 

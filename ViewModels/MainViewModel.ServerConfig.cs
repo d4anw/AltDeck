@@ -25,6 +25,48 @@ public partial class MainViewModel
     [ObservableProperty] private bool configBusy;
     [ObservableProperty, NotifyPropertyChangedFor(nameof(ConfigRegenerateText))] private bool configRegenerateArmed;
     public ObservableCollection<CommunityMember> ConfigMembers { get; } = new();
+    /// <summary>Friends whose name starts with (or contains) what's typed in "Username to add".</summary>
+    public ObservableCollection<FriendTile> ConfigSuggestions { get; } = new();
+    private (Account Account, List<FriendTile> Friends)? _configFriends;
+
+    partial void OnConfigAddNameChanged(string value) => _ = SuggestFriendsAsync(value);
+
+    private async Task SuggestFriendsAsync(string typed)
+    {
+        var q = (typed ?? "").Trim().TrimStart('@');
+        if (q.Length == 0 || CurrentAccount is not { } a) { ConfigSuggestions.Clear(); return; }
+        if (_configFriends?.Account != a)
+        {
+            try { _configFriends = (a, await RobloxFriends.GetFriendListAsync(a.Cookie, a.UserId, CancellationToken.None)); }
+            catch (RobloxException) { return; }
+        }
+        if ((ConfigAddName ?? "").Trim().TrimStart('@') != q) return;   // typed on meanwhile
+        var members = ConfigMembers.Select(m => m.UserId).ToHashSet();
+        var hits = _configFriends!.Value.Friends
+            .Where(f => !members.Contains(f.UserId)
+                        && (f.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || f.DisplayName.Contains(q, StringComparison.OrdinalIgnoreCase)))
+            .OrderBy(f => f.Name.StartsWith(q, StringComparison.OrdinalIgnoreCase) || f.DisplayName.StartsWith(q, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(f => f.Name, StringComparer.OrdinalIgnoreCase).Take(6).ToList();
+        ConfigSuggestions.Clear();
+        foreach (var f in hits) ConfigSuggestions.Add(f);
+        try
+        {
+            var need = hits.Where(f => f.HeadshotUrl.Length == 0).ToList();
+            if (need.Count == 0) return;
+            var pics = await Thumbnails.GetAsync("AvatarHeadShot", need.Select(f => f.UserId), "150x150");
+            foreach (var f in need) if (pics.TryGetValue(f.UserId, out var u)) f.HeadshotUrl = u;
+        }
+        catch { }
+    }
+
+    /// <summary>A suggested friend: added straight away.</summary>
+    [RelayCommand]
+    private Task AddSuggestedMember(FriendTile? f) => f == null ? Task.CompletedTask : ConfigChangeAsync(async (a, s) =>
+    {
+        await RobloxPrivateServers.AddMemberAsync(a.Cookie, s.Id, f.UserId, CancellationToken.None);
+        ConfigMembers.Add(new CommunityMember { UserId = f.UserId, Name = f.Name, DisplayName = f.DisplayName, HeadshotUrl = f.HeadshotUrl });
+        ConfigAddName = "";
+    }, $"{f.Label} can join now.");
 
     public string ConfigRegenerateText => ConfigRegenerateArmed ? "Click again: the old link stops working" : "Regenerate";
     public bool ConfigIsPaid => ConfigServer is { Price: > 0 };
@@ -228,6 +270,7 @@ public partial class MainViewModel
     {
         TargetPickerTab = tab is "Servers" ? "Servers" : "Games";
         ShowTargetPicker = true;
+        if (TargetPickerTab == "Games" && string.IsNullOrWhiteSpace(TargetGameSearch)) _ = ShowSuggestedGamesAsync();
         if (TargetPickerTab == "Servers") _ = LoadMyServersAsync(false);
     }
 
@@ -237,7 +280,7 @@ public partial class MainViewModel
     private Task SearchTargetGames()
     {
         var q = (TargetGameSearch ?? "").Trim();
-        if (q.Length == 0) { TargetGameHits.Clear(); TargetGamesLoad.State = LoadState.Ready; return Task.CompletedTask; }
+        if (q.Length == 0) return ShowSuggestedGamesAsync();
         return TargetGamesLoad.RunAsync(async ct =>
         {
             TargetGameHits.Clear();
@@ -248,6 +291,24 @@ public partial class MainViewModel
             return TargetGameHits.Count > 0;
         }, "Searching…");
     }
+
+    /// <summary>Before anything is typed: your recent and favourite games, then what's popular right now.</summary>
+    private Task ShowSuggestedGamesAsync() => TargetGamesLoad.RunAsync(async ct =>
+    {
+        TargetGameHits.Clear();
+        if (GameRows.Count == 0) { try { await LoadChartsAsync(); } catch { } }
+        var list = Settings.RecentGames.Select(s => s.Tile).Concat(Settings.FavouriteGames.Select(s => s.Tile))
+            .Concat(GameRows.SelectMany(r => r.Games))
+            .Where(g => g.PlaceId > 0).GroupBy(g => g.UniverseId).Select(g => g.First()).Take(30).ToList();
+        foreach (var g in list) TargetGameHits.Add(g);
+        var need = list.Where(g => g.IconUrl.Length == 0).Select(g => g.UniverseId).ToList();
+        if (need.Count > 0)
+        {
+            var icons = await Thumbnails.GetAsync("GameIcon", need, "256x256", ct);
+            foreach (var g in list) if (g.IconUrl.Length == 0 && icons.TryGetValue(g.UniverseId, out var u)) g.IconUrl = u;
+        }
+        return list.Count > 0;
+    }, "Loading games…");
 
     [RelayCommand]
     private void PickTargetGame(GameTile? g)

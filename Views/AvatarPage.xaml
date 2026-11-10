@@ -356,8 +356,6 @@
                     <TextBlock Text="Size" FontWeight="SemiBold" VerticalAlignment="Center"/>
                   </StackPanel>
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock Text="Keep proportions" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource MutedText}"/>
-                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding KeepProportions}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <Button Style="{StaticResource Subtle}" Command="{Binding ResetAdjustGroupCommand}" CommandParameter="Size"
                             ToolTip="Put size back to normal">
                       <StackPanel Orientation="Horizontal">
@@ -373,21 +371,12 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="64"/>
                   </Grid.ColumnDefinitions>
-                  <Grid.RowDefinitions><RowDefinition Height="34"/><RowDefinition Height="34"/><RowDefinition Height="34"/></Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Width" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                <Slider Grid.Row="0" Grid.Column="1" Minimum="{Binding ScaleMin}" Maximum="{Binding ScaleMax}" Value="{Binding AdjScaleX}"
+                  <Grid.RowDefinitions><RowDefinition Height="34"/></Grid.RowDefinitions>
+                <!-- one slider: Roblox only resizes an accessory evenly, so width, height and depth move together -->
+                <TextBlock Text="Size" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                <Slider Grid.Column="1" Minimum="{Binding ScaleMin}" Maximum="{Binding ScaleMax}" Value="{Binding AdjScaleX}"
                         VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource FineSlider}"/>
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding AdjScaleX, StringFormat='{}{0:P0}'}" VerticalAlignment="Center"
-                           HorizontalAlignment="Right" FontFamily="Consolas"/>
-                <TextBlock Grid.Row="1" Text="Height" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                <Slider Grid.Row="1" Grid.Column="1" Minimum="{Binding ScaleMin}" Maximum="{Binding ScaleMax}" Value="{Binding AdjScaleY}"
-                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource FineSlider}"/>
-                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding AdjScaleY, StringFormat='{}{0:P0}'}" VerticalAlignment="Center"
-                           HorizontalAlignment="Right" FontFamily="Consolas"/>
-                <TextBlock Grid.Row="2" Text="Depth" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                <Slider Grid.Row="2" Grid.Column="1" Minimum="{Binding ScaleMin}" Maximum="{Binding ScaleMax}" Value="{Binding AdjScaleZ}"
-                        VerticalAlignment="Center" SmallChange="0.01" LargeChange="0.05" Style="{StaticResource FineSlider}"/>
-                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding AdjScaleZ, StringFormat='{}{0:P0}'}" VerticalAlignment="Center"
+                <TextBlock Grid.Column="2" Text="{Binding AdjScaleX, StringFormat='{}{0:P0}'}" VerticalAlignment="Center"
                            HorizontalAlignment="Right" FontFamily="Consolas"/>
                 </Grid>
               </StackPanel>
