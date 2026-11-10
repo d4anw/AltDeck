@@ -130,20 +130,28 @@ public static class RobloxGameExtras
         return list.OrderByDescending(s => s.IsMine).ThenByDescending(s => s.Players).ToList();
     }
 
+    /// <summary>What creating a private server costs this account: Roblox's own answer on its game page.</summary>
+    public sealed record ServerOffer(bool Sold, bool CanCreate, long Price, int Limit);
+
     /// <summary>
-    /// Whether the game sells private servers, and for how many Robux a month (0 = free). Roblox puts this on the game's
-    /// page only, so it's read from there (the same page every browser gets).
+    /// Whether the game sells private servers, whether this account can create one now, and what it costs it a month.
+    /// Roblox only puts this on the game's page, worked out for the signed-in account (Roblox Plus members get them
+    /// free, up to a limit), so the page is read signed in as the account.
     /// </summary>
-    public static async Task<(bool Sold, long Price)> GetPrivateServerOfferAsync(long placeId, CancellationToken ct)
+    public static async Task<ServerOffer> GetPrivateServerOfferAsync(long placeId, string? cookie, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(HttpMethod.Get, $"https://www.roblox.com/games/{placeId}");
+        if (!string.IsNullOrEmpty(cookie)) req.Headers.TryAddWithoutValidation("Cookie", ".ROBLOSECURITY=" + cookie);
         using var resp = await RobloxApi.Http.SendAsync(req, ct);
-        if (!resp.IsSuccessStatusCode) return (false, 0);
+        if (!resp.IsSuccessStatusCode) return new(false, false, 0, 0);
         var html = await resp.Content.ReadAsStringAsync(ct);
-        var price = System.Text.RegularExpressions.Regex.Match(html, @"data-private-server-price=""(-?\d+)""");
-        var product = System.Text.RegularExpressions.Regex.Match(html, @"data-private-server-product-id=""(\d+)""");
-        if (!price.Success || !product.Success || !long.TryParse(price.Groups[1].Value, out var p) || p < 0) return (false, 0);
-        return (true, p);
+        string Attr(string name) =>
+            System.Text.RegularExpressions.Regex.Match(html, "data-" + name + @"=""([^""]*)""") is { Success: true } m ? m.Groups[1].Value : "";
+        bool sold = long.TryParse(Attr("private-server-product-id"), out var product) && product > 0;
+        if (!long.TryParse(Attr("private-server-price"), out var price) || price < 0) sold = false;
+        bool canCreate = Attr("can-create-server") is var c && (c.Length == 0 ? sold : c.Equals("True", StringComparison.OrdinalIgnoreCase));
+        int.TryParse(Attr("private-server-limit"), out var limit);
+        return new(sold, sold && canCreate, Math.Max(0, price), limit);
     }
 
     /// <summary>

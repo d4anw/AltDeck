@@ -140,26 +140,36 @@ public partial class MainViewModel
     /// <summary>Whether this game sells private servers, and the price a month (0 = free); null while unknown.</summary>
     [ObservableProperty, NotifyPropertyChangedFor(nameof(CreateServerText), nameof(CanCreateServer))] private long? privateServerPrice;
     [ObservableProperty] private bool privateServersSold;
+    /// <summary>Why this account can't create one right now ("" when it can), e.g. its free servers for this game are used up.</summary>
+    [ObservableProperty] private string createServerBlocked = "";
     [ObservableProperty] private bool showCreateServer;
     [ObservableProperty] private string newServerName = "";
     [ObservableProperty] private bool createServerBusy;
     [ObservableProperty] private string createServerError = "";
 
-    public bool CanCreateServer => PrivateServersSold && PrivateServerPrice != null;
+    public bool CanCreateServer => PrivateServersSold && PrivateServerPrice != null && CreateServerBlocked.Length == 0;
     public string CreateServerText => PrivateServerPrice is long p ? (p == 0 ? "Create one (free)" : $"Create one · R$ {p:N0}/month") : "Create one";
     public string CreateServerConfirmText => PrivateServerPrice is long p && p > 0 ? $"Create for R$ {p:N0} a month" : "Create for free";
     public string CreateServerPriceText => PrivateServerPrice is long p && p > 0 ? $"R$ {p:N0} a month" : "Free";
+    public bool CreateServerIsFree => PrivateServerPrice is 0;
 
     private async Task LoadServerOfferAsync(GameDetails g)
     {
         PrivateServersSold = false;
         PrivateServerPrice = null;
+        CreateServerBlocked = "";
+        var a = CurrentAccount;
         try
         {
-            var (sold, price) = await RobloxGameExtras.GetPrivateServerOfferAsync(g.PlaceId, CancellationToken.None);
-            if (OpenGame != g) return;
-            PrivateServersSold = sold;
-            PrivateServerPrice = sold ? price : null;
+            // signed in as the account: Roblox Plus members see their own (free) price
+            var offer = await RobloxGameExtras.GetPrivateServerOfferAsync(g.PlaceId, a?.Cookie, CancellationToken.None);
+            if (OpenGame != g || CurrentAccount != a) return;
+            PrivateServersSold = offer.Sold;
+            PrivateServerPrice = offer.Sold ? offer.Price : null;
+            CreateServerBlocked = offer.Sold && !offer.CanCreate
+                ? (offer.Price == 0 ? "You've made the most free private servers this game allows." : "Roblox doesn't let this account create one here right now.")
+                : "";
+            OnPropertyChanged(nameof(CanCreateServer));
         }
         catch { }
     }
@@ -169,6 +179,7 @@ public partial class MainViewModel
     {
         if (OpenGame is not { } g) return;
         if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; return; }
+        if (CreateServerBlocked.Length > 0) { StatusMessage = CreateServerBlocked; return; }
         if (!CanCreateServer) { StatusMessage = $"{g.Name} doesn't sell private servers."; return; }
         NewServerName = $"{a.Label}'s server";
         long price = PrivateServerPrice ?? 0;
@@ -176,6 +187,7 @@ public partial class MainViewModel
                           : a.Robux is long have && price > have ? $"{a.Label} has only R$ {have:N0}." : "";
         OnPropertyChanged(nameof(CreateServerConfirmText));
         OnPropertyChanged(nameof(CreateServerPriceText));
+        OnPropertyChanged(nameof(CreateServerIsFree));
         ShowCreateServer = true;
     }
 

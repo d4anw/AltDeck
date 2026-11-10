@@ -594,7 +594,11 @@
             </StackPanel>
           </Border>
           <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Style="{StaticResource MutedText}"
-                     Text="Paid servers renew every month until you cancel (on the game's Servers tab on Roblox). Only you and the people you invite or share the link with can join."/>
+                     Text="It renews every month until you cancel (on the game's Servers tab on Roblox). Only you and the people you invite or share the link with can join."
+                     Visibility="{Binding CreateServerIsFree, Converter={StaticResource BoolVisInv}}"/>
+          <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Style="{StaticResource MutedText}"
+                     Text="Free for this account (Roblox Plus members get private servers free). Only you and the people you invite or share the link with can join."
+                     Visibility="{Binding CreateServerIsFree, Converter={StaticResource BoolVis}}"/>
           <TextBlock Text="{Binding CreateServerError}" Foreground="{DynamicResource Red}" TextWrapping="Wrap" Margin="0,12,0,0" FontWeight="SemiBold"
                      Visibility="{Binding CreateServerError, Converter={StaticResource EmptyCollapsed}}"/>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
