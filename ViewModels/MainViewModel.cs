@@ -151,6 +151,7 @@ public partial class MainViewModel : ObservableObject
         CardsView = new CollectionViewSource { Source = ClientMon.Clients }.View;
         CardsView.Filter = o => o is ClientInfo c && (SelectedTab == "Overview" || c.Pid.ToString() == SelectedTab);
 
+        SetupPerfProfiles();
         Settings.PropertyChanged += OnSettingsChanged;
         ClientMon.ClientDropped += OnClientDropped;
         _logWatcher.Disconnected += OnClientDisconnected;
@@ -160,7 +161,7 @@ public partial class MainViewModel : ObservableObject
         SetupShell();
         SetupFlags();
 
-        _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); _store.Save(Settings); };
+        _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); try { SaveSettingsToDisk(); } catch { } };
         _vaultTimer.Tick += (_, _) =>
         {
             _vaultTimer.Stop();
@@ -203,12 +204,12 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    public void SaveSettingsNow() { try { _store.Save(Settings); } catch { } }
+    public void SaveSettingsNow() { try { SaveSettingsToDisk(); } catch { } }
 
     /// <summary>Called when the window closes: Roblox's own settings and any CPU limits go back to normal.</summary>
     public void Shutdown()
     {
-        try { _store.Save(Settings); } catch { }
+        try { SaveSettingsToDisk(); } catch { }
         // a change made a moment ago (a name, a group, a new picture) is still waiting to be saved: save it now
         if (_vaultTimer.IsEnabled) { _vaultTimer.Stop(); try { _vault.Save(Accounts); } catch { } }
         try { SaveDealsNow(); } catch { }
@@ -340,6 +341,9 @@ public partial class MainViewModel : ObservableObject
             case nameof(AppSettings.PerfPreset):
                 if (!_applyingPreset) ApplyPreset(Settings.PerfPreset);
                 break;
+            case nameof(AppSettings.PerfEditing):
+                SwitchPerfProfile();
+                break;
             // changing a fine-tune setting by hand: it's your own preset now (saved as "My preset")
             case nameof(AppSettings.FpsCap) or nameof(AppSettings.UnlimitedFps) or nameof(AppSettings.LowestGraphics)
                  or nameof(AppSettings.LighterRendering) or nameof(AppSettings.Msaa) or nameof(AppSettings.TextureQuality)
@@ -368,13 +372,7 @@ public partial class MainViewModel : ObservableObject
     private void SaveCustomPerf()
     {
         var s = Settings;
-        s.CustomPerf = new PerfSnapshot
-        {
-            FpsCap = s.FpsCap, UnlimitedFps = s.UnlimitedFps, LowestGraphics = s.LowestGraphics, LighterRendering = s.LighterRendering,
-            Msaa = s.Msaa, TextureQuality = s.TextureQuality, RenderingMode = s.RenderingMode,
-            GraySky = s.GraySky, NoGrass = s.NoGrass, StartTiny = s.StartTiny, MinimizeOnLaunch = s.MinimizeOnLaunch,
-            MuteOnStart = s.MuteOnStart, BackgroundCpuLimit = s.BackgroundCpuLimit, AntiAfk = s.AntiAfk,
-        };
+        s.CustomPerf = Snap(s);
         bool was = _applyingPreset;
         _applyingPreset = true;
         s.PerfPreset = "Custom";
@@ -385,6 +383,7 @@ public partial class MainViewModel : ObservableObject
     {
         _applyingPreset = true;
         Settings.UnlimitedFps = false;   // every preset sets its own FPS cap
+        if (preset != "Custom") { Settings.MuteOnStart = false; Settings.AntiAfk = false; }
         switch (preset)
         {
             case "Max alts":
@@ -401,15 +400,7 @@ public partial class MainViewModel : ObservableObject
                 Settings.StartTiny = false; Settings.MinimizeOnLaunch = false; Settings.BackgroundCpuLimit = 50;
                 break;
             case "Custom":
-                if (Settings.CustomPerf is { } c)
-                {
-                    Settings.FpsCap = c.FpsCap; Settings.UnlimitedFps = c.UnlimitedFps;
-                    Settings.LowestGraphics = c.LowestGraphics; Settings.LighterRendering = c.LighterRendering;
-                    Settings.Msaa = c.Msaa; Settings.TextureQuality = c.TextureQuality; Settings.RenderingMode = c.RenderingMode;
-                    Settings.GraySky = c.GraySky; Settings.NoGrass = c.NoGrass;
-                    Settings.StartTiny = c.StartTiny; Settings.MinimizeOnLaunch = c.MinimizeOnLaunch;
-                    Settings.MuteOnStart = c.MuteOnStart; Settings.BackgroundCpuLimit = c.BackgroundCpuLimit; Settings.AntiAfk = c.AntiAfk;
-                }
+                if (Settings.CustomPerf is { } c) Put(Settings, c);
                 break;
             default:
                 Settings.FpsCap = AppSettings.FpsMax; Settings.LowestGraphics = false; Settings.LighterRendering = false;
@@ -499,7 +490,12 @@ public partial class MainViewModel : ObservableObject
         if (++_headshotTick % 10 == 0 && CurrentAccount is { UserId: > 0 } me) _ = RefreshHeadshotAsync(me);
         try { _logWatcher.Poll(ClientMon.Clients); } catch { }
         try { SnapBackWindows(); } catch { }
-        try { _perf.TuneClients(ClientMon.Clients, Settings); } catch { }
+        try
+        {
+            AppSettings play = PerfSettings(true), alts = PerfSettings(false);
+            _perf.TuneClients(ClientMon.Clients, c => c.Farm ? alts : play);
+        }
+        catch { }
         if (Settings.AutoRestart) RestartFrozenClients();
         CheckStopTimer();
         var live = ClientMon.Clients.Where(c => c.IsAlive).ToList();
@@ -569,10 +565,14 @@ public partial class MainViewModel : ObservableObject
         }
         RoomText = MemPercent < 50 && CpuPercent < 80 ? "Plenty of room" : MemPercent < 75 ? "Getting busy" : "Low on memory";
 
-        if (Settings.AntiAfk && live.Count > 0 && DateTime.Now - _lastAfk > TimeSpan.FromMinutes(5))
+        if (live.Count > 0 && DateTime.Now - _lastAfk > TimeSpan.FromMinutes(5))
         {
-            _lastAfk = DateTime.Now;
-            ClientMon.AntiAfkPulse();
+            bool playAfk = PerfSettings(true).AntiAfk, altsAfk = PerfSettings(false).AntiAfk;
+            if (playAfk || altsAfk)
+            {
+                _lastAfk = DateTime.Now;
+                ClientMon.AntiAfkPulse(c => c.Farm ? altsAfk : playAfk);
+            }
         }
 
         UpdateHomeTexts();
@@ -983,7 +983,7 @@ public partial class MainViewModel : ObservableObject
             }
             try
             {
-                await _perf.PrepareLaunchAsync(Settings, c.Owner);
+                await _perf.PrepareLaunchAsync(PerfSettings(false), c.Owner, AltsProfile);
                 if (Settings.IsolateSignIns) SignInIsolation.PrepareLaunch();
                 await _launcher.LaunchAsync(c.Owner, joinTarget, ArgsFor(c.Owner));
                 if (Settings.IsolateSignIns) SignInIsolation.LaunchStarted();

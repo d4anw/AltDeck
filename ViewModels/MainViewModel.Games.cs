@@ -79,6 +79,23 @@ public partial class MainViewModel
 
     private DateTime _chartsLoadedAt = DateTime.MinValue;
 
+    /// <summary>Multi-launch's "Browse games": the next game you click on Games fills in Where to?</summary>
+    [ObservableProperty] private bool pickingGameForMulti;
+
+    [RelayCommand]
+    private void BrowseGamesForMulti()
+    {
+        PickingGameForMulti = true;
+        Page = "Games";
+    }
+
+    [RelayCommand]
+    private void CancelPickGame()
+    {
+        PickingGameForMulti = false;
+        GoMulti("Launch");
+    }
+
     /// <summary>Set while something opens a game page from another page (Home, a profile), so that isn't undone.</summary>
     private bool _gamesDirect;
 
@@ -225,6 +242,7 @@ public partial class MainViewModel
     private async Task OpenGameAsync(GameTile? tile)
     {
         if (tile == null || tile.UniverseId == 0) return;
+        if (PickingGameForMulti && Page == "Games") { PlayGameWithAlts(tile); return; }   // picked for Multi-launch
         _lastOpened = tile;
         OpenGame = null;
         Servers.Clear();

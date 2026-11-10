@@ -96,6 +96,11 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool graySky = true;
     [ObservableProperty] private bool noGrass = true;
 
+    /// <summary>Which FPS &amp; FastFlags profile the page shows: "Playing" or "Multi-launch" (see PerfProfile).</summary>
+    [ObservableProperty] private string perfEditing = "Multi-launch";
+    public PerfProfile? PlayPerf { get; set; }
+    public PerfProfile? AltsPerf { get; set; }
+
     // The user's own preset, shown next to the three built-in ones (null until they save it)
     [ObservableProperty, NotifyPropertyChangedFor(nameof(HasCustomPerf), nameof(CustomPerfSummary))]
     private PerfSnapshot? customPerf;

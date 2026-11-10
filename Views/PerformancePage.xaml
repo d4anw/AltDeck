@@ -6,8 +6,27 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="32,18,32,32">
       <TextBlock Text="FPS &amp; FastFlags" FontSize="28" FontWeight="Bold"/>
-      <TextBlock Margin="0,4,0,24" Style="{StaticResource MutedText}" TextWrapping="Wrap"
-                 Text="FPS, graphics and your own FastFlags for every client RoDeck starts, one account or many. Your normal Roblox settings are put back afterwards."/>
+      <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                 Text="FPS, graphics and your own FastFlags for the clients RoDeck starts. Your normal Roblox settings are put back afterwards."/>
+
+      <!-- two profiles: playing on your own, and many accounts at once -->
+      <StackPanel Orientation="Horizontal" Margin="0,16,0,6">
+        <RadioButton Style="{StaticResource Seg}" GroupName="perfprofile"
+                     IsChecked="{Binding Settings.PerfEditing, Converter={StaticResource Eq}, ConverterParameter=Playing, Mode=TwoWay}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Icons}" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+            <TextBlock Text="Playing" VerticalAlignment="Center"/>
+          </StackPanel>
+        </RadioButton>
+        <RadioButton Style="{StaticResource Seg}" GroupName="perfprofile"
+                     IsChecked="{Binding Settings.PerfEditing, Converter={StaticResource Eq}, ConverterParameter='Multi-launch', Mode=TwoWay}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+            <TextBlock Text="Multi-launch" VerticalAlignment="Center"/>
+          </StackPanel>
+        </RadioButton>
+      </StackPanel>
+      <TextBlock Text="{Binding PerfEditingInfo}" Margin="0,0,0,20" FontSize="13" TextWrapping="Wrap" Style="{StaticResource MutedText}"/>
 
       <!-- ===== presets ===== -->
       <Grid>

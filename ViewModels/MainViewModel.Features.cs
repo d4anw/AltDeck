@@ -417,7 +417,8 @@ public partial class MainViewModel
                 await _launchGate.WaitAsync();   // a rejoin may be launching right now: never two at once
                 try
                 {
-                    var note = await _perf.PrepareLaunchAsync(Settings, a);   // every account, not just the first
+                    // every account, not just the first; Play on Home / Games / Friends uses the Playing profile
+                    var note = await _perf.PrepareLaunchAsync(PerfSettings(!next.Farm), a, next.Farm ? AltsProfile : PlayingProfile);
                     perfNote ??= note;
                     if (Settings.IsolateSignIns) SignInIsolation.PrepareLaunch();
                     await _launcher.LaunchAsync(a, next.Target, ArgsFor(a));

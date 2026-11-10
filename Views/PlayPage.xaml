@@ -74,6 +74,8 @@
               <TextBlock Text="Where to?" FontSize="16" FontWeight="SemiBold" Margin="14,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Style="{StaticResource Subtle}" Content="Browse games" Command="{Binding BrowseGamesForMultiCommand}"
+                      Margin="0,0,8,0" ToolTip="Pick a game from Games: charts, search, favourites and recently played"/>
               <Button Style="{StaticResource Subtle}" Content="Join someone" Command="{Binding JoinSomeoneCommand}"
                       ToolTip="Find the server a friend (or anyone who lets you join) is in"/>
               <Button Style="{StaticResource Subtle}" Content="Browse servers" Command="{Binding BrowseServersCommand}" Margin="8,0,0,0"

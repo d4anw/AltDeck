@@ -33,6 +33,20 @@
           </StackPanel>
         </Grid>
 
+        <!-- Multi-launch → Browse games: a click fills in Where to? -->
+        <Border Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource AccentLine}" BorderThickness="1" CornerRadius="12"
+                Padding="16,10" Margin="0,16,0,0" Visibility="{Binding PickingGameForMulti, Converter={StaticResource BoolVis}}">
+          <Grid>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="&#xE716;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}"
+                         Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
+                         Text="Pick a game for Multi-launch: click one and it's filled in under Where to?"/>
+            </StackPanel>
+            <Button Content="Cancel" HorizontalAlignment="Right" Margin="0" Command="{Binding CancelPickGameCommand}"/>
+          </Grid>
+        </Border>
+
         <ctl:StateView State="{Binding ChartsLoad.State}" Message="{Binding ChartsLoad.Message}" MinHeight="260" Margin="0,8,0,0"
                        EmptyText="No games here." RetryCommand="{Binding RefreshGamesCommand}">
           <Grid>

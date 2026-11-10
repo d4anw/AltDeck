@@ -284,8 +284,8 @@ public sealed class ClientMonitor
 
     public void Show(ClientInfo c) => Win32.Restore(Win32.MainWindowOf(c.Pid));
     public void Minimize(ClientInfo c) => Win32.Minimize(Win32.MainWindowOf(c.Pid));
-    public void AntiAfkPulse()
+    public void AntiAfkPulse(Func<ClientInfo, bool> which)
     {
-        foreach (var c in Clients.Where(c => c.IsAlive)) Win32.KeyTap(Win32.MainWindowOf(c.Pid), 0x7E);
+        foreach (var c in Clients.Where(c => c.IsAlive && which(c))) Win32.KeyTap(Win32.MainWindowOf(c.Pid), 0x7E);
     }
 }

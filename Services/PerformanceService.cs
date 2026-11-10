@@ -46,7 +46,7 @@ public sealed class PerformanceService
     private readonly System.Threading.Timer _restoreTimer;
     private PerfRestoreState? _state;
     private DateTime _lastLaunch = DateTime.MinValue;
-    private bool? _lastWasFull;
+    private string? _lastProfile;   // "full", or the FPS & FastFlags profile of the last launch
 
     private readonly Dictionary<int, int> _stage = new();          // pid -> 0 new, 1 resized, 2 done
     private readonly Dictionary<int, IntPtr> _jobs = new();         // pid -> job object holding the CPU cap
@@ -181,7 +181,7 @@ public sealed class PerformanceService
     /// Call right before starting a client for this account. Returns a short notice for the user, or null.
     /// A "Full quality" account gets the user's own settings back instead of the light profile.
     /// </summary>
-    public async Task<string?> PrepareLaunchAsync(AppSettings s, Account account)
+    public async Task<string?> PrepareLaunchAsync(AppSettings s, Account account, string profile = "")
     {
         try
         {
@@ -191,12 +191,13 @@ public sealed class PerformanceService
 
             // Roblox reads its settings while it starts, so give the previous client time to finish
             // before the files change under it.
-            if (_lastWasFull != null && _lastWasFull != full)
+            var key = full ? "full" : profile;
+            if (_lastProfile != null && _lastProfile != key)
             {
                 var wait = TimeSpan.FromSeconds(ProfileSwitchGapSeconds) - (DateTime.UtcNow - _lastLaunch);
                 if (wait > TimeSpan.Zero) await Task.Delay(wait);
             }
-            _lastWasFull = full;
+            _lastProfile = key;
 
             string? notice = null;
             await Task.Run(() =>
@@ -547,7 +548,7 @@ public sealed class PerformanceService
     // ------------------------------------------------------------------ running clients
 
     /// <summary>Called every couple of seconds with the clients that are running.</summary>
-    public void TuneClients(IEnumerable<ClientInfo> clients, AppSettings s)
+    public void TuneClients(IEnumerable<ClientInfo> clients, Func<ClientInfo, AppSettings> settingsFor)
     {
         var live = clients.Where(c => c.IsAlive).ToList();
         var pids = live.Select(c => c.Pid).ToHashSet();
@@ -566,6 +567,7 @@ public sealed class PerformanceService
 
         foreach (var c in live)
         {
+            var s = settingsFor(c);   // its own profile: Playing or Multi-launch
             // Clients RoDeck didn't start, and "Full quality" accounts, are left exactly as they are.
             bool exempt = c.Owner == null || c.Owner.FullQuality;
 
