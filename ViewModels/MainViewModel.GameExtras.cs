@@ -53,6 +53,7 @@ public partial class MainViewModel
         {
             "Private" => PrivateLoad.RunAsync(async ct =>
             {
+                _ = LoadServerOfferAsync(g);
                 PrivateServers.Clear();
                 if (a is not { UserId: > 0 }) throw new RobloxException("Pick an account top right first.");
                 var list = await RobloxGameExtras.GetPrivateServersAsync(a.Cookie, g.PlaceId, a.UserId, ct);
@@ -134,13 +135,97 @@ public partial class MainViewModel
 
     private static string PrivateLink(GameDetails g, PrivateServer s) => $"https://www.roblox.com/games/{g.PlaceId}?accessCode={s.AccessCode}";
 
-    /// <summary>Private servers are a monthly Robux subscription: started (and managed) on Roblox's own game page.</summary>
+    // ---- creating one: a monthly Robux subscription, so always behind a confirm card that says so
+
+    /// <summary>Whether this game sells private servers, and the price a month (0 = free); null while unknown.</summary>
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(CreateServerText), nameof(CanCreateServer))] private long? privateServerPrice;
+    [ObservableProperty] private bool privateServersSold;
+    [ObservableProperty] private bool showCreateServer;
+    [ObservableProperty] private string newServerName = "";
+    [ObservableProperty] private bool createServerBusy;
+    [ObservableProperty] private string createServerError = "";
+
+    public bool CanCreateServer => PrivateServersSold && PrivateServerPrice != null;
+    public string CreateServerText => PrivateServerPrice is long p ? (p == 0 ? "Create one (free)" : $"Create one · R$ {p:N0}/month") : "Create one";
+    public string CreateServerConfirmText => PrivateServerPrice is long p && p > 0 ? $"Create for R$ {p:N0} a month" : "Create for free";
+    public string CreateServerPriceText => PrivateServerPrice is long p && p > 0 ? $"R$ {p:N0} a month" : "Free";
+
+    private async Task LoadServerOfferAsync(GameDetails g)
+    {
+        PrivateServersSold = false;
+        PrivateServerPrice = null;
+        try
+        {
+            var (sold, price) = await RobloxGameExtras.GetPrivateServerOfferAsync(g.PlaceId, CancellationToken.None);
+            if (OpenGame != g) return;
+            PrivateServersSold = sold;
+            PrivateServerPrice = sold ? price : null;
+        }
+        catch { }
+    }
+
     [RelayCommand]
     private void CreatePrivateServer()
     {
         if (OpenGame is not { } g) return;
         if (CurrentAccount is not { } a) { StatusMessage = "Pick an account top right first."; return; }
-        OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/games/{g.PlaceId}#!/game-instances", g.Name);
+        if (!CanCreateServer) { StatusMessage = $"{g.Name} doesn't sell private servers."; return; }
+        NewServerName = $"{a.Label}'s server";
+        long price = PrivateServerPrice ?? 0;
+        CreateServerError = Settings.MarketSpendLimit > 0 && price > Settings.MarketSpendLimit ? "This is over your spending limit (Settings)."
+                          : a.Robux is long have && price > have ? $"{a.Label} has only R$ {have:N0}." : "";
+        OnPropertyChanged(nameof(CreateServerConfirmText));
+        OnPropertyChanged(nameof(CreateServerPriceText));
+        ShowCreateServer = true;
+    }
+
+    [RelayCommand] private void CancelCreateServer() { if (!CreateServerBusy) ShowCreateServer = false; }
+
+    [RelayCommand]
+    private async Task ConfirmCreateServer()
+    {
+        if (OpenGame is not { } g || CurrentAccount is not { } a || CreateServerBusy || CreateServerError.Length > 0) return;
+        var name = (NewServerName ?? "").Trim();
+        if (name.Length == 0) { CreateServerError = "Give it a name."; return; }
+        if (name.Length > 50) name = name[..50];
+        long price = PrivateServerPrice ?? 0;
+        CreateServerBusy = true;
+        try
+        {
+            await RobloxGameExtras.CreatePrivateServerAsync(a.Cookie, g.UniverseId, name, price, CancellationToken.None);
+            ShowCreateServer = false;
+            var msg = price > 0 ? $"{a.Label} created the private server \"{name}\" for {g.Name} (R$ {price:N0} a month, renews until you cancel it on Roblox)."
+                                : $"{a.Label} created the free private server \"{name}\" for {g.Name}.";
+            StatusMessage = msg;
+            Log(ActivityLog.Purchase, msg);
+            if (price > 0) await RefreshRobuxAsync(a);
+            _gameTabsLoaded.Remove("Private");
+            await LoadGameTabAsync();
+        }
+        catch (RobloxException ex) when (ex.Challenge)
+        {
+            ShowCreateServer = false;
+            OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/games/{g.PlaceId}#!/game-instances", g.Name);
+            StatusMessage = "Roblox wants a quick security check: create it on the game's Servers tab there.";
+        }
+        catch (RobloxException ex) { CreateServerError = ex.Message; }
+        finally { CreateServerBusy = false; }
+    }
+
+    /// <summary>Your own private server: copies its share link (anyone with the link can join).</summary>
+    [RelayCommand]
+    private async Task CopyPrivateServerLink(PrivateServer? s)
+    {
+        if (s == null || CurrentAccount is not { } a) return;
+        if (!s.IsMine) { StatusMessage = "Only the owner can share a private server's link."; return; }
+        try
+        {
+            var link = await RobloxGameExtras.GetPrivateServerLinkAsync(a.Cookie, s.Id, CancellationToken.None);
+            if (link.Length == 0) { StatusMessage = "Roblox didn't give a link for this server. Try again in a moment."; return; }
+            try { System.Windows.Clipboard.SetText(link); StatusMessage = $"Link to \"{s.Name}\" copied. Anyone with it can join, so share it with care."; }
+            catch { StatusMessage = "Couldn't copy the link (another app is using the clipboard). Try again."; }
+        }
+        catch (RobloxException ex) { StatusMessage = ex.Message; }
     }
 
     // ---- the store

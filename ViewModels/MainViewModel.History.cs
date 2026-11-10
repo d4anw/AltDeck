@@ -95,6 +95,7 @@ public partial class MainViewModel
     private bool CloseOverlay()
     {
         if (ShowPassBuy) { CancelPassBuy(); return true; }
+        if (ShowCreateServer) { CancelCreateServer(); return true; }
         if (ShowTradeConfirm) { if (!TradeBusy) ShowTradeConfirm = false; return true; }
         if (ShowBuyConfirm) { if (!BuyBusy) ShowBuyConfirm = false; return true; }
         if (ShowInstaBuyWarning) { ShowInstaBuyWarning = false; return true; }

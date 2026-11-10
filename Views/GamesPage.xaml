@@ -287,8 +287,9 @@
                     </TextBlock>
                   </StackPanel>
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Button Content="Create one" ctl:Btn.Icon="&#xE710;" ctl:Btn.External="True" Command="{Binding CreatePrivateServerCommand}"
-                            ToolTip="Private servers are a monthly Robux subscription: started on Roblox's own game page, signed in as this account"/>
+                    <Button Content="{Binding CreateServerText}" ctl:Btn.Icon="&#xE710;" Command="{Binding CreatePrivateServerCommand}"
+                            Visibility="{Binding PrivateServersSold, Converter={StaticResource BoolVis}}"
+                            ToolTip="A private server of your own: a monthly Robux subscription, asked first"/>
                     <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" Margin="0" ToolTip="Look again" Command="{Binding RefreshGameTabCommand}"/>
                   </StackPanel>
                 </Grid>
@@ -314,6 +315,11 @@
                               <TextBlock Text="{Binding PlayersText}" FontFamily="Consolas"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal">
+                              <Button Content="Copy link" ctl:Btn.Icon="&#xE8C8;" Padding="12,6"
+                                      Visibility="{Binding IsMine, Converter={StaticResource BoolVis}}"
+                                      ToolTip="Its share link: anyone with it can join"
+                                      Command="{Binding DataContext.CopyPrivateServerLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding}"/>
                               <Button Content="Alts…" ctl:Btn.Icon="&#xE716;" Padding="12,6" IsEnabled="{Binding CanJoin}"
                                       Command="{Binding DataContext.JoinPrivateServerWithAltsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                       CommandParameter="{Binding}"/>
@@ -561,6 +567,44 @@
         </ctl:StateView>
       </StackPanel>
     </ScrollViewer>
+
+    <!-- ================= creating a private server: a monthly subscription, always asked first ================= -->
+    <Grid Visibility="{Binding ShowCreateServer, Converter={StaticResource BoolVis}}" Background="#B0000000">
+      <Border Style="{StaticResource CardBox}" Width="460" Padding="26,22" HorizontalAlignment="Center" VerticalAlignment="Center"
+              Background="{DynamicResource Card}">
+        <StackPanel>
+          <TextBlock Text="Create a private server?" FontSize="20" FontWeight="Bold"/>
+          <TextBlock Text="{Binding OpenGame.Name}" FontSize="12" Margin="0,4,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+          <TextBlock Text="Name" FontWeight="SemiBold" FontSize="12" Margin="0,16,0,6"/>
+          <TextBox Text="{Binding NewServerName, UpdateSourceTrigger=PropertyChanged}" MaxLength="50" Padding="12,9"/>
+          <Border Background="{DynamicResource Card2}" CornerRadius="12" Padding="14,10" Margin="0,14,0,0">
+            <StackPanel>
+              <Grid>
+                <TextBlock Text="Price" Style="{StaticResource MutedText}"/>
+                <TextBlock HorizontalAlignment="Right" FontWeight="Bold" Text="{Binding CreateServerPriceText}"/>
+              </Grid>
+              <Grid Margin="0,6,0,0">
+                <TextBlock Text="Account" Style="{StaticResource MutedText}"/>
+                <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding CurrentAccount.Label}"/>
+              </Grid>
+              <Grid Margin="0,6,0,0">
+                <TextBlock Text="Balance" Style="{StaticResource MutedText}"/>
+                <TextBlock HorizontalAlignment="Right" Text="{Binding CurrentAccount.RobuxText}"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+          <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Style="{StaticResource MutedText}"
+                     Text="Paid servers renew every month until you cancel (on the game's Servers tab on Roblox). Only you and the people you invite or share the link with can join."/>
+          <TextBlock Text="{Binding CreateServerError}" Foreground="{DynamicResource Red}" TextWrapping="Wrap" Margin="0,12,0,0" FontWeight="SemiBold"
+                     Visibility="{Binding CreateServerError, Converter={StaticResource EmptyCollapsed}}"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel" Command="{Binding CancelCreateServerCommand}" IsCancel="True"/>
+            <Button Margin="0" Style="{StaticResource Primary}" Content="{Binding CreateServerConfirmText}" Command="{Binding ConfirmCreateServerCommand}"
+                    IsEnabled="{Binding CreateServerBusy, Converter={StaticResource Not}}"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
 
     <!-- ================= buying a game pass: always asked first ================= -->
     <Grid Visibility="{Binding ShowPassBuy, Converter={StaticResource BoolVis}}" Background="#B0000000">

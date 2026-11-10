@@ -130,6 +130,45 @@ public static class RobloxGameExtras
         return list.OrderByDescending(s => s.IsMine).ThenByDescending(s => s.Players).ToList();
     }
 
+    /// <summary>
+    /// Whether the game sells private servers, and for how many Robux a month (0 = free). Roblox puts this on the game's
+    /// page only, so it's read from there (the same page every browser gets).
+    /// </summary>
+    public static async Task<(bool Sold, long Price)> GetPrivateServerOfferAsync(long placeId, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"https://www.roblox.com/games/{placeId}");
+        using var resp = await RobloxApi.Http.SendAsync(req, ct);
+        if (!resp.IsSuccessStatusCode) return (false, 0);
+        var html = await resp.Content.ReadAsStringAsync(ct);
+        var price = System.Text.RegularExpressions.Regex.Match(html, @"data-private-server-price=""(-?\d+)""");
+        var product = System.Text.RegularExpressions.Regex.Match(html, @"data-private-server-product-id=""(\d+)""");
+        if (!price.Success || !product.Success || !long.TryParse(price.Groups[1].Value, out var p) || p < 0) return (false, 0);
+        return (true, p);
+    }
+
+    /// <summary>
+    /// Starts a private server (a monthly subscription at <paramref name="price"/> Robux, 0 for free ones), exactly at that
+    /// price: Roblox refuses if it changed. Returns the new server's ID.
+    /// </summary>
+    public static async Task<long> CreatePrivateServerAsync(string cookie, long universeId, string name, long price, CancellationToken ct)
+    {
+        using var doc = await RobloxHttp.PostJsonAsync($"https://games.roblox.com/v1/games/vip-servers/{universeId}", cookie,
+            new { name, expectedPrice = price, idempotencyKey = Guid.NewGuid().ToString() }, ct);
+        return doc.RootElement.Num("vipServerId") is > 0 and var id ? id : doc.RootElement.Num("id");
+    }
+
+    /// <summary>
+    /// The share link of the account's own private server (anyone with it can join). Roblox makes one the first time
+    /// it's asked for.
+    /// </summary>
+    public static async Task<string> GetPrivateServerLinkAsync(string cookie, long vipServerId, CancellationToken ct)
+    {
+        using (var doc = await RobloxHttp.GetJsonAsync($"https://games.roblox.com/v1/vip-servers/{vipServerId}", cookie, ct))
+            if (doc.RootElement.Text("link") is { Length: > 0 } link) return link;
+        using var made = await RobloxHttp.PatchJsonAsync($"https://games.roblox.com/v1/vip-servers/{vipServerId}", cookie, new { newJoinCode = true }, ct);
+        return made.RootElement.Text("link");
+    }
+
     /// <summary>The game's passes. Signed in, Roblox also says which ones the account owns.</summary>
     public static async Task<List<GamePassInfo>> GetPassesAsync(string? cookie, long universeId, CancellationToken ct)
     {
