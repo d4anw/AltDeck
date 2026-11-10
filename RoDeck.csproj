@@ -10,7 +10,7 @@
     <ApplicationIcon>RoDeck.ico</ApplicationIcon>
     <LangVersion>latest</LangVersion>
     <!-- shown in Settings > About and in the exe's Properties > Details. Change it here only. -->
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Product>RoDeck</Product>
     <AssemblyTitle>RoDeck</AssemblyTitle>
     <Description>All-in-one Roblox app (formerly AltDeck)</Description>

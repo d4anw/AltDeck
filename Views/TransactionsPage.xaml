@@ -89,7 +89,10 @@
       <Border Style="{StaticResource CardBox}" Padding="20,18" Margin="0,22,0,0">
         <StackPanel>
           <Grid>
-            <TextBlock Text="Summary" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Summary" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding TxTotalsUpdated}" FontSize="12" Margin="12,1,0,0" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+            </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
               <RadioButton Style="{StaticResource Seg}" Content="Past day" GroupName="txframe"
                            IsChecked="{Binding TxTimeFrame, Converter={StaticResource Eq}, ConverterParameter=Day, Mode=TwoWay}"/>

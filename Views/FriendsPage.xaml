@@ -31,11 +31,32 @@
       <Button Width="132" Margin="0,0,12,12" Padding="0" Cursor="Hand" Focusable="False" ToolTip="{Binding Name}"
               Template="{StaticResource HoverCard}"
               Command="{Binding DataContext.OpenProfileItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-              CommandParameter="{Binding}">
-        <StackPanel>
-          <ctl:RemoteImage Url="{Binding ThumbUrl}" Height="116" Margin="8,8,8,0" CornerRadius="10" Background="Transparent" Stretch="Uniform"/>
-          <TextBlock Text="{Binding Name}" Margin="10,6,10,10" FontSize="12" TextTrimming="CharacterEllipsis"/>
-        </StackPanel>
+              CommandParameter="{Binding}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+        <Button.ContextMenu>
+          <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+            <MenuItem Header="Copy link" Command="{Binding CopyLinkCommand}"
+                CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+            <MenuItem.Icon><TextBlock Text="&#xE8C8;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+          </MenuItem>
+            <MenuItem Header="Open on roblox.com" Command="{Binding OpenLinkOnWebCommand}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+              <MenuItem.Icon><TextBlock Text="&#xE8A7;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+            </MenuItem>
+          </ContextMenu>
+        </Button.ContextMenu>
+        <Grid>
+          <StackPanel>
+            <ctl:RemoteImage Url="{Binding ThumbUrl}" Height="116" Margin="8,8,8,0" CornerRadius="10" Background="Transparent" Stretch="Uniform"/>
+            <TextBlock Text="{Binding Name}" Margin="10,6,10,10" FontSize="12" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+          <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" Padding="6,2" CornerRadius="7" Background="{DynamicResource Green}"
+                    Visibility="{Binding OwnedByMe, Converter={StaticResource BoolVis}}" ToolTip="You own this">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="9" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Text="OWNED" FontSize="9" FontWeight="Bold" Foreground="White"/>
+              </StackPanel>
+            </Border>
+        </Grid>
       </Button>
     </DataTemplate>
     <!-- a friend: picture with status dot (and a star for favourites), name, what they're doing. Click: menu. -->
@@ -332,6 +353,7 @@
                   <Button Content="Edit About" ctl:Btn.Icon="&#xE70F;" Style="{StaticResource Primary}" Margin="0,0,8,8" Padding="18,10"
                           Command="{Binding EditAboutCommand}" Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVis}}"
                           ToolTip="Change the About text everyone sees on your profile"/>
+                  <Button Content="Copy link" ctl:Btn.Icon="&#xE8C8;" Margin="0,0,8,8" Command="{Binding CopyLinkCommand}"/>
                   <Button Content="Roblox.com" ctl:Btn.External="True" Margin="0,0,8,8" Command="{Binding ProfileOnWebCommand}"/>
                 </WrapPanel>
               </StackPanel>

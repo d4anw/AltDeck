@@ -212,6 +212,7 @@ public partial class MainViewModel
                     var theirs = items.Where(i => i.CreatorType == "Group" && i.CreatorId == c.Id).ToList();
                     foreach (var i in theirs) CommunityStore.Add(i);
                     _ = RobloxMarket.FillThumbsAsync(theirs, "150x150", CancellationToken.None);
+                    _ = MarkOwnedAsync(theirs);
                     return theirs.Count > 0;
                 }
                 default:

@@ -29,10 +29,45 @@ public partial class MainViewModel
     private string? _txNext;
     private Account? _txFor;
 
-    // Roblox adds up the totals on request and only allows a few a minute: each account + time frame is kept a few
-    // minutes, so switching back and forth is instant, and a quick run of clicks only asks for the last one
-    private readonly Dictionary<string, (DateTime At, long In, long Out, long Pending, List<TxTotal> Lines)> _txTotalsCache = new();
+    // Roblox adds up the totals when asked, which can take most of a minute, and allows about 10 a minute. So the last
+    // totals of every account + time frame are kept (also on disk): opening the page shows them at once ("updated 18:42")
+    // and fresh ones replace them quietly. This month's are fetched in the background after start-up.
+    private sealed record SavedTotals(DateTime At, long In, long Out, long Pending, List<TxTotal> Lines);
+    private Dictionary<string, SavedTotals>? _txTotalsCache;
+    private readonly HashSet<string> _txTotalsBusy = new();
     private int _txTotalsAsk;
+    [ObservableProperty] private string txTotalsUpdated = "";
+
+    private static string TotalsFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoDeck", "cache", "txtotals.json");
+
+    private Dictionary<string, SavedTotals> TotalsCache
+    {
+        get
+        {
+            if (_txTotalsCache != null) return _txTotalsCache;
+            try
+            {
+                _txTotalsCache = File.Exists(TotalsFile)
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, SavedTotals>>(File.ReadAllText(TotalsFile))
+                    : null;
+            }
+            catch { _txTotalsCache = null; }
+            return _txTotalsCache ??= new();
+        }
+    }
+
+    private void SaveTotals()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(TotalsFile)!);
+            // only accounts that are still in RoDeck
+            var ids = Accounts.Select(x => x.Id).ToHashSet();
+            var keep = TotalsCache.Where(kv => ids.Contains(kv.Key.Split('|')[0])).ToDictionary(kv => kv.Key, kv => kv.Value);
+            File.WriteAllText(TotalsFile, System.Text.Json.JsonSerializer.Serialize(keep));
+        }
+        catch { }
+    }
 
     partial void OnTxTypeChanged(string value) { if (Page == "Transactions") _ = LoadTxAsync(); }
     partial void OnTxTimeFrameChanged(string value) { if (Page == "Transactions") _ = LoadTxTotalsAsync(); }
@@ -49,27 +84,49 @@ public partial class MainViewModel
         _ = LoadTxAsync();
     }
 
+    /// <summary>Refresh: the list again, and the totals quietly (the ones on screen stay until the new ones are in).</summary>
     [RelayCommand]
     private Task RefreshTransactions()
     {
-        _txTotalsCache.Clear();
-        return Task.WhenAll(LoadTxTotalsAsync(), LoadTxAsync());
+        if (CurrentAccount is { UserId: > 0 } a && TotalsCache.ContainsKey($"{a.Id}|{TxTimeFrame}"))
+            _ = RefreshTotalsQuietlyAsync(a, TxTimeFrame);
+        else _ = LoadTxTotalsAsync();
+        return LoadTxAsync();
     }
 
-    private Task LoadTxTotalsAsync() => TxTotalsLoad.RunAsync(async ct =>
+    private void ShowTotals(SavedTotals t)
+    {
+        TxTotals.Clear();
+        TxIncoming = "+" + t.In.ToString("N0");
+        TxOutgoing = (t.Out > 0 ? "−" : "") + Math.Abs(t.Out).ToString("N0");
+        TxPending = t.Pending.ToString("N0");
+        foreach (var l in t.Lines) TxTotals.Add(l);
+        TxTotalsUpdated = UpdatedText(t.At);
+    }
+
+    private static string UpdatedText(DateTime at) =>
+        "Updated " + (at.Date == DateTime.Today ? at.ToString("HH:mm") : at.ToString("d MMM, HH:mm"));
+
+    private Task LoadTxTotalsAsync()
     {
         int ask = ++_txTotalsAsk;
-        TxTotals.Clear();
-        TxIncoming = TxOutgoing = TxPending = "";
-        if (CurrentAccount is not { UserId: > 0 } a) throw new RobloxException("Pick an account top right first.");
         var frame = TxTimeFrame;
-        var key = $"{a.Id}|{frame}";
-        if (!_txTotalsCache.TryGetValue(key, out var t) || DateTime.Now - t.At > TimeSpan.FromMinutes(5))
+        // known already: on screen at once, and fresh ones in the background when these are older than 5 minutes
+        if (CurrentAccount is { UserId: > 0 } known && TotalsCache.TryGetValue($"{known.Id}|{frame}", out var saved))
         {
+            TxTotalsLoad.Cancel();
+            TxTotalsLoad.State = LoadState.Ready;
+            ShowTotals(saved);
+            if (DateTime.Now - saved.At > TimeSpan.FromMinutes(5)) _ = RefreshTotalsQuietlyAsync(known, frame);
+            return Task.CompletedTask;
+        }
+        return TxTotalsLoad.RunAsync(async ct =>
+        {
+            TxTotals.Clear();
+            TxIncoming = TxOutgoing = TxPending = TxTotalsUpdated = "";
+            if (CurrentAccount is not { UserId: > 0 } a) throw new RobloxException("Pick an account top right first.");
             await Task.Delay(350, ct);   // clicking through the time frames: only the last one is asked
             if (ask != _txTotalsAsk) return true;
-            using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            limit.CancelAfter(TimeSpan.FromMinutes(2));
             _ = SayStillLoadingAsync(TxTotalsLoad, ct, frame switch
             {
                 "Day" => "Roblox is adding up the past day…",
@@ -77,24 +134,60 @@ public partial class MainViewModel
                 "Year" => "Roblox is adding up the whole year. That can take a minute…",
                 _ => "Roblox is adding up the past month. That can take a while…",
             });
-            try
-            {
-                var (inc, outg, pend, lines) = await RobloxEconomy.GetTotalsAsync(a.Cookie, a.UserId, frame, limit.Token);
-                t = (DateTime.Now, inc, outg, pend, lines);
-                _txTotalsCache[key] = t;
-            }
-            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-            {
-                throw new RobloxException("Roblox didn't finish adding this up. Press Try again in a moment.");
-            }
+            var t = await FetchTotalsAsync(a, frame, ct);
+            if (a != CurrentAccount || frame != TxTimeFrame) return true;
+            ShowTotals(t);
+            return true;
+        });
+    }
+
+    /// <summary>Asks Roblox for the totals (up to 2 minutes) and keeps them.</summary>
+    private async Task<SavedTotals> FetchTotalsAsync(Account a, string frame, CancellationToken ct)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        limit.CancelAfter(TimeSpan.FromMinutes(2));
+        try
+        {
+            var (inc, outg, pend, lines) = await RobloxEconomy.GetTotalsAsync(a.Cookie, a.UserId, frame, limit.Token);
+            var t = new SavedTotals(DateTime.Now, inc, outg, pend, lines);
+            TotalsCache[$"{a.Id}|{frame}"] = t;
+            SaveTotals();
+            return t;
         }
-        if (a != CurrentAccount || frame != TxTimeFrame) return true;
-        TxIncoming = "+" + t.In.ToString("N0");
-        TxOutgoing = (t.Out > 0 ? "−" : "") + Math.Abs(t.Out).ToString("N0");
-        TxPending = t.Pending.ToString("N0");
-        foreach (var l in t.Lines) TxTotals.Add(l);
-        return true;
-    });
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new RobloxException("Roblox didn't finish adding this up. Press Try again in a moment.");
+        }
+    }
+
+    /// <summary>Fresh totals while the old ones stay on screen ("Updated 18:42 · updating…").</summary>
+    private async Task RefreshTotalsQuietlyAsync(Account a, string frame)
+    {
+        var key = $"{a.Id}|{frame}";
+        if (!_txTotalsBusy.Add(key)) return;
+        bool Showing() => CurrentAccount == a && TxTimeFrame == frame && Page == "Transactions";
+        try
+        {
+            if (Showing() && TotalsCache.TryGetValue(key, out var old)) TxTotalsUpdated = UpdatedText(old.At) + " · updating…";
+            var t = await FetchTotalsAsync(a, frame, CancellationToken.None);
+            if (Showing()) ShowTotals(t);
+        }
+        catch (RobloxException)
+        {
+            if (Showing() && TotalsCache.TryGetValue(key, out var old)) TxTotalsUpdated = UpdatedText(old.At) + " · couldn't update just now";
+        }
+        finally { _txTotalsBusy.Remove(key); }
+    }
+
+    /// <summary>After start-up and after switching account: this month's totals in the background, if they're old.</summary>
+    private async Task PrefetchTotalsAsync(Account? a)
+    {
+        if (a is not { UserId: > 0 }) return;
+        await Task.Delay(TimeSpan.FromSeconds(20));
+        if (CurrentAccount != a) return;
+        if (TotalsCache.TryGetValue($"{a.Id}|Month", out var t) && DateTime.Now - t.At < TimeSpan.FromMinutes(30)) return;
+        await RefreshTotalsQuietlyAsync(a, "Month");
+    }
 
     private Task LoadTxAsync() => TxLoad.RunAsync(async ct =>
     {

@@ -33,6 +33,8 @@ public partial class WardrobeItem : ObservableObject
     public bool IsAdjustable { get; init; }
     [ObservableProperty] private string thumbUrl = "";
     [ObservableProperty] private bool isWorn;
+    /// <summary>On someone else's profile: the account top right owns this too.</summary>
+    [ObservableProperty] private bool ownedByMe;
     [ObservableProperty] private bool isBusy;
     /// <summary>Its adjust panel is open (the tile in Wearing gets the accent).</summary>
     [ObservableProperty] private bool isBeingAdjusted;

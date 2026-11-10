@@ -22,7 +22,19 @@
       <Button Width="300" Margin="0,0,12,12" Padding="12" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
               Template="{StaticResource HoverCard}" ToolTip="{Binding Name}"
               Command="{Binding DataContext.OpenCommunityTileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-              CommandParameter="{Binding}">
+              CommandParameter="{Binding}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+        <Button.ContextMenu>
+          <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+            <MenuItem Header="Copy link" Command="{Binding CopyLinkCommand}"
+                CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+            <MenuItem.Icon><TextBlock Text="&#xE8C8;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+          </MenuItem>
+            <MenuItem Header="Open on roblox.com" Command="{Binding OpenLinkOnWebCommand}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+              <MenuItem.Icon><TextBlock Text="&#xE8A7;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+            </MenuItem>
+          </ContextMenu>
+        </Button.ContextMenu>
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -166,6 +178,7 @@
                     </Button.Style>
                     <TextBlock Text="{Binding CommunityJoinText}" FontWeight="SemiBold"/>
                   </Button>
+                  <Button Content="Copy link" ctl:Btn.Icon="&#xE8C8;" Margin="8,0,0,0" Command="{Binding CopyLinkCommand}"/>
                   <Button Content="Roblox.com" ctl:Btn.External="True" Margin="8,0,0,0" Command="{Binding OpenCommunityOnWebCommand}"/>
                 </StackPanel>
               </StackPanel>
@@ -301,11 +314,30 @@
                       <Button Width="160" Margin="0,0,14,14" Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch" Focusable="False"
                               Template="{StaticResource HoverCard}" ToolTip="{Binding Name}"
                               Command="{Binding DataContext.OpenCommunityStoreItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              CommandParameter="{Binding}">
+                              CommandParameter="{Binding}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <Button.ContextMenu>
+                          <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                            <MenuItem Header="Copy link" Command="{Binding CopyLinkCommand}"
+                                                CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                        <MenuItem.Icon><TextBlock Text="&#xE8C8;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+                          </MenuItem>
+                            <MenuItem Header="Open on roblox.com" Command="{Binding OpenLinkOnWebCommand}"
+                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                              <MenuItem.Icon><TextBlock Text="&#xE8A7;" FontFamily="{StaticResource Icons}" FontSize="12"/></MenuItem.Icon>
+                            </MenuItem>
+                          </ContextMenu>
+                        </Button.ContextMenu>
                         <StackPanel>
                           <Grid>
                             <Border Height="158" CornerRadius="13,13,0,0" Background="{DynamicResource Card2}"/>
                             <ctl:RemoteImage Url="{Binding ThumbUrl}" Height="158" CornerRadius="13" TopCornersOnly="True"/>
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Padding="6,2" CornerRadius="7" Background="{DynamicResource Green}"
+                    Visibility="{Binding IsOwned, Converter={StaticResource BoolVis}}" ToolTip="You own this">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="9" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Text="OWNED" FontSize="9" FontWeight="Bold" Foreground="White"/>
+              </StackPanel>
+            </Border>
                           </Grid>
                           <StackPanel Margin="10,9,10,10">
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>

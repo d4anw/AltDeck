@@ -27,6 +27,8 @@ public sealed class RobloxException : Exception
     public bool TooMany => Status is HttpStatusCode.TooManyRequests;
     /// <summary>Roblox wants a security check (a captcha or similar) before it does this; only its own website can do that.</summary>
     public bool Challenge { get; init; }
+    /// <summary>Roblox's own words, before RoDeck turned them into a plainer message ("" when it said nothing).</summary>
+    public string RobloxSaid { get; init; } = "";
 }
 
 /// <summary>
@@ -195,6 +197,7 @@ public static class RobloxHttp
                 lock (gate) waitLeft = (int)Math.Ceiling(Math.Max(0, (gate.BlockedUntil - DateTime.UtcNow).TotalSeconds));
                 throw new RobloxException(Describe(resp.StatusCode, text), resp.StatusCode)
                 {
+                    RobloxSaid = RobloxMessage(text) ?? "",
                     WaitSeconds = waitLeft,
                     Challenge = resp.Headers.Contains("rblx-challenge-id") || resp.Headers.Contains("rblx-challenge-type"),
                 };
@@ -202,18 +205,51 @@ public static class RobloxHttp
         }
     }
 
-    static string Describe(HttpStatusCode status, string body)
+    /// <summary>Roblox's own message, when it gives one: {"errors":[{"code":..,"message":".."}]}.</summary>
+    static string? RobloxMessage(string body)
     {
-        // Roblox's own message, when it gives one: {"errors":[{"code":..,"message":".."}]}
-        string? roblox = null;
         try
         {
             using var doc = JsonDocument.Parse(body);
             if (doc.RootElement.TryGetProperty("errors", out var errs) && errs.ValueKind == JsonValueKind.Array && errs.GetArrayLength() > 0
                 && errs[0].TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String)
-                roblox = m.GetString();
+                return m.GetString();
         }
         catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Roblox's vaguer answers in plain words. Messages that already say what's wrong ("You don't have enough Robux")
+    /// are kept as they are.
+    /// </summary>
+    static string? Plain(string? roblox)
+    {
+        if (string.IsNullOrWhiteSpace(roblox)) return null;
+        var r = roblox.Trim();
+        bool Has(string s) => r.Contains(s, StringComparison.OrdinalIgnoreCase);
+        if (Has("unknown error") || Has("something went wrong") || Has("internalservererror") || Has("internal server error")
+            || r.Equals("error", StringComparison.OrdinalIgnoreCase) || Has("an error occurred") || Has("an error occured"))
+            return "Roblox didn't say what went wrong. Nothing was changed; try again in a moment.";
+        if (Has("request context failure"))
+            return "Roblox couldn't check this account just now. Try again in a moment.";
+        if (Has("challenge is required") || Has("captcha"))
+            return "Roblox wants a quick security check first, which only works on its own website.";
+        if (Has("token validation failed") || Has("xsrf"))
+            return "Roblox's security token ran out. Try again.";
+        if (Has("pin is locked") || Has("account pin") || Has("pinlocked"))
+            return "This account's PIN is locked. Unlock it in Roblox's settings, then try again.";
+        if (Has("flood") || Has("too many"))
+            return "Roblox says that's too often. Wait a minute and try again.";
+        if (Has("not authorized") || Has("authorization has been denied"))
+            return "This account isn't allowed to do that.";
+        return null;
+    }
+
+    static string Describe(HttpStatusCode status, string body)
+    {
+        var said = RobloxMessage(body);
+        var roblox = Plain(said) ?? said;
 
         return status switch
         {

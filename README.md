@@ -104,6 +104,7 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 - **Try on** shows an item on your avatar before you buy it.
 - **Item pages** with similar items and more from the same creator; limiteds show their RAP / value chart and every seller.
 - Free items in one click. Robux purchases always show item, price, account and balance first, with an optional spending limit.
+- An **OWNED** tick on everything you already have.
 
 ### 💎 Trades
 - **Deals:** limiteds listed below their RAP or value, newest first, like Rolimons' deals. New listings come in every second while you're on Deals, and every limited's cheapest price is checked round after round.
@@ -118,7 +119,7 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 
 ### 💰 Robux
 Click the Robux top right: **My Transactions** shows the account's purchases, sales, Robux bought, Premium, group
-payouts and trades, with totals for the past day, week, month or year. **Buy Robux** and **Redeem Roblox Codes**
+payouts and trades, with totals for the past day, week, month or year (shown at once, refreshed in the background). **Buy Robux** and **Redeem Roblox Codes**
 open Roblox's own pages, already signed in as that account (paying and gift cards always happen on Roblox's side).
 
 ### 🔔 Notifications
@@ -149,6 +150,7 @@ Windows notifications for friends coming online, trades you receive, trades you 
 ### 🎨 And the rest
 - **Your look:** black with orange accents by default; change the accent colour, density and background image.
 - **Mouse side buttons** go back and forward between pages.
+- **Copy link:** right-click a game, player, community or item to copy its roblox.com link.
 - **Discord:** "Playing RoDeck" on your profile, with how many alts are running.
 - **Updates itself:** RoDeck asks when a new version is out, shows what's new and restarts into it.
 - **Report a bug** in one click, with your versions filled in and your activity log copied.
@@ -274,6 +276,18 @@ RoDeck/
 ## 📝 Changelog
 
 <details open>
+<summary><b>1.0.1</b></summary>
+<br>
+
+- **My Transactions opens instantly:** the summary shows the last totals at once ("Updated 18:42") and fresh ones replace them quietly. This month's totals are fetched in the background after RoDeck starts, so they're usually ready before you look.
+- **Owned ticks:** items you already own get a green OWNED tick on the Marketplace, in similar items, in community stores, and on other people's Wearing and Inventory tabs.
+- **Copy link:** right-click a game, friend, community or item (or use the Copy link button on game, profile and community pages) to copy its roblox.com link, ready to paste.
+- **Plainer errors:** Roblox's vague answers ("An unknown error occurred", "Request Context Failure"…) now say in plain words what happened and what to do.
+- Profile and community tabs that were cut short by a quick click load again, and Trades no longer reopens on a trade profile you left.
+
+</details>
+
+<details>
 <summary><b>1.0.0: AltDeck is now RoDeck</b></summary>
 <br>
 

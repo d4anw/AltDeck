@@ -71,6 +71,7 @@ public partial class MainViewModel
         if (GameRows.Count > 0) _ = BuildGameRowsAsync();   // "My favourites" is per account
         _txFor = null;
         MaybeLoadTransactions();
+        _ = PrefetchTotalsAsync(value);
         _communitiesFor = null;
         MyCommunities.Clear();
         if (IsCommunityOpen) _ = OpenCommunityByIdAsync(_lastCommunityId);   // its Join / Leave is per account

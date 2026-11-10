@@ -141,6 +141,7 @@ public partial class MainViewModel
         MarketItems.Clear();
         foreach (var i in items) MarketItems.Add(i);
         _ = RobloxMarket.FillThumbsAsync(items, "150x150", CancellationToken.None);
+        _ = MarkOwnedAsync(items);
         return items.Count > 0;
     }
 
@@ -159,6 +160,7 @@ public partial class MainViewModel
             var fresh = items.Where(i => !MarketItems.Any(m => m.Id == i.Id && m.ItemType == i.ItemType)).ToList();
             foreach (var i in fresh) MarketItems.Add(i);
             _ = RobloxMarket.FillThumbsAsync(fresh, "150x150", CancellationToken.None);
+            _ = MarkOwnedAsync(fresh);
         }
         catch (RobloxException ex)
         {
@@ -259,6 +261,7 @@ public partial class MainViewModel
                 if (_lastMarketItem != opened) return;   // another item was opened meanwhile
                 var list = found.Where(i => !(i.Id == item.Id && i.ItemType == item.ItemType)).Take(18).ToList();
                 foreach (var i in list) into.Add(i);
+                _ = MarkOwnedAsync(list);
                 await RobloxMarket.FillThumbsAsync(list, "150x150", CancellationToken.None);
             }
             catch (RobloxException) { }
@@ -551,6 +554,7 @@ public partial class MainViewModel
             if (result.Ok)
             {
                 item.Owned = true;
+                RememberOwned(a, item.Id, item.IsBundle);
                 if (seller != null) MarketSellers.Remove(seller);
                 ShowBuyConfirm = false;
                 var from = seller != null ? $" from {seller.Name}" : "";

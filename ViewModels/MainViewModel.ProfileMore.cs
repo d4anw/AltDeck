@@ -85,6 +85,7 @@ public partial class MainViewModel
                     if (Gone()) return true;
                     foreach (var i in items) ProfileWearing.Add(i);
                     _ = FillItemPicturesAsync(items);
+                    if (a?.UserId != id) _ = MarkOwnedAsync(items);
                     return items.Count > 0;
                 }
                 case "Friends":
@@ -147,6 +148,7 @@ public partial class MainViewModel
                     if (Gone()) return true;
                     foreach (var i in items) ProfileInventory.Add(i);
                     _ = FillItemPicturesAsync(items);
+                    if (!mine) _ = MarkOwnedAsync(items);
                     return items.Count > 0;
                 }
             }
@@ -182,6 +184,7 @@ public partial class MainViewModel
             var add = items.Where(i => !have.Contains(i.AssetId)).ToList();
             foreach (var i in add) ProfileInventory.Add(i);
             _ = FillItemPicturesAsync(add);
+            if (CurrentAccount?.UserId != p.UserId) _ = MarkOwnedAsync(add);
         }
         catch (RobloxException ex) { StatusMessage = ex.Message; }
     }

@@ -40,6 +40,7 @@ public partial class FriendsPage : UserControl
             items.Add(("Join with several alts…", () => VM.JoinFriendWithAltsCommand.Execute(f)));
         }
         items.Add((f.IsFavourite ? "Remove from favourites" : "★ Add to favourites", () => VM.ToggleFavouriteFriendCommand.Execute(f)));
+        items.Add(("Copy profile link", () => VM.CopyLinkCommand.Execute(f)));
         items.Add(("Open profile on roblox.com", () => Open($"https://www.roblox.com/users/{f.UserId}/profile")));
         items.Add(("Unfriend…", () => ConfirmUnfriend(target, f.UserId, f.Label)));
         MenuHelper.Show(target, items.ToArray());

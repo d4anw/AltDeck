@@ -57,6 +57,7 @@ public partial class StartPage : UserControl
             items.Add(("Join with several alts…", () => VM.JoinFriendWithAltsCommand.Execute(f)));
         }
         items.Add((f.IsFavourite ? "Remove from favourites" : "★ Add to favourites", () => VM.ToggleFavouriteFriendCommand.Execute(f)));
+        items.Add(("Copy profile link", () => VM.CopyLinkCommand.Execute(f)));
         items.Add(("Open profile on roblox.com", () => OpenUrl($"https://www.roblox.com/users/{f.UserId}/profile")));
         MenuHelper.Show(target, items.ToArray());
     }

@@ -125,6 +125,22 @@ public static class RobloxMarket
         return item;
     }
 
+    /// <summary>The IDs of every bundle the account owns (for the "owned" ticks).</summary>
+    public static async Task<List<long>> GetOwnedBundlesAsync(string cookie, long userId, CancellationToken ct)
+    {
+        var ids = new List<long>();
+        string? cursor = null;
+        for (int page = 0; page < 20; page++)
+        {
+            using var doc = await RobloxHttp.GetJsonAsync($"{Catalog}/v1/users/{userId}/bundles?limit=100&sortOrder=Desc"
+                                                          + (cursor != null ? "&cursor=" + Uri.EscapeDataString(cursor) : ""), cookie, ct);
+            foreach (var b in doc.RootElement.Arr("data")) if (b.Num("id") is > 0 and var id) ids.Add(id);
+            cursor = doc.RootElement.Text("nextPageCursor");
+            if (cursor.Length == 0) break;
+        }
+        return ids;
+    }
+
     // ------------------------------------------------------------------ trying on
 
     /// <summary>

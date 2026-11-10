@@ -319,7 +319,7 @@ public partial class MainViewModel
         catch (RobloxException ex)
         {
             TradeConfirmError = ex.TooMany ? "Roblox is busy. Nothing changed. Try again in a moment."
-                : ex.Message.Contains("unknown error", StringComparison.OrdinalIgnoreCase)
+                : ex.RobloxSaid.Contains("unknown error", StringComparison.OrdinalIgnoreCase)
                     ? "Roblox refused it without saying why (\"An unknown error occurred\"). Usually the other player just changed their trade "
                       + "settings, or one of the items was traded away a moment ago. Nothing was sent."
                 : ex.Message;

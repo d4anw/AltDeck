@@ -205,10 +205,10 @@
                     <TextBlock FontWeight="SemiBold"><Run Text="Play as"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay, FallbackValue='…'}"/></TextBlock>
                   </StackPanel>
                 </Button>
-                <UniformGrid Columns="3">
-                  <Button Content="With alts…" ctl:Btn.Icon="&#xE716;" Margin="0,0,8,0" Command="{Binding PlayOpenGameWithAltsCommand}"
+                <UniformGrid Columns="2">
+                  <Button Content="With alts…" ctl:Btn.Icon="&#xE716;" Margin="0,0,4,4" Command="{Binding PlayOpenGameWithAltsCommand}"
                           ToolTip="Fill this game in Multi-launch → Launch to pick several accounts"/>
-                  <Button Margin="0,0,8,0" Command="{Binding ToggleFavouriteGameCommand}">
+                  <Button Margin="4,0,0,4" Command="{Binding ToggleFavouriteGameCommand}">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,7,0">
                         <TextBlock.Style>
@@ -226,7 +226,8 @@
                       <TextBlock Text="Favourite"/>
                     </StackPanel>
                   </Button>
-                  <Button Content="Roblox.com" ctl:Btn.External="True" Margin="0" Command="{Binding OpenGameOnWebCommand}"/>
+                  <Button Content="Copy link" ctl:Btn.Icon="&#xE8C8;" Margin="0,4,4,0" Command="{Binding CopyLinkCommand}"/>
+                  <Button Content="Roblox.com" ctl:Btn.External="True" Margin="4,4,0,0" Command="{Binding OpenGameOnWebCommand}"/>
                 </UniformGrid>
                 </StackPanel>
               </Grid>
