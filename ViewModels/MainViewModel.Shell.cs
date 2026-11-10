@@ -98,4 +98,11 @@ public partial class MainViewModel
         if (CurrentAccount == null || !Accounts.Contains(CurrentAccount))
             CurrentAccount = DefaultAccount();
     }
+
+    /// <summary>The account's Robux again (after buying or redeeming on roblox.com).</summary>
+    public async Task RefreshRobuxAsync(Account a)
+    {
+        try { if (await RobloxApi.GetRobuxAsync(a.Cookie, a.UserId) is long r) a.Robux = r; }
+        catch { }
+    }
 }

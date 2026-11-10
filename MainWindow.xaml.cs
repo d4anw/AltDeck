@@ -434,8 +434,28 @@ public partial class MainWindow : Window
         menu.IsOpen = true;
     }
 
-    /// <summary>The Robux pill: the Marketplace.</summary>
-    private void Robux_Click(object sender, RoutedEventArgs e) => _vm.Page = "Marketplace";
+    /// <summary>The Robux pill: Buy Robux, My Transactions and Redeem Roblox Codes, like on roblox.com.</summary>
+    private void Robux_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = (UIElement)sender,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom
+        };
+        Add(menu, "Buy Robux", "", () => OpenRobloxPage("https://www.roblox.com/upgrades/robux", "Buy Robux"));
+        Add(menu, "My Transactions", "", () => OpenRobloxPage("https://www.roblox.com/transactions", "My Transactions"));
+        Add(menu, "Redeem Roblox Codes", "", () => OpenRobloxPage("https://www.roblox.com/redeem", "Redeem Roblox Codes"));
+        menu.IsOpen = true;
+    }
+
+    /// <summary>A roblox.com page signed in as the account top right; its Robux are checked again afterwards.</summary>
+    private void OpenRobloxPage(string url, string title)
+    {
+        if (_vm.CurrentAccount is not { } a || string.IsNullOrEmpty(a.Cookie)) { _vm.StatusMessage = "Pick an account top right first."; return; }
+        var w = new RobloxWebWindow(a, url, title) { Owner = this };
+        w.Closed += async (_, _) => await _vm.RefreshRobuxAsync(a);
+        w.Show();
+    }
 
     private static void Add(System.Windows.Controls.ContextMenu menu, string text, string glyph, Action click)
     {
