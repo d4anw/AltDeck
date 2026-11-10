@@ -171,7 +171,7 @@
                       <Grid Width="44" Height="44" Margin="0,0,16,0">
                         <Border CornerRadius="10" Background="{DynamicResource Card2}"/>
                         <TextBlock Text="&#xE8C7;" FontFamily="{StaticResource Icons}" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource Muted}" Visibility="{Binding HasItem, Converter={StaticResource BoolVisInv}}"/>
+                                   Foreground="{DynamicResource Muted}" Visibility="{Binding ShowGlyph, Converter={StaticResource BoolVis}}"/>
                         <ctl:RemoteImage Url="{Binding ThumbUrl}" CornerRadius="10"/>
                       </Grid>
                       <StackPanel VerticalAlignment="Center">

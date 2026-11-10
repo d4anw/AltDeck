@@ -15,13 +15,30 @@ public sealed partial class TxRow(long id, DateTime created, bool pending, strin
     public string AgentType { get; } = agentType;
     public string ItemName { get; } = itemName;
     public long ItemId { get; } = itemId;
-    public string ItemType { get; } = itemType;
+    /// <summary>"Asset", "Bundle", "GamePass", "DeveloperProduct" or "" (Robux, a payout…), whatever spelling Roblox used.</summary>
+    public string ItemType { get; } = Normalize(itemType);
     public long Amount { get; } = amount;
-    [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty] private string thumbUrl = "";
+    [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+    [CommunityToolkit.Mvvm.ComponentModel.NotifyPropertyChangedFor(nameof(ShowGlyph))]
+    private string thumbUrl = "";
+    /// <summary>No picture (yet): a Robux symbol in its place.</summary>
+    public bool ShowGlyph => ThumbUrl.Length == 0;
+    /// <summary>Something with a picture: an item, a bundle, a game pass or an in-game product.</summary>
+    public bool HasPicture => ItemId > 0 && ItemType.Length > 0;
+
+    static string Normalize(string t) => t.ToLowerInvariant() switch
+    {
+        "asset" => "Asset",
+        "bundle" => "Bundle",
+        "gamepass" or "game pass" or "game-pass" => "GamePass",
+        "developerproduct" or "developer product" or "product" => "DeveloperProduct",
+        _ => "",
+    };
     public string WhenText => Created == default ? "" : Created.ToLocalTime().ToString("d MMM yyyy, HH:mm", CultureInfo.CurrentCulture);
     public string AmountText => (Amount < 0 ? "−" : Amount > 0 ? "+" : "") + Math.Abs(Amount).ToString("N0", CultureInfo.CurrentCulture);
     public int Kind => Amount > 0 ? 1 : Amount < 0 ? -1 : 0;
-    public bool HasItem => ItemId > 0 && ItemType is "Asset" or "Bundle" or "GamePass";
+    /// <summary>Opens on the Marketplace (items and bundles; game passes and in-game products aren't sold there).</summary>
+    public bool HasItem => ItemId > 0 && ItemType is "Asset" or "Bundle";
     public string ItemText => ItemName.Length > 0 ? ItemName : "Robux";
     public string AgentText => AgentName.Length == 0 ? "" : AgentType == "Group" ? AgentName + " (group)" : AgentName;
     public string PendingText => Pending ? "Pending" : "";
@@ -131,6 +148,42 @@ public static class RobloxEconomy
             else sb.Append(sb.Length == 0 ? char.ToUpperInvariant(c) : c);
         }
         return sb.ToString();
+    }
+
+    static readonly Dictionary<string, (string Path, string Param)> IconServices = new()
+    {
+        ["Asset"] = ("v1/assets", "assetIds"),
+        ["Bundle"] = ("v1/bundles/thumbnails", "bundleIds"),
+        ["GamePass"] = ("v1/game-passes", "gamePassIds"),
+        ["DeveloperProduct"] = ("v1/developer-products/icons", "developerProductIds"),
+    };
+
+    /// <summary>150×150 pictures for these ids of one kind; ones Roblox is still making are asked again a few times.</summary>
+    public static async Task<Dictionary<long, string>> GetIconsAsync(string kind, IEnumerable<long> ids, CancellationToken ct)
+    {
+        var result = new Dictionary<long, string>();
+        if (!IconServices.TryGetValue(kind, out var svc)) return result;
+        var left = ids.Where(i => i > 0).Distinct().ToList();
+        for (int round = 0; round < 4 && left.Count > 0; round++)
+        {
+            if (round > 0) await Task.Delay(TimeSpan.FromSeconds(2 * round), ct);
+            var pending = new List<long>();
+            foreach (var chunk in left.Chunk(100))
+            {
+                using var doc = await RobloxHttp.GetJsonAsync(
+                    $"https://thumbnails.roblox.com/{svc.Path}?{svc.Param}={string.Join(',', chunk)}&size=150x150&format=Png&isCircular=false",
+                    null, ct);
+                foreach (var t in doc.RootElement.Arr("data"))
+                {
+                    long id = t.Num("targetId");
+                    var url = t.Text("imageUrl");
+                    if (t.Text("state") == "Completed" && url.Length > 0) result[id] = url;
+                    else if (t.Text("state") == "Pending") pending.Add(id);
+                }
+            }
+            left = pending;
+        }
+        return result;
     }
 
     /// <summary>A gift card PIN (digits only), which Roblox redeems through its payment service, not here.</summary>

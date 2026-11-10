@@ -215,7 +215,16 @@ public partial class MainViewModel
             var a = CurrentAccount;
             var full = await RobloxMarket.GetItemAsync(item.Id, item.IsBundle, a?.Cookie, ct);
             if (_lastMarketItem != item) return true;
-            full.ThumbUrl = item.ThumbUrl;
+            if (full.ThumbUrl.Length == 0) full.ThumbUrl = item.ThumbUrl;
+            if (full.ShowsAsLimited)
+            {
+                // opened from somewhere that didn't know it's a limited (a purchase, a link): the limited item page
+                OpenMarketItem = full;
+                var tile = LimitedTile.From(full.Id, full.Name, 0, bundle: full.IsBundle);
+                tile.ThumbUrl = full.ThumbUrl;
+                await OpenLimitedTile(tile);
+                return true;
+            }
             OpenMarketItem = full;
             var big = full.IsBundle
                 ? await Thumbnails.GetAsync("BundleThumbnail", new[] { full.Id }, "420x420", ct)

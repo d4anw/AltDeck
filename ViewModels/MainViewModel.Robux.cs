@@ -29,6 +29,11 @@ public partial class MainViewModel
     private string? _txNext;
     private Account? _txFor;
 
+    // Roblox adds up the totals on request and only allows a few a minute: each account + time frame is kept a few
+    // minutes, so switching back and forth is instant, and a quick run of clicks only asks for the last one
+    private readonly Dictionary<string, (DateTime At, long In, long Out, long Pending, List<TxTotal> Lines)> _txTotalsCache = new();
+    private int _txTotalsAsk;
+
     partial void OnTxTypeChanged(string value) { if (Page == "Transactions") _ = LoadTxAsync(); }
     partial void OnTxTimeFrameChanged(string value) { if (Page == "Transactions") _ = LoadTxTotalsAsync(); }
 
@@ -45,19 +50,42 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
-    private Task RefreshTransactions() => Task.WhenAll(LoadTxTotalsAsync(), LoadTxAsync());
+    private Task RefreshTransactions()
+    {
+        _txTotalsCache.Clear();
+        return Task.WhenAll(LoadTxTotalsAsync(), LoadTxAsync());
+    }
 
     private Task LoadTxTotalsAsync() => TxTotalsLoad.RunAsync(async ct =>
     {
+        int ask = ++_txTotalsAsk;
         TxTotals.Clear();
         TxIncoming = TxOutgoing = TxPending = "";
         if (CurrentAccount is not { UserId: > 0 } a) throw new RobloxException("Pick an account top right first.");
-        var (inc, outg, pend, lines) = await RobloxEconomy.GetTotalsAsync(a.Cookie, a.UserId, TxTimeFrame, ct);
-        if (a != CurrentAccount) return true;
-        TxIncoming = "+" + inc.ToString("N0");
-        TxOutgoing = (outg > 0 ? "−" : "") + Math.Abs(outg).ToString("N0");
-        TxPending = pend.ToString("N0");
-        foreach (var l in lines) TxTotals.Add(l);
+        var frame = TxTimeFrame;
+        var key = $"{a.Id}|{frame}";
+        if (!_txTotalsCache.TryGetValue(key, out var t) || DateTime.Now - t.At > TimeSpan.FromMinutes(5))
+        {
+            await Task.Delay(350, ct);   // clicking through the time frames: only the last one is asked
+            if (ask != _txTotalsAsk) return true;
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            limit.CancelAfter(TimeSpan.FromSeconds(25));
+            try
+            {
+                var (inc, outg, pend, lines) = await RobloxEconomy.GetTotalsAsync(a.Cookie, a.UserId, frame, limit.Token);
+                t = (DateTime.Now, inc, outg, pend, lines);
+                _txTotalsCache[key] = t;
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                throw new RobloxException("Roblox is taking too long to add this up. Press Try again in a moment.");
+            }
+        }
+        if (a != CurrentAccount || frame != TxTimeFrame) return true;
+        TxIncoming = "+" + t.In.ToString("N0");
+        TxOutgoing = (t.Out > 0 ? "−" : "") + Math.Abs(t.Out).ToString("N0");
+        TxPending = t.Pending.ToString("N0");
+        foreach (var l in t.Lines) TxTotals.Add(l);
         return true;
     });
 
@@ -68,7 +96,15 @@ public partial class MainViewModel
         HasTxMore = false;
         if (CurrentAccount is not { UserId: > 0 } a) throw new RobloxException("Pick an account top right first.");
         _txFor = a;
-        var (rows, next) = await RobloxEconomy.GetTransactionsAsync(a.Cookie, a.UserId, TxType, null, ct);
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        limit.CancelAfter(TimeSpan.FromSeconds(25));
+        List<TxRow> rows;
+        string? next;
+        try { (rows, next) = await RobloxEconomy.GetTransactionsAsync(a.Cookie, a.UserId, TxType, null, limit.Token); }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new RobloxException("Roblox is taking too long to answer. Press Try again in a moment.");
+        }
         if (a != CurrentAccount) return true;
         foreach (var r in rows) TxRows.Add(r);
         _txNext = next;
@@ -100,13 +136,16 @@ public partial class MainViewModel
     {
         try
         {
-            foreach (var (type, kind) in new[] { ("Asset", "Asset"), ("Bundle", "BundleThumbnail"), ("GamePass", "GamePass") })
+            // every kind at once, each from its own picture service
+            await Task.WhenAll(rows.Where(r => r.HasPicture).GroupBy(r => r.ItemType).Select(async g =>
             {
-                var ids = rows.Where(r => r.ItemType == type && r.ItemId > 0).Select(r => r.ItemId).Distinct().ToList();
-                if (ids.Count == 0) continue;
-                var urls = await Thumbnails.GetAsync(kind, ids);
-                foreach (var r in rows.Where(r => r.ItemType == type && urls.ContainsKey(r.ItemId))) r.ThumbUrl = urls[r.ItemId];
-            }
+                try
+                {
+                    var urls = await RobloxEconomy.GetIconsAsync(g.Key, g.Select(r => r.ItemId), CancellationToken.None);
+                    foreach (var r in g) if (urls.TryGetValue(r.ItemId, out var u)) r.ThumbUrl = u;
+                }
+                catch (Exception ex) when (ex is RobloxException or System.Text.Json.JsonException) { }
+            }));
         }
         catch { }
     }
@@ -115,7 +154,7 @@ public partial class MainViewModel
     [RelayCommand]
     private void OpenTxItem(TxRow? r)
     {
-        if (r is not { HasItem: true } || r.ItemType == "GamePass") return;
+        if (r is not { HasItem: true }) return;
         _marketDirect = true;
         try { Page = "Marketplace"; } finally { _marketDirect = false; }
         _ = OpenMarketItemAsync(new MarketItem { Id = r.ItemId, Name = r.ItemName, ItemType = r.ItemType == "Bundle" ? "Bundle" : "Asset", ThumbUrl = r.ThumbUrl });
