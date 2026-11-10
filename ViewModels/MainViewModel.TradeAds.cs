@@ -238,7 +238,24 @@ public partial class MainViewModel
         _adPosting = true;
         try
         {
-            var r = await RolimonsAds.PostAsync(cookie, a.UserId, Settings.TradeAdOffer, Settings.TradeAdRequest, Settings.TradeAdTags, CancellationToken.None);
+            // Rolimons refuses the whole ad ("Invalid item ID") for an item it doesn't list, or one the account no longer owns:
+            // leave those out instead of failing every time
+            try { await LimitedValues.EnsureAsync(CancellationToken.None); } catch { }
+            var offer = Settings.TradeAdOffer.Where(id => LimitedValues.Count == 0 || LimitedValues.Get(id) != null).ToList();
+            try
+            {
+                var owned = (await RobloxTrades.GetTradableAsync(a.Cookie, a.UserId, CancellationToken.None)).Select(t => t.AssetId).ToHashSet();
+                if (owned.Count > 0) offer = offer.Where(owned.Contains).ToList();
+            }
+            catch { }
+            var want = Settings.TradeAdRequest.Where(id => LimitedValues.Count == 0 || LimitedValues.Get(id) != null).ToList();
+            if (offer.Count == 0)
+            {
+                Notify?.Invoke("Trade ad: none of the items you offer can be traded right now. Pick them again.");
+                UpdateAdStatus();
+                return;
+            }
+            var r = await RolimonsAds.PostAsync(cookie, a.UserId, offer, want, Settings.TradeAdTags, CancellationToken.None);
             if (r.Ok)
             {
                 Settings.TradeAdLastPosted = DateTime.UtcNow;
