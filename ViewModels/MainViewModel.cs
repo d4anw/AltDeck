@@ -139,7 +139,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         Settings = _store.Load();
-        _perf.RecoverFromCrash();   // put Roblox's own settings back if RoDeck was closed while they were changed
+        _perf.RecoverFromCrash(Settings);   // put Roblox's own settings back if RoDeck was closed while they were changed
         SignInIsolation.Restore();  // same for the user's own Roblox sign-in
         ThemeManager.Apply(Settings.Theme, Settings.Accent);
 

@@ -203,7 +203,7 @@ public sealed class PerformanceService
             {
                 lock (_gate)
                 {
-                    if (full) { RestoreLocked(); HealOwnSettingsLocked(s); }
+                    if (full) { RestoreLocked(); HealOwnSettingsLocked(s, includeWanted: true); }
                     else notice = ApplyLocked(s);
                 }
             });
@@ -235,16 +235,22 @@ public sealed class PerformanceService
         lock (_gate) RestoreLocked();
     }
 
-    /// <summary>If RoDeck was closed or crashed while it had changed Roblox's files, put them back.</summary>
-    public void RecoverFromCrash()
+    /// <summary>
+    /// At start: if RoDeck was closed or crashed while it had changed Roblox's files, put them back; and undo values a
+    /// client saved back into Roblox's own settings when it closed (so your own Roblox isn't stuck at, say, 10 FPS).
+    /// </summary>
+    public void RecoverFromCrash(AppSettings s)
     {
         try
         {
             lock (_gate)
             {
-                if (!File.Exists(StatePath)) return;
-                _state = JsonSerializer.Deserialize<PerfRestoreState>(File.ReadAllText(StatePath));
-                RestoreLocked();
+                if (File.Exists(StatePath))
+                {
+                    _state = JsonSerializer.Deserialize<PerfRestoreState>(File.ReadAllText(StatePath));
+                    RestoreLocked();
+                }
+                HealOwnSettingsLocked(s, includeWanted: false);
             }
         }
         catch { }
@@ -259,6 +265,8 @@ public sealed class PerformanceService
         // Start from a clean slate: put back whatever the previous launch changed, then apply what is wanted now.
         // (The originals are read fresh from disk, so they are always the user's own values.)
         if (_state != null) RestoreLocked();
+        // values an earlier client saved back into Roblox's settings when it closed (e.g. a 10 FPS cap): the user's own first
+        HealOwnSettingsLocked(s, includeWanted: false);
         var st = new PerfRestoreState();
 
         var flags = BuildFlags(s);
@@ -309,6 +317,8 @@ public sealed class PerformanceService
         }
         if (s.UsesFpsCap)
             l.Add(("FramerateCap", "int", s.FpsCap.ToString(CultureInfo.InvariantCulture)));
+        else if (s.UnlimitedFps)
+            l.Add(("FramerateCap", "int", UnlimitedFpsValue.ToString(CultureInfo.InvariantCulture)));   // Roblox's own cap would still hold otherwise
         if (s.MuteOnStart)
             l.Add(("MasterVolume", "float", "0"));
         return l;
@@ -445,7 +455,8 @@ public sealed class PerformanceService
     /// For "Full quality" launches: if Roblox's own settings still hold values RoDeck wrote for a light profile
     /// (saved back by an earlier client), put the user's real value back, or remove the entry so Roblox uses its default.
     /// </summary>
-    private void HealOwnSettingsLocked(AppSettings s)
+    /// <param name="includeWanted">Also count values equal to what the current settings would write as RoDeck's.</param>
+    private void HealOwnSettingsLocked(AppSettings s, bool includeWanted)
     {
         try
         {
@@ -456,7 +467,7 @@ public sealed class PerformanceService
             if (props == null) return;
 
             var mem = LoadMemory();
-            var current = BuildOwnSettings(s).ToDictionary(x => x.Name, x => x.Value);
+            var current = includeWanted ? BuildOwnSettings(s).ToDictionary(x => x.Name, x => x.Value) : new Dictionary<string, string>();
             bool changed = false;
             foreach (var name in new[] { "GraphicsQualityLevel", "SavedQualityLevel", "FramerateCap", "MasterVolume" })
             {
