@@ -84,6 +84,7 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 - Online friends first, with the game they're in and a **Join** button.
 - **Friend requests** in a grid that fits your window: accept or decline right there.
 - **Find players** by name, user ID or profile link, open their profile, and star your favourite friends.
+- **Profiles** with tabs: what they're wearing, their friends, communities, badges, favourite games and inventory (when it's public). **Follow** or unfollow from there.
 - **Edit your own About** text: open your profile (account menu → My profile) and press Edit About.
 - **Roblox settings** (privacy, security…) from the account menu, signed in as that account.
 
@@ -96,6 +97,7 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 - Your wardrobe by category, body colours and scales, R6 / R15 and your outfits.
 - A **3D preview** you can turn, and accessory adjustment.
 - **Copy a look** from one of your accounts to another.
+- **Emotes:** your emote wheel's 8 slots and every emote you own; click one to put it in a slot.
 
 ### 🛒 Marketplace
 - Categories, search, sort and price filters, starting on all items.

@@ -31,6 +31,7 @@ public partial class MainViewModel
         if (value != "Games") PickingGameForMulti = false;
         MaybeLoadTransactions();
         MaybeLoadCommunities();
+        MaybeLoadEmotes();
         RecordNav();
         MaybeLoadHome();
         MaybeLoadGames();

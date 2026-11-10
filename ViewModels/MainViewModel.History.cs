@@ -36,7 +36,7 @@ public partial class MainViewModel
             "Multi" => MultiTab,
             "Games" => (GamesView.Length > 0 ? GamesView : "charts") + (GamesView == "search" ? $" {GameSearchText}" : "")
                        + (game != null ? $" game {game.UniverseId}" : ""),
-            "Friends" => FriendsTab + (profile > 0 ? $" profile {profile}" : ""),
+            "Friends" => FriendsTab + (profile > 0 ? $" profile {profile} {ProfileTab}" : ""),
             "Communities" => IsCommunityOpen && _lastCommunityId > 0 ? $"community {_lastCommunityId} {CommunityTab}"
                              : IsCommunitySearch ? $"search {CommunitySearchText}" : "",
             "Avatar" => AvatarTab,
@@ -133,7 +133,12 @@ public partial class MainViewModel
 
             case "Friends":
                 FriendsTab = s.FriendsTab;
-                if (s.ProfileId > 0) { if (!IsProfileOpen || _lastProfileId != s.ProfileId) _ = OpenProfileAsync(s.ProfileId); }
+                if (s.ProfileId > 0)
+                {
+                    if (!IsProfileOpen || _lastProfileId != s.ProfileId) _ = OpenProfileAsync(s.ProfileId);
+                    var tab = s.Key.Split(' ')[^1];
+                    if (tab is "About" or "Wearing" or "Friends" or "Communities" or "Badges" or "Favourites" or "Inventory") ProfileTab = tab;
+                }
                 else if (IsProfileOpen) CloseProfile();
                 break;
 

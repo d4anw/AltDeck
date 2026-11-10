@@ -412,8 +412,121 @@
                        IsChecked="{Binding AvatarTab, Converter={StaticResource Eq}, ConverterParameter=Wardrobe, Mode=TwoWay}"/>
           <RadioButton Style="{StaticResource Seg}" Content="Body" GroupName="avatartab"
                        IsChecked="{Binding AvatarTab, Converter={StaticResource Eq}, ConverterParameter=Body, Mode=TwoWay}"/>
-          <RadioButton Style="{StaticResource Seg}" Content="Outfits" GroupName="avatartab" Margin="0"
+          <RadioButton Style="{StaticResource Seg}" Content="Outfits" GroupName="avatartab"
                        IsChecked="{Binding AvatarTab, Converter={StaticResource Eq}, ConverterParameter=Outfits, Mode=TwoWay}"/>
+          <RadioButton Style="{StaticResource Seg}" Content="Emotes" GroupName="avatartab" Margin="0"
+                       IsChecked="{Binding AvatarTab, Converter={StaticResource Eq}, ConverterParameter=Emotes, Mode=TwoWay}"/>
+        </StackPanel>
+
+        <!-- emotes: the 8 slots of the emote wheel, and the account's emotes -->
+        <StackPanel Visibility="{Binding AvatarTab, Converter={StaticResource PageVis}, ConverterParameter=Emotes}">
+          <ctl:StateView State="{Binding EmotesLoad.State}" Message="{Binding EmotesLoad.Message}" MinHeight="220"
+                         RetryCommand="{Binding RefreshEmotesCommand}">
+            <StackPanel>
+              <Grid Margin="0,0,0,10">
+                <StackPanel>
+                  <TextBlock Text="Emote wheel" FontSize="16" FontWeight="SemiBold"/>
+                  <TextBlock Text="Pick a slot, then click one of your emotes below to put it there. In a game, press . to open the wheel."
+                             FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
+                </StackPanel>
+                <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0"
+                        ToolTip="Load again" Command="{Binding RefreshEmotesCommand}"/>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding EmoteSlots}" Margin="0,0,-10,0">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="4"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Margin="0,0,10,10" Padding="0" Cursor="Hand" Focusable="False" HorizontalContentAlignment="Stretch"
+                            Command="{Binding DataContext.SelectEmoteSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}">
+                      <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                          <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1.5"
+                                  CornerRadius="14" Padding="10,8">
+                            <ContentPresenter/>
+                          </Border>
+                          <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></Trigger>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                              <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                              <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
+                            </DataTrigger>
+                          </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                      </Button.Template>
+                      <Grid>
+                        <StackPanel>
+                          <Grid Width="72" Height="72" HorizontalAlignment="Center">
+                            <Border CornerRadius="12" Background="{DynamicResource Page}"/>
+                            <TextBlock Text="{Binding Position}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource Muted}" Visibility="{Binding IsEmpty, Converter={StaticResource BoolVis}}"/>
+                            <ctl:RemoteImage Url="{Binding ThumbUrl}" CornerRadius="12" Background="Transparent" Stretch="Uniform"
+                                             Visibility="{Binding IsEmpty, Converter={StaticResource BoolVisInv}}"/>
+                          </Grid>
+                          <TextBlock FontSize="11" Margin="0,6,0,0" HorizontalAlignment="Center" Style="{StaticResource MutedText}">
+                            <Run Text="Slot"/> <Run Text="{Binding Position, Mode=OneWay}"/>
+                          </TextBlock>
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                     Visibility="{Binding IsEmpty, Converter={StaticResource BoolVisInv}}" ToolTip="{Binding Name}"/>
+                          <TextBlock Text="Empty" FontSize="12" HorizontalAlignment="Center" Style="{StaticResource MutedText}"
+                                     Visibility="{Binding IsEmpty, Converter={StaticResource BoolVis}}"/>
+                        </StackPanel>
+                        <Button Style="{StaticResource IconBtn}" Content="&#xE711;" Margin="0,-2,-4,0" Width="26" Height="26" FontSize="10"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                ToolTip="Take it off the wheel" Visibility="{Binding IsEmpty, Converter={StaticResource BoolVisInv}}"
+                                Command="{Binding DataContext.RemoveEmoteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"/>
+                      </Grid>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,18,0,10">
+                <Run Text="Your emotes"/> <Run Text="{Binding OwnedEmotes.Count, Mode=OneWay}" Foreground="{DynamicResource Muted}" FontWeight="Normal"/>
+              </TextBlock>
+              <TextBlock Text="This account has no emotes yet. Get some on the Marketplace." Style="{StaticResource MutedText}"
+                         Visibility="{Binding OwnedEmotes.Count, Converter={StaticResource CountVis}, ConverterParameter=Inverse}"/>
+              <ItemsControl ItemsSource="{Binding OwnedEmotes}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Width="118" Margin="0,0,10,10" Padding="0" Cursor="Hand" Focusable="False" ToolTip="Put it in the picked slot"
+                            Command="{Binding DataContext.EquipEmoteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}">
+                      <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                          <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1.5" CornerRadius="14">
+                            <ContentPresenter/>
+                          </Border>
+                          <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource AccentHover}"/></Trigger>
+                            <DataTrigger Binding="{Binding IsWorn}" Value="True">
+                              <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                              <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsBusy}" Value="True"><Setter TargetName="b" Property="Opacity" Value="0.5"/></DataTrigger>
+                          </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                      </Button.Template>
+                      <Grid>
+                        <StackPanel>
+                          <ctl:RemoteImage Url="{Binding ThumbUrl}" Height="104" Margin="6,6,6,0" CornerRadius="10" Background="Transparent" Stretch="Uniform"/>
+                          <TextBlock Text="{Binding Name}" Margin="9,6,9,9" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <Border Width="22" Height="22" CornerRadius="11" Background="{DynamicResource Accent}" Margin="0,6,6,0"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Visibility="{Binding IsWorn, Converter={StaticResource BoolVis}}"
+                                ToolTip="On your wheel">
+                          <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{DynamicResource AccentFg}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                      </Grid>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ctl:StateView>
         </StackPanel>
 
         <!-- wardrobe -->

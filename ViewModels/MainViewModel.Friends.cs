@@ -306,6 +306,7 @@ public partial class MainViewModel
             OpenProfile = p;
             NotifyProfile();
             IsEditingAbout = false;
+            ResetProfileTabs(p.UserId);
             return true;
         }, "Opening profile…");
     }

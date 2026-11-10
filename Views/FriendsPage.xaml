@@ -3,6 +3,41 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctl="clr-namespace:RoDeck.Controls">
   <UserControl.Resources>
+    <!-- a chip that lights up when selected (inventory kinds) -->
+    <Style x:Key="PickChip" TargetType="Button" BasedOn="{StaticResource Chip}">
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+          <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+          <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <ControlTemplate x:Key="HoverCard" TargetType="Button">
+      <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"
+              CornerRadius="14" Padding="{TemplateBinding Padding}">
+        <ContentPresenter/>
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+          <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+        </Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <!-- an item on a profile (wearing, inventory): picture and name; click for its page -->
+    <DataTemplate x:Key="ProfileItemTile">
+      <Button Width="132" Margin="0,0,12,12" Padding="0" Cursor="Hand" Focusable="False" ToolTip="{Binding Name}"
+              Template="{StaticResource HoverCard}"
+              Command="{Binding DataContext.OpenProfileItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+              CommandParameter="{Binding}">
+        <StackPanel>
+          <ctl:RemoteImage Url="{Binding ThumbUrl}" Height="116" Margin="8,8,8,0" CornerRadius="10" Background="Transparent" Stretch="Uniform"/>
+          <TextBlock Text="{Binding Name}" Margin="10,6,10,10" FontSize="12" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+      </Button>
+    </DataTemplate>
     <!-- a friend: picture with status dot (and a star for favourites), name, what they're doing. Click: menu. -->
     <DataTemplate x:Key="FriendCard">
       <Button Width="236" Margin="0,0,12,12" Padding="12,10" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
@@ -274,6 +309,29 @@
                       <TextBlock Text="Favourite"/>
                     </StackPanel>
                   </Button>
+                  <Button Margin="0,0,8,8" Command="{Binding ToggleFollowCommand}" IsEnabled="{Binding FollowBusy, Converter={StaticResource Not}}"
+                          Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVisInv}}"
+                          ToolTip="Following shows when they're online and what they make, on Roblox">
+                    <Button.Style>
+                      <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding ProfileFollowing}" Value="True">
+                            <Setter Property="BorderBrush" Value="{DynamicResource AccentLine}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding UnfollowArmed}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Red}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Red}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE8FA;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding ProfileFollowText}"/>
+                    </StackPanel>
+                  </Button>
                   <Button Content="Edit About" ctl:Btn.Icon="&#xE70F;" Style="{StaticResource Primary}" Margin="0,0,8,8" Padding="18,10"
                           Command="{Binding EditAboutCommand}" Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVis}}"
                           ToolTip="Change the About text everyone sees on your profile"/>
@@ -282,8 +340,159 @@
               </StackPanel>
             </Grid>
 
+            <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+              <RadioButton Style="{StaticResource Seg}" Content="About" GroupName="profiletab"
+                           IsChecked="{Binding ProfileTab, Converter={StaticResource Eq}, ConverterParameter=About, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Wearing" GroupName="profiletab"
+                           IsChecked="{Binding ProfileTab, Converter={StaticResource Eq}, ConverterParameter=Wearing, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Friends" GroupName="profiletab"
+                           IsChecked="{Binding ProfileTab, Converter={StaticResource Eq}, ConverterParameter=Friends, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Communities" GroupName="profiletab"
+                           IsChecked="{Binding ProfileTab, Converter={StaticResource Eq}, ConverterParameter=Communities, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Badges" GroupName="profiletab"
+                           IsChecked="{Binding ProfileTab, Converter={StaticResource Eq}, ConverterParameter=Badges, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Favourites" GroupName="profiletab"
+                           IsChecked="{Binding ProfileTab, Converter={StaticResource Eq}, ConverterParameter=Favourites, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Inventory" GroupName="profiletab" Margin="0"
+                           IsChecked="{Binding ProfileTab, Converter={StaticResource Eq}, ConverterParameter=Inventory, Mode=TwoWay}"/>
+            </StackPanel>
+
+            <!-- ===== the other tabs ===== -->
+            <StackPanel Margin="0,16,0,0">
+              <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding ProfileTab}" Value="About"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </StackPanel.Style>
+              <Grid Margin="0,0,0,12">
+                <TextBlock Text="{Binding ProfileTabInfo}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" HorizontalAlignment="Right" Margin="0" ToolTip="Load again"
+                        Command="{Binding RefreshProfileTabCommand}"/>
+              </Grid>
+              <!-- inventory kinds -->
+              <ItemsControl ItemsSource="{Binding InventoryChips}" Margin="0,0,0,8"
+                            Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=Inventory}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Style="{StaticResource PickChip}" Content="{Binding Name}"
+                            Command="{Binding DataContext.SelectInventoryCategoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding Id}"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <ctl:StateView State="{Binding ProfileTabLoad.State}" Message="{Binding ProfileTabLoad.Message}" MinHeight="200"
+                             EmptyText="Nothing here." RetryCommand="{Binding RefreshProfileTabCommand}">
+                <Grid>
+                  <ItemsControl ItemsSource="{Binding ProfileWearing}" ItemTemplate="{StaticResource ProfileItemTile}"
+                                Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=Wearing}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  </ItemsControl>
+
+                  <ItemsControl ItemsSource="{Binding ProfileFriends}"
+                                Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=Friends}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Width="220" Margin="0,0,12,12" Padding="12,10" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
+                                Template="{StaticResource HoverCard}" ToolTip="Open their profile"
+                                Command="{Binding DataContext.OpenProfileFriendCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}">
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <ctl:AvatarView Width="40" Height="40" Url="{Binding HeadshotUrl}" Initials="{Binding Initials}"/>
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="{Binding Name, StringFormat=@{0}}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                          </Grid>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                  <ItemsControl ItemsSource="{Binding ProfileCommunities}"
+                                Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=Communities}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Width="300" Margin="0,0,12,12" Padding="12" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
+                                Template="{StaticResource HoverCard}" ToolTip="{Binding Name}"
+                                Command="{Binding DataContext.OpenCommunityTileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}">
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Grid Width="52" Height="52">
+                              <Border CornerRadius="12" Background="{DynamicResource Card2}"/>
+                              <ctl:RemoteImage Url="{Binding IconUrl}" CornerRadius="12"/>
+                            </Grid>
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="{Binding Role}" FontSize="12" Margin="0,3,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="{Binding MembersText}" FontSize="11" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                            </StackPanel>
+                          </Grid>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                  <StackPanel Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=Badges}">
+                    <ItemsControl ItemsSource="{Binding ProfileBadges}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1" CornerRadius="12"
+                                  Padding="12,10" Margin="0,0,0,6">
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="230"/>
+                              </Grid.ColumnDefinitions>
+                              <Grid Width="52" Height="52">
+                                <Border CornerRadius="26" Background="{DynamicResource Card2}"/>
+                                <ctl:RemoteImage Url="{Binding IconUrl}" CornerRadius="26"/>
+                              </Grid>
+                              <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Description}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"
+                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}"/>
+                              </StackPanel>
+                              <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding RarityText}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding AwardedText}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                              </StackPanel>
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="Show more" HorizontalAlignment="Center" Margin="0,6,0,0" Command="{Binding MoreProfileBadgesCommand}"
+                            Visibility="{Binding HasMoreProfileBadges, Converter={StaticResource BoolVis}}"/>
+                  </StackPanel>
+
+                  <ItemsControl ItemsSource="{Binding ProfileFavourites}" ItemTemplate="{StaticResource GameTileTemplate}"
+                                Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=Favourites}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  </ItemsControl>
+
+                  <StackPanel Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=Inventory}">
+                    <ItemsControl ItemsSource="{Binding ProfileInventory}" ItemTemplate="{StaticResource ProfileItemTile}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <Button Content="Show more" HorizontalAlignment="Center" Margin="0,4,0,0" Command="{Binding MoreProfileInventoryCommand}"
+                            Visibility="{Binding HasMoreProfileInventory, Converter={StaticResource BoolVis}}"/>
+                  </StackPanel>
+                </Grid>
+              </ctl:StateView>
+            </StackPanel>
+
+            <!-- ===== About: the about text and their games ===== -->
+            <StackPanel Visibility="{Binding ProfileTab, Converter={StaticResource PageVis}, ConverterParameter=About}">
             <!-- your own profile: edit the About text -->
-            <Border Style="{StaticResource CardBox}" Margin="0,22,0,0" Padding="22,18"
+            <Border Style="{StaticResource CardBox}" Margin="0,16,0,0" Padding="22,18"
                     Visibility="{Binding IsEditingAbout, Converter={StaticResource BoolVis}}">
               <StackPanel>
                 <TextBlock Text="Your About text" FontSize="16" FontWeight="SemiBold"/>
@@ -299,7 +508,7 @@
               </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource CardBox}" Margin="0,22,0,0" Padding="22,18"
+            <Border Style="{StaticResource CardBox}" Margin="0,16,0,0" Padding="22,18"
                     Visibility="{Binding OpenProfile.About, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">
               <StackPanel>
                 <TextBlock Text="About" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
@@ -314,6 +523,7 @@
               <ItemsControl ItemsSource="{Binding OpenProfile.Games}" ItemTemplate="{StaticResource GameTileTemplate}">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
               </ItemsControl>
+            </StackPanel>
             </StackPanel>
           </StackPanel>
         </ctl:StateView>

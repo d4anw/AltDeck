@@ -136,6 +136,8 @@ public partial class MainViewModel
 
         // the wardrobe, outfits and picture don't need the look first: start them now, side by side
         if (AvatarTab == "Outfits") _ = LoadOutfitsAsync(); else _ = LoadWardrobeAsync();
+        _emotesFor = null;
+        MaybeLoadEmotes();
         _ = LoadPictureAsync(a);
         string before = LookKey(AvatarLook);
         _model3DStale = Avatar3DModel == null;
@@ -422,6 +424,7 @@ public partial class MainViewModel
     {
         if (Page == "Avatar") RecordNav();
         if (value == "Outfits" && _outfitsLoadedFor != CurrentAccount) _ = LoadOutfitsAsync();
+        MaybeLoadEmotes();
     }
 
     private async Task LoadWardrobeAsync(bool more = false)
