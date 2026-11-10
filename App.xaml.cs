@@ -9,6 +9,26 @@ public partial class App : Application
     // Only one RoDeck at a time: two copies would fight over the vault, Roblox's lock and the hotkeys.
     private const string InstanceName = @"Local\RoDeck.SingleInstance";
     private const string ShowSignalName = @"Local\RoDeck.ShowWindow";
+    private const string ShownSignalName = @"Local\RoDeck.WindowShown";
+
+    /// <summary>Ends the other running RoDeck copies (the stuck one), so this one can start. False when one couldn't be closed.</summary>
+    private static bool CloseOtherCopies()
+    {
+        var me = Environment.ProcessId;
+        bool ok = true;
+        foreach (var p in System.Diagnostics.Process.GetProcesses())
+        {
+            try
+            {
+                if (p.Id == me || !p.ProcessName.StartsWith("RoDeck", StringComparison.OrdinalIgnoreCase)) continue;
+                p.Kill();
+                ok &= p.WaitForExit(5000);
+            }
+            catch { }
+            finally { p.Dispose(); }
+        }
+        return ok;
+    }
     private static Mutex? _instance;
     private static EventWaitHandle? _showSignal;
 
@@ -30,15 +50,28 @@ public partial class App : Application
         if (!firstCopy)
         {
             // RoDeck is already running (maybe hidden in the tray): bring that one to the front instead.
+            using var shown = new EventWaitHandle(false, EventResetMode.AutoReset, ShownSignalName);
             try { using var signal = EventWaitHandle.OpenExisting(ShowSignalName); signal.Set(); } catch { }
-            Shutdown();
-            return;
+            if (shown.WaitOne(TimeSpan.FromSeconds(5))) { Shutdown(); return; }
+
+            // It didn't come to the front: that copy is stuck (for example half-closed). Offer to close it and start fresh.
+            var answer = MessageBox.Show("RoDeck is already running, but it isn't responding and didn't come to the front.\n\n"
+                                         + "Close that copy and open RoDeck again?", "RoDeck", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer != MessageBoxResult.Yes || !CloseOtherCopies()) { Shutdown(); return; }
+            try { firstCopy = _instance.WaitOne(TimeSpan.FromSeconds(10)); }
+            catch (AbandonedMutexException) { firstCopy = true; }   // the closed copy still held it: it's ours now
+            if (!firstCopy) { Shutdown(); return; }
         }
         _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSignalName);
         new Thread(() =>
         {
             while (_showSignal.WaitOne())
-                Dispatcher.BeginInvoke(new Action(() => (MainWindow as MainWindow)?.BringToFront()));
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    (MainWindow as MainWindow)?.BringToFront();
+                    // "I'm here": a second copy that asked to show us can close itself
+                    try { using var ack = EventWaitHandle.OpenExisting(ShownSignalName); ack.Set(); } catch { }
+                }));
         }) { IsBackground = true, Name = "RoDeck show signal" }.Start();
 
         // Show errors instead of closing silently.
