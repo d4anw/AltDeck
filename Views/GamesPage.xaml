@@ -242,8 +242,216 @@
               </StackPanel>
             </Border>
 
+            <!-- servers, private servers, the store, badges -->
+            <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+              <RadioButton Style="{StaticResource Seg}" GroupName="gametab"
+                           IsChecked="{Binding GameTab, Converter={StaticResource Eq}, ConverterParameter=Servers, Mode=TwoWay}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE968;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                  <TextBlock Text="Servers" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton Style="{StaticResource Seg}" GroupName="gametab"
+                           IsChecked="{Binding GameTab, Converter={StaticResource Eq}, ConverterParameter=Private, Mode=TwoWay}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE72E;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                  <TextBlock Text="Private servers" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton Style="{StaticResource Seg}" GroupName="gametab"
+                           IsChecked="{Binding GameTab, Converter={StaticResource Eq}, ConverterParameter=Store, Mode=TwoWay}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE719;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                  <TextBlock Text="Store" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton Style="{StaticResource Seg}" GroupName="gametab" Margin="0"
+                           IsChecked="{Binding GameTab, Converter={StaticResource Eq}, ConverterParameter=Badges, Mode=TwoWay}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE734;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                  <TextBlock Text="Badges" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+            </StackPanel>
+
+            <!-- ===== private servers ===== -->
+            <Border Style="{StaticResource CardBox}" Margin="0,14,0,0" Padding="22,18"
+                    Visibility="{Binding GameTab, Converter={StaticResource PageVis}, ConverterParameter=Private}">
+              <StackPanel>
+                <Grid>
+                  <StackPanel>
+                    <TextBlock Text="Private servers" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}">
+                      <Run Text="Yours, and the ones"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay}"/> <Run Text="was invited to."/>
+                    </TextBlock>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="Create one" ctl:Btn.Icon="&#xE710;" ctl:Btn.External="True" Command="{Binding CreatePrivateServerCommand}"
+                            ToolTip="Private servers are a monthly Robux subscription: started on Roblox's own game page, signed in as this account"/>
+                    <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" Margin="0" ToolTip="Look again" Command="{Binding RefreshGameTabCommand}"/>
+                  </StackPanel>
+                </Grid>
+                <ctl:StateView State="{Binding PrivateLoad.State}" Message="{Binding PrivateLoad.Message}" MinHeight="140" Margin="0,14,0,0"
+                               EmptyText="No private servers for this account here." RetryCommand="{Binding RefreshGameTabCommand}">
+                  <ItemsControl ItemsSource="{Binding PrivateServers}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{DynamicResource Card2}" CornerRadius="12" Padding="14,10" Margin="0,0,0,6">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="200"/>
+                              <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="{Binding OwnerText}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                              <ProgressBar Width="110" Height="6" Maximum="1" Value="{Binding Fill, Mode=OneWay}" BorderThickness="0"
+                                           Foreground="{DynamicResource Accent}" Background="{DynamicResource Line}" Margin="0,0,10,0"/>
+                              <TextBlock Text="{Binding PlayersText}" FontFamily="Consolas"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                              <Button Content="Alts…" ctl:Btn.Icon="&#xE716;" Padding="12,6" IsEnabled="{Binding CanJoin}"
+                                      Command="{Binding DataContext.JoinPrivateServerWithAltsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding}"/>
+                              <Button Content="Join" ctl:Btn.Icon="&#xE768;" Style="{StaticResource Primary}" Padding="16,6" Margin="0" IsEnabled="{Binding CanJoin}"
+                                      Command="{Binding DataContext.JoinPrivateServerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding}"/>
+                            </StackPanel>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ctl:StateView>
+              </StackPanel>
+            </Border>
+
+            <!-- ===== the store: game passes ===== -->
+            <Border Style="{StaticResource CardBox}" Margin="0,14,0,0" Padding="22,18"
+                    Visibility="{Binding GameTab, Converter={StaticResource PageVis}, ConverterParameter=Store}">
+              <StackPanel>
+                <Grid>
+                  <StackPanel>
+                    <TextBlock Text="Store" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Text="Game passes: extras the game sells, yours for good once bought." FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                  </StackPanel>
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0"
+                          ToolTip="Look again" Command="{Binding RefreshGameTabCommand}"/>
+                </Grid>
+                <ctl:StateView State="{Binding StoreLoad.State}" Message="{Binding StoreLoad.Message}" MinHeight="140" Margin="0,14,0,0"
+                               EmptyText="This game doesn't sell any passes." RetryCommand="{Binding RefreshGameTabCommand}">
+                  <ItemsControl ItemsSource="{Binding GamePasses}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Width="190" Margin="0,0,12,12" CornerRadius="14" Background="{DynamicResource Card2}" Padding="0,0,0,12"
+                                ToolTip="{Binding Description}">
+                          <StackPanel>
+                            <Grid Height="150" Margin="12,12,12,0">
+                              <Border CornerRadius="75" Background="{DynamicResource Page}" Width="150" Height="150"/>
+                              <ctl:RemoteImage Url="{Binding IconUrl}" Width="150" Height="150" CornerRadius="75"/>
+                            </Grid>
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="12,10,12,0" TextTrimming="CharacterEllipsis"/>
+                            <Grid Margin="12,8,12,0">
+                              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Viewbox Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center"
+                                         Visibility="{Binding ShowRobux, Converter={StaticResource BoolVis}}">
+                                  <Canvas Width="20" Height="20">
+                                    <Path Stroke="{DynamicResource Fg}" StrokeThickness="2.2" StrokeLineJoin="Round"
+                                          Data="M10,1.6 L17.3,5.8 L17.3,14.2 L10,18.4 L2.7,14.2 L2.7,5.8 Z"/>
+                                    <Rectangle Canvas.Left="7.2" Canvas.Top="7.2" Width="5.6" Height="5.6" RadiusX="0.8" RadiusY="0.8" Fill="{DynamicResource Fg}"/>
+                                  </Canvas>
+                                </Viewbox>
+                                <TextBlock Text="{Binding PriceText}" FontWeight="SemiBold">
+                                  <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                      <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Owned}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Green}"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding ForSale}" Value="False"><Setter Property="Foreground" Value="{DynamicResource Muted}"/></DataTrigger>
+                                      </Style.Triggers>
+                                    </Style>
+                                  </TextBlock.Style>
+                                </TextBlock>
+                              </StackPanel>
+                              <Button Content="Buy" Style="{StaticResource Primary}" Padding="14,5" Margin="0" HorizontalAlignment="Right"
+                                      Visibility="{Binding CanBuy, Converter={StaticResource BoolVis}}"
+                                      Command="{Binding DataContext.BuyPassCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding}"/>
+                            </Grid>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ctl:StateView>
+              </StackPanel>
+            </Border>
+
+            <!-- ===== badges ===== -->
+            <Border Style="{StaticResource CardBox}" Margin="0,14,0,0" Padding="22,18"
+                    Visibility="{Binding GameTab, Converter={StaticResource PageVis}, ConverterParameter=Badges}">
+              <StackPanel>
+                <Grid>
+                  <StackPanel>
+                    <TextBlock Text="Badges" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding BadgesInfo}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                  </StackPanel>
+                  <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0"
+                          ToolTip="Look again" Command="{Binding RefreshGameTabCommand}"/>
+                </Grid>
+                <ctl:StateView State="{Binding BadgesLoad.State}" Message="{Binding BadgesLoad.Message}" MinHeight="140" Margin="0,14,0,0"
+                               EmptyText="This game has no badges." RetryCommand="{Binding RefreshGameTabCommand}">
+                  <ItemsControl ItemsSource="{Binding GameBadges}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border x:Name="b" Background="{DynamicResource Card2}" CornerRadius="12" Padding="12,10" Margin="0,0,0,6"
+                                BorderThickness="1" BorderBrush="Transparent">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="Auto"/>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="230"/>
+                              <ColumnDefinition Width="170"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Width="56" Height="56">
+                              <Border CornerRadius="28" Background="{DynamicResource Page}"/>
+                              <ctl:RemoteImage Url="{Binding IconUrl}" CornerRadius="28"/>
+                            </Grid>
+                            <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="{Binding Description}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"
+                                         TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding RarityText}" FontWeight="SemiBold"/>
+                              <TextBlock Text="{Binding AwardedText}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                        Visibility="{Binding IsOwned, Converter={StaticResource BoolVis}}">
+                              <TextBlock Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="12" Foreground="{DynamicResource Green}"
+                                         VerticalAlignment="Center" Margin="0,0,6,0"/>
+                              <TextBlock Text="{Binding OwnedText}" FontSize="12" Foreground="{DynamicResource Green}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                          </Grid>
+                        </Border>
+                        <DataTemplate.Triggers>
+                          <DataTrigger Binding="{Binding IsOwned}" Value="True">
+                            <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Green}"/>
+                          </DataTrigger>
+                        </DataTemplate.Triggers>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ctl:StateView>
+              </StackPanel>
+            </Border>
+
             <!-- server finder -->
-            <Border Style="{StaticResource CardBox}" Margin="0,16,0,0" Padding="22,18">
+            <Border Style="{StaticResource CardBox}" Margin="0,14,0,0" Padding="22,18"
+                    Visibility="{Binding GameTab, Converter={StaticResource PageVis}, ConverterParameter=Servers}">
               <StackPanel>
                 <Grid>
                   <StackPanel>
@@ -352,5 +560,53 @@
         </ctl:StateView>
       </StackPanel>
     </ScrollViewer>
+
+    <!-- ================= buying a game pass: always asked first ================= -->
+    <Grid Visibility="{Binding ShowPassBuy, Converter={StaticResource BoolVis}}" Background="#B0000000">
+      <Border Style="{StaticResource CardBox}" Width="440" Padding="26,22" HorizontalAlignment="Center" VerticalAlignment="Center"
+              Background="{DynamicResource Card}">
+        <StackPanel>
+          <TextBlock Text="Buy this game pass?" FontSize="20" FontWeight="Bold"/>
+          <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Width="72" Height="72">
+              <Border CornerRadius="36" Background="{DynamicResource Card2}"/>
+              <ctl:RemoteImage Url="{Binding PassToBuy.IconUrl}" CornerRadius="36"/>
+            </Grid>
+            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding PassToBuy.Name}" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding OpenGame.Name}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </Grid>
+          <Border Background="{DynamicResource Card2}" CornerRadius="12" Padding="14,10" Margin="0,16,0,0">
+            <StackPanel>
+              <Grid>
+                <TextBlock Text="Price" Style="{StaticResource MutedText}"/>
+                <TextBlock HorizontalAlignment="Right" FontWeight="Bold"><Run Text="R$"/> <Run Text="{Binding PassToBuy.PriceText, Mode=OneWay}"/></TextBlock>
+              </Grid>
+              <Grid Margin="0,6,0,0">
+                <TextBlock Text="Account" Style="{StaticResource MutedText}"/>
+                <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding CurrentAccount.Label}"/>
+              </Grid>
+              <Grid Margin="0,6,0,0">
+                <TextBlock Text="Balance" Style="{StaticResource MutedText}"/>
+                <TextBlock HorizontalAlignment="Right" Text="{Binding CurrentAccount.RobuxText}"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="{Binding PassBuyError}" Foreground="{DynamicResource Red}" TextWrapping="Wrap" Margin="0,12,0,0" FontWeight="SemiBold"
+                     Visibility="{Binding PassBuyError, Converter={StaticResource EmptyCollapsed}}"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel" Command="{Binding CancelPassBuyCommand}" IsCancel="True"/>
+            <Button Margin="0" Style="{StaticResource Primary}" Command="{Binding ConfirmPassBuyCommand}" IsEnabled="{Binding PassBuyBusy, Converter={StaticResource Not}}">
+              <TextBlock><Run Text="Buy for R$"/> <Run Text="{Binding PassToBuy.PriceText, Mode=OneWay}"/></TextBlock>
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
   </Grid>
 </UserControl>

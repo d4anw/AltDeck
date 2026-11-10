@@ -30,6 +30,7 @@ public partial class MainViewModel
         if (value == "Multi" && !_restoring && !_multiTabChosen && MultiTab == "Running" && RunningCount == 0) MultiTab = "Launch";
         if (value != "Games") PickingGameForMulti = false;
         MaybeLoadTransactions();
+        MaybeLoadCommunities();
         RecordNav();
         MaybeLoadHome();
         MaybeLoadGames();
@@ -69,6 +70,10 @@ public partial class MainViewModel
         if (GameRows.Count > 0) _ = BuildGameRowsAsync();   // "My favourites" is per account
         _txFor = null;
         MaybeLoadTransactions();
+        _communitiesFor = null;
+        MyCommunities.Clear();
+        if (IsCommunityOpen) _ = OpenCommunityByIdAsync(_lastCommunityId);   // its Join / Leave is per account
+        MaybeLoadCommunities();
     }
 
     [RelayCommand]

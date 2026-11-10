@@ -72,7 +72,7 @@ public partial class MainViewModel
     private string DescribeTarget(LaunchTarget t)
     {
         var place = _placeNames.TryGetValue(t.PlaceId, out var n) ? n : "place " + t.PlaceId;
-        if (t.PrivateCode != null) return place + " (private server)";
+        if (t.PrivateCode != null || t.AccessCode != null) return place + " (private server)";
         if (t.JobId != null) return place + " (server " + t.JobId[..Math.Min(8, t.JobId.Length)] + ")";
         return place;
     }

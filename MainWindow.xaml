@@ -154,6 +154,8 @@
                   </Border>
                 </Grid>
               </RadioButton>
+              <RadioButton Style="{StaticResource Nav}" Tag="&#xE902;" GroupName="nav" Content="Communities"
+                           IsChecked="{Binding Page, Converter={StaticResource Eq}, ConverterParameter=Communities, Mode=TwoWay}"/>
 
               <TextBlock Text="AVATAR &amp; ITEMS" FontSize="11" FontWeight="SemiBold" Margin="4,18,0,6" Style="{StaticResource MutedText}"/>
               <RadioButton Style="{StaticResource Nav}" Tag="&#xE77B;" GroupName="nav" Content="Avatar"
@@ -225,6 +227,7 @@
             <views:PerformancePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Performance}"/>
             <views:SettingsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Settings}"/>
             <views:TransactionsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Transactions}"/>
+            <views:CommunitiesPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Communities}"/>
             </Grid>
 
             <!-- toast: bottom centre, or top centre while the launch queue panel is in the corner -->

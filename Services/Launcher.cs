@@ -8,7 +8,9 @@ namespace RoDeck.Services;
 /// Where to play. A newer "roblox.com/share?code=...&amp;type=Server" link has no place ID yet:
 /// it carries ShareCode/ShareType and is turned into a normal target by RobloxApi.ResolveShareLinkAsync.
 /// </summary>
-public record LaunchTarget(long PlaceId, string? JobId, string? PrivateCode, string? ShareCode = null, string? ShareType = null);
+/// A private server from its list on the game page has an <see cref="AccessCode"/> (written as "?accessCode=…" in a link).
+public record LaunchTarget(long PlaceId, string? JobId, string? PrivateCode, string? ShareCode = null, string? ShareType = null,
+                           string? AccessCode = null);
 
 public static class TargetParser
 {
@@ -35,8 +37,10 @@ public static class TargetParser
         }
         var code = Regex.Match(input, @"privateServerLinkCode=([\w-]+)");
         var job = Regex.Match(input, @"(?:gameInstanceId|jobId)=([0-9a-fA-F-]{36})");
+        var access = Regex.Match(input, @"accessCode=([0-9a-fA-F-]{36})", RegexOptions.IgnoreCase);
         return new LaunchTarget(placeId, job.Success ? job.Groups[1].Value : null,
-                                code.Success ? code.Groups[1].Value : null);
+                                code.Success ? code.Groups[1].Value : null,
+                                AccessCode: access.Success ? access.Groups[1].Value : null);
     }
 }
 
@@ -114,7 +118,9 @@ public sealed class Launcher
         var tracker = Random.Shared.NextInt64(100_000_000_000, 130_000_000_000);
 
         string request;
-        if (t.PrivateCode != null)
+        if (t.AccessCode != null && t.PrivateCode == null)
+            request = $"RequestPrivateGame&placeId={t.PlaceId}&accessCode={t.AccessCode}";   // a private server from its list
+        else if (t.PrivateCode != null)
         {
             // The access code is looked up with this account's own session. If Roblox's page doesn't give one,
             // still try with just the link code instead of giving up.

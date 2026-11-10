@@ -273,10 +273,48 @@
                       <TextBlock Text="Favourite"/>
                     </StackPanel>
                   </Button>
+                  <Button Content="Edit About" ctl:Btn.Icon="&#xE70F;" Margin="0,0,8,8" Command="{Binding EditAboutCommand}"
+                          Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVis}}"/>
                   <Button Content="Roblox.com" ctl:Btn.External="True" Margin="0,0,8,8" Command="{Binding ProfileOnWebCommand}"/>
+                  <Button Margin="0,0,8,8" Command="{Binding ToggleBlockCommand}"
+                          Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVisInv}}"
+                          ToolTip="A blocked player can't message, friend or join this account">
+                    <Button.Style>
+                      <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding BlockArmed}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Red}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Red}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE8F8;" FontFamily="{StaticResource Icons}" FontSize="12" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding ProfileBlockText}"/>
+                    </StackPanel>
+                  </Button>
                 </WrapPanel>
               </StackPanel>
             </Grid>
+
+            <!-- your own profile: edit the About text -->
+            <Border Style="{StaticResource CardBox}" Margin="0,22,0,0" Padding="22,18"
+                    Visibility="{Binding IsEditingAbout, Converter={StaticResource BoolVis}}">
+              <StackPanel>
+                <TextBlock Text="Your About text" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Text="Everyone sees this on your profile. Roblox filters it, and turns words it doesn't allow into #s." FontSize="12"
+                           Margin="0,2,0,10" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
+                <TextBox Text="{Binding AboutDraft, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110"
+                         MaxLength="1000" VerticalContentAlignment="Top" Padding="12,10" VerticalScrollBarVisibility="Auto"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                  <Button Content="Cancel" Command="{Binding CancelAboutCommand}"/>
+                  <Button Content="Save" Style="{StaticResource Primary}" Margin="0" Command="{Binding SaveAboutCommand}"
+                          IsEnabled="{Binding AboutBusy, Converter={StaticResource Not}}"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
 
             <Border Style="{StaticResource CardBox}" Margin="0,22,0,0" Padding="22,18"
                     Visibility="{Binding OpenProfile.About, Converter={StaticResource EmptyCollapsed}, FallbackValue=Collapsed}">

@@ -1,0 +1,310 @@
+<UserControl x:Class="RoDeck.Views.CommunitiesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RoDeck.Controls">
+  <UserControl.Resources>
+    <!-- a card that lifts and lights up on hover (communities, members, store items) -->
+    <ControlTemplate x:Key="HoverCard" TargetType="Button">
+      <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"
+              CornerRadius="14" Padding="{TemplateBinding Padding}">
+        <ContentPresenter/>
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+          <Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/>
+        </Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <!-- a community in a list -->
+    <DataTemplate x:Key="CommunityCard">
+      <Button Width="300" Margin="0,0,12,12" Padding="12" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
+              Template="{StaticResource HoverCard}" ToolTip="{Binding Name}"
+              Command="{Binding DataContext.OpenCommunityTileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+              CommandParameter="{Binding}">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Grid Width="56" Height="56">
+            <Border CornerRadius="12" Background="{DynamicResource Card2}"/>
+            <ctl:RemoteImage Url="{Binding IconUrl}" CornerRadius="12"/>
+          </Grid>
+          <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="190"/>
+              <TextBlock Text="&#xE930;" FontFamily="{StaticResource Icons}" FontSize="12" Foreground="{DynamicResource Accent}" Margin="6,0,0,0"
+                         VerticalAlignment="Center" ToolTip="Verified" Visibility="{Binding Verified, Converter={StaticResource BoolVis}}"/>
+            </StackPanel>
+            <TextBlock Text="{Binding SubText}" FontSize="12" Margin="0,3,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Text="{Binding MembersText}" FontSize="11" Margin="0,2,0,0" Style="{StaticResource MutedText}"
+                       Visibility="{Binding Role, Converter={StaticResource EmptyCollapsed}}"/>
+          </StackPanel>
+        </Grid>
+      </Button>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <Grid>
+    <!-- ================= the list: yours, or a search ================= -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Visibility="{Binding IsCommunityOpen, Converter={StaticResource BoolVisInv}}">
+      <StackPanel Margin="32,26,32,32">
+        <Grid>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Communities" FontSize="28" FontWeight="Bold"/>
+            <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}">
+              <Run Text="Roblox's groups:"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="'s, and every other one you search for."/>
+            </TextBlock>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <ctl:SearchBox Width="320" Margin="0,0,10,0" Text="{Binding CommunitySearchText}" Placeholder="Search communities, press Enter"
+                           SubmitCommand="{Binding SearchCommunitiesCommand}" SubmitOnClear="True"/>
+            <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh" Margin="0" Command="{Binding RefreshCommunitiesCommand}"/>
+          </StackPanel>
+        </Grid>
+
+        <!-- search results -->
+        <StackPanel Visibility="{Binding IsCommunitySearch, Converter={StaticResource BoolVis}}" Margin="0,22,0,0">
+          <Grid Margin="0,0,0,14">
+            <TextBlock FontSize="18" FontWeight="Bold" VerticalAlignment="Center">
+              <Run Text="Results for"/> <Run Text="{Binding CommunitySearchText, Mode=OneWay}"/>
+            </TextBlock>
+            <Button Style="{StaticResource Subtle}" Content="Back to your communities" HorizontalAlignment="Right" Command="{Binding ClearCommunitySearchCommand}"/>
+          </Grid>
+          <ctl:StateView State="{Binding CommunitySearchLoad.State}" Message="{Binding CommunitySearchLoad.Message}" MinHeight="200"
+                         EmptyText="No communities found." RetryCommand="{Binding SearchCommunitiesCommand}">
+            <ItemsControl ItemsSource="{Binding CommunityResults}" ItemTemplate="{StaticResource CommunityCard}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </ctl:StateView>
+        </StackPanel>
+
+        <!-- yours -->
+        <StackPanel Visibility="{Binding IsCommunitySearch, Converter={StaticResource BoolVisInv}}" Margin="0,22,0,0">
+          <TextBlock FontSize="18" FontWeight="Bold" Margin="0,0,0,14">
+            <Run Text="Your communities"/> <Run Text="{Binding MyCommunities.Count, Mode=OneWay}" Foreground="{DynamicResource Muted}" FontWeight="Normal"/>
+          </TextBlock>
+          <ctl:StateView State="{Binding CommunitiesLoad.State}" Message="{Binding CommunitiesLoad.Message}" MinHeight="200"
+                         EmptyText="This account isn't in any communities yet. Search for one above." RetryCommand="{Binding RefreshCommunitiesCommand}">
+            <ItemsControl ItemsSource="{Binding MyCommunities}" ItemTemplate="{StaticResource CommunityCard}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </ctl:StateView>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- ================= a community's page ================= -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Visibility="{Binding IsCommunityOpen, Converter={StaticResource BoolVis}}">
+      <StackPanel Margin="32,18,32,32">
+        <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseCommunityCommand}" Margin="-8,0,0,10">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE72B;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock Text="Back to communities"/>
+          </StackPanel>
+        </Button>
+
+        <ctl:StateView State="{Binding CommunityLoad.State}" Message="{Binding CommunityLoad.Message}" MinHeight="300"
+                       RetryCommand="{Binding RefreshCommunitiesCommand}">
+          <StackPanel>
+            <!-- header -->
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Grid Width="132" Height="132">
+                <Border CornerRadius="24" Background="{DynamicResource Card2}"/>
+                <ctl:RemoteImage Url="{Binding OpenCommunityIcon}" CornerRadius="24"/>
+              </Grid>
+              <StackPanel Grid.Column="1" Margin="22,0,0,0" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{Binding OpenCommunity.Name}" FontSize="26" FontWeight="Bold" TextWrapping="Wrap" MaxWidth="640"/>
+                  <TextBlock Text="&#xE930;" FontFamily="{StaticResource Icons}" FontSize="16" Foreground="{DynamicResource Accent}" Margin="10,4,0,0"
+                             VerticalAlignment="Center" ToolTip="Verified" Visibility="{Binding OpenCommunity.Verified, Converter={StaticResource BoolVis}, FallbackValue=Collapsed}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                  <TextBlock Text="By" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                  <Button Style="{StaticResource Subtle}" Padding="0" Margin="4,0,0,0" Command="{Binding OpenCommunityOwnerCommand}"
+                          Content="{Binding OpenCommunity.OwnerName}" ToolTip="Their profile"/>
+                  <TextBlock Text="·" Style="{StaticResource MutedText}" Margin="6,0" VerticalAlignment="Center"/>
+                  <TextBlock Text="{Binding OpenCommunity.MembersText}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                  <Border Style="{StaticResource Badge}" Background="{DynamicResource AccentSoft}" Margin="12,0,0,0" VerticalAlignment="Center"
+                          Visibility="{Binding CommunityRole, Converter={StaticResource EmptyCollapsed}}">
+                    <TextBlock Style="{StaticResource BadgeText}" Foreground="{DynamicResource Accent}">
+                      <Run Text="You:"/> <Run Text="{Binding CommunityRole, Mode=OneWay}"/>
+                    </TextBlock>
+                  </Border>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                  <Button Padding="22,10" Command="{Binding JoinOrLeaveCommunityCommand}" IsEnabled="{Binding CommunityBusy, Converter={StaticResource Not}}">
+                    <Button.Style>
+                      <Style TargetType="Button" BasedOn="{StaticResource Primary}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding CommunityMembership}" Value="Member">
+                            <Setter Property="Background" Value="{DynamicResource Card2}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding CommunityMembership}" Value="Pending">
+                            <Setter Property="Background" Value="{DynamicResource Card2}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding CommunityLeaveArmed}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Red}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Red}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Button.Style>
+                    <TextBlock Text="{Binding CommunityJoinText}" FontWeight="SemiBold"/>
+                  </Button>
+                  <Button Content="Roblox.com" ctl:Btn.External="True" Margin="8,0,0,0" Command="{Binding OpenCommunityOnWebCommand}"/>
+                </StackPanel>
+              </StackPanel>
+            </Grid>
+
+            <!-- shout and about next to each other -->
+            <Grid Margin="0,22,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border Style="{StaticResource CardBox}" Padding="22,18" VerticalAlignment="Stretch">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="&#xE789;" FontFamily="{StaticResource Icons}" FontSize="14" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Shout" FontSize="16" FontWeight="SemiBold"/>
+                  </StackPanel>
+                  <TextBlock Text="{Binding OpenCommunity.Shout}" TextWrapping="Wrap" LineHeight="21"
+                             Visibility="{Binding OpenCommunity.HasShout, Converter={StaticResource BoolVis}, FallbackValue=Collapsed}"/>
+                  <TextBlock Text="{Binding OpenCommunity.ShoutMeta}" FontSize="12" Margin="0,8,0,0" Style="{StaticResource MutedText}"
+                             Visibility="{Binding OpenCommunity.HasShout, Converter={StaticResource BoolVis}, FallbackValue=Collapsed}"/>
+                  <TextBlock Text="No shout right now." Style="{StaticResource MutedText}"
+                             Visibility="{Binding OpenCommunity.HasShout, Converter={StaticResource BoolVisInv}, FallbackValue=Collapsed}"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Style="{StaticResource CardBox}" Padding="22,18" VerticalAlignment="Stretch">
+                <StackPanel>
+                  <TextBlock Text="About" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                  <ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto">
+                    <TextBlock Text="{Binding OpenCommunity.Description}" TextWrapping="Wrap" LineHeight="21" Style="{StaticResource MutedText}"/>
+                  </ScrollViewer>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <!-- games, store, members -->
+            <Grid Margin="0,24,0,14">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton Style="{StaticResource Seg}" Content="Games" GroupName="communitytab"
+                             IsChecked="{Binding CommunityTab, Converter={StaticResource Eq}, ConverterParameter=Games, Mode=TwoWay}"/>
+                <RadioButton Style="{StaticResource Seg}" Content="Store" GroupName="communitytab"
+                             IsChecked="{Binding CommunityTab, Converter={StaticResource Eq}, ConverterParameter=Store, Mode=TwoWay}"/>
+                <RadioButton Style="{StaticResource Seg}" Content="Members" GroupName="communitytab" Margin="0"
+                             IsChecked="{Binding CommunityTab, Converter={StaticResource Eq}, ConverterParameter=Members, Mode=TwoWay}"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                          Visibility="{Binding CommunityTab, Converter={StaticResource PageVis}, ConverterParameter=Members}">
+                <TextBlock Text="Role" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <Grid>
+                  <ComboBox Width="240" Height="40" ItemsSource="{Binding CommunityRoles}" SelectedItem="{Binding CommunityRoleFilter}"/>
+                  <TextBlock Text="All roles" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding CommunityRoleFilter}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </Grid>
+                <Button Content="All" Margin="8,0,0,0" ToolTip="Every member, newest first" Command="{Binding ClearRoleFilterCommand}">
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                      <Setter Property="Visibility" Value="Visible"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding CommunityRoleFilter}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+              </StackPanel>
+            </Grid>
+
+            <ctl:StateView State="{Binding CommunityTabLoad.State}" Message="{Binding CommunityTabLoad.Message}" MinHeight="200"
+                           EmptyText="Nothing here yet.">
+              <Grid>
+                <ItemsControl ItemsSource="{Binding CommunityGames}" ItemTemplate="{StaticResource GameTileTemplate}"
+                              Visibility="{Binding CommunityTab, Converter={StaticResource PageVis}, ConverterParameter=Games}">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <ItemsControl ItemsSource="{Binding CommunityStore}"
+                              Visibility="{Binding CommunityTab, Converter={StaticResource PageVis}, ConverterParameter=Store}">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Width="160" Margin="0,0,14,14" Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch" Focusable="False"
+                              Template="{StaticResource HoverCard}" ToolTip="{Binding Name}"
+                              Command="{Binding DataContext.OpenCommunityStoreItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              CommandParameter="{Binding}">
+                        <StackPanel>
+                          <Grid>
+                            <Border Height="158" CornerRadius="13,13,0,0" Background="{DynamicResource Card2}"/>
+                            <ctl:RemoteImage Url="{Binding ThumbUrl}" Height="158" CornerRadius="13" TopCornersOnly="True"/>
+                          </Grid>
+                          <StackPanel Margin="10,9,10,10">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding PriceText}" FontWeight="SemiBold" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
+                          </StackPanel>
+                        </StackPanel>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Visibility="{Binding CommunityTab, Converter={StaticResource PageVis}, ConverterParameter=Members}">
+                  <ItemsControl ItemsSource="{Binding CommunityMembers}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Width="236" Margin="0,0,12,12" Padding="12,10" HorizontalContentAlignment="Stretch" Cursor="Hand" Focusable="False"
+                                Template="{StaticResource HoverCard}" ToolTip="Open their profile"
+                                Command="{Binding DataContext.OpenCommunityMemberCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="Auto"/>
+                              <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ctl:AvatarView Width="44" Height="44" Url="{Binding HeadshotUrl}" Initials="{Binding Initials}"/>
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="{Binding Role}" FontSize="12" Margin="0,2,0,0" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                          </Grid>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Button Content="Show more" HorizontalAlignment="Center" Margin="0,8,0,0" Command="{Binding MoreMembersCommand}"
+                          Visibility="{Binding HasMoreMembers, Converter={StaticResource BoolVis}}"/>
+                </StackPanel>
+              </Grid>
+            </ctl:StateView>
+          </StackPanel>
+        </ctl:StateView>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

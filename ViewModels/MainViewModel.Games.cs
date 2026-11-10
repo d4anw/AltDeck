@@ -249,6 +249,7 @@ public partial class MainViewModel
         _allServers = new();
         ServersInfo = "";
         SelectedMedia = "";
+        ResetGameExtras();
         IsGameOpen = true;                       // first, so "back" from here returns to where you came from
         if (Page != "Games") { _gamesDirect = true; try { Page = "Games"; } finally { _gamesDirect = false; } }
         await GameLoad.RunAsync(async ct =>

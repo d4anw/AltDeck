@@ -37,6 +37,8 @@ public partial class MainViewModel
             "Games" => (GamesView.Length > 0 ? GamesView : "charts") + (GamesView == "search" ? $" {GameSearchText}" : "")
                        + (game != null ? $" game {game.UniverseId}" : ""),
             "Friends" => FriendsTab + (profile > 0 ? $" profile {profile}" : ""),
+            "Communities" => IsCommunityOpen && _lastCommunityId > 0 ? $"community {_lastCommunityId} {CommunityTab}"
+                             : IsCommunitySearch ? $"search {CommunitySearchText}" : "",
             "Avatar" => AvatarTab,
             "Settings" => SettingsSection,
             "Marketplace" => item != null ? $"item {item.ItemType} {item.Id}" : "",
@@ -92,6 +94,7 @@ public partial class MainViewModel
     /// <summary>Closes a confirm card or the trade maker. True when something was closed.</summary>
     private bool CloseOverlay()
     {
+        if (ShowPassBuy) { CancelPassBuy(); return true; }
         if (ShowTradeConfirm) { if (!TradeBusy) ShowTradeConfirm = false; return true; }
         if (ShowBuyConfirm) { if (!BuyBusy) ShowBuyConfirm = false; return true; }
         if (ShowInstaBuyWarning) { ShowInstaBuyWarning = false; return true; }
@@ -137,6 +140,18 @@ public partial class MainViewModel
             case "Avatar":
                 AvatarTab = s.AvatarTab;
                 break;
+
+            case "Communities":
+            {
+                var parts = s.Key.Split('|', 2)[1].Split(' ');
+                if (parts[0] == "community" && parts.Length > 1 && long.TryParse(parts[1], out var cid))
+                {
+                    if (!IsCommunityOpen || _lastCommunityId != cid) _ = OpenCommunityByIdAsync(cid);
+                    if (parts.Length > 2) CommunityTab = parts[2];
+                }
+                else if (IsCommunityOpen) CloseCommunity();
+                break;
+            }
 
             case "Settings":
                 if (s.SettingsSection.Length > 0) SettingsSection = s.SettingsSection;

@@ -8,8 +8,9 @@ AltDeck has a new name and is now a whole new Roblox client: RoDeck replaces the
 
 - **New look:** a sidebar with Home, Games, Friends, Avatar, Marketplace, Trades, Multi-launch and FPS & FastFlags. Pick an account top right and every page is for that account. Your mouse's side buttons go back and forward.
 - **Home:** friends online, friend requests, continue playing, your favourite games and recommended games.
-- **Games:** charts as rows, search, favourites (synced with Roblox) and recently played, game pages with stats and a server finder.
-- **Friends:** who's online and where, join them, requests, player search and profiles.
+- **Games:** charts as rows, search, favourites (synced with Roblox) and recently played, game pages with stats, a server finder, private servers, the game's store and its badges.
+- **Communities:** your communities, search, community pages with shout, games, store and members, join and leave.
+- **Friends:** who's online and where, join them, requests, player search and profiles; block players and edit your own About text.
 - **Avatar editor:** wardrobe, body, colours, outfits, R6 / R15, a 3D preview, and copy a look to another account.
 - **Marketplace:** browse, search and try on items; item pages with similar items, more from the creator and every seller for limiteds.
 - **Trades:** live deals (newest first) with a buy card or insta-buy, a watchlist with notifications, a trade calculator, limiteds with values and RAP history, inventory value, your trades with accept / counter / decline, and Rolimons trade ads.

@@ -412,6 +412,11 @@ public partial class MainWindow : Window
             menu.Items.Add(item);
         }
         if (_vm.Accounts.Count > 0) menu.Items.Add(new System.Windows.Controls.Separator());
+        if (_vm.CurrentAccount != null)
+        {
+            Add(menu, "My profile", "", () => _vm.OpenMyProfileCommand.Execute(null));
+            Add(menu, "Roblox settings (privacy, security…)", "", () => _vm.OpenRobloxSettingsCommand.Execute(null));
+        }
         Add(menu, _vm.Accounts.Count > 0 ? "Manage accounts…" : "Add an account…", "\uE716", () => _vm.GoMultiTabCommand.Execute("Accounts"));
         Add(menu, "Check all sign-ins", "\uE72C", () => _vm.CheckAllCommand.Execute(null));
         Add(menu, "Accounts & security", "\uE72E", () => _vm.GoSectionCommand.Execute("Accounts"));

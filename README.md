@@ -75,12 +75,22 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 - **Search**, **favourites** (synced with your Roblox favourites both ways) and **recently played**.
 - **Game pages** with pictures, players online, visits, likes and the description.
 - **Server finder:** best ping, fewest or most players, or the server your friends are in.
+- **Private servers:** yours and the ones you were invited to, joined in one click (or with your alts). Creating one opens Roblox's page, since it's a monthly subscription.
+- **Store:** the game's passes with prices and which you own; buying always shows a confirm card first.
+- **Badges:** every badge with how rare it is, how many won it, and the ones you have.
 - **Play** joins with the account top right and closes the game it was in first. **With alts…** sends the game to Multi-launch.
 
 ### 👫 Friends
 - Online friends first, with the game they're in and a **Join** button.
 - **Friend requests** in a grid that fits your window: accept or decline right there.
 - **Find players** by name, user ID or profile link, open their profile, and star your favourite friends.
+- **Block** or unblock a player from their profile, and **edit your own About** text on yours.
+- **Roblox settings** (privacy, security…) from the account menu, signed in as that account.
+
+### 🏘️ Communities
+- **Your communities** (Roblox's groups) with your role in each, and **search** for any other.
+- **Community pages** with the shout, the about text, the owner, its **games**, its **store** and its **members** (by role).
+- **Join** (or ask to join) and **leave**, for the account top right.
 
 ### 🧍 Avatar editor
 - Your wardrobe by category, body colours and scales, R6 / R15 and your outfits.
@@ -258,7 +268,8 @@ AltDeck was an alt launcher; RoDeck is a whole Roblox app. Your accounts and set
 
 - **New look:** a sidebar with Home, Games, Friends, Avatar, Marketplace, Trades, Multi-launch and FPS & FastFlags. Pick an account top right and every page is for that account. Back / forward with your mouse's side buttons.
 - **Home:** continue playing, your favourite games, your friends, and a card for every running client.
-- **Games:** charts as rows, search, favourites (synced with Roblox) and recently played, game pages with stats and a server finder.
+- **Games:** charts as rows, search, favourites (synced with Roblox) and recently played, game pages with stats, a server finder, private servers, the game's store and its badges.
+- **Communities:** your communities, search, community pages with shout, games, store and members, join and leave.
 - **Friends:** who's online and where, join them, requests, player search, profiles.
 - **Avatar editor:** wardrobe, body, colours, outfits, R6 / R15, a 3D preview and copy a look to another account.
 - **Marketplace:** browse, search and try on items; item pages with similar items, more from the creator and every seller for limiteds.

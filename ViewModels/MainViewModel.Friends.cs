@@ -303,6 +303,7 @@ public partial class MainViewModel
             var p = await RobloxFriends.GetProfileAsync(id, a?.Cookie, a?.UserId ?? 0, ct);
             OpenProfile = p;
             NotifyProfile();
+            _ = LoadBlockStateAsync(p.UserId);
             return true;
         }, "Opening profile…");
     }
