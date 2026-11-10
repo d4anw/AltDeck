@@ -104,7 +104,8 @@ public partial class MainViewModel
         var q = (AdPickerSearch ?? "").Trim();
         long? min = Limited.ParseAmount(AdPickerMin), max = Limited.ParseAmount(AdPickerMax);
         IEnumerable<LimitedTile> source = slot.IsOffer
-            ? _myTradableAll.GroupBy(t => t.AssetId).Select(g => g.First())               // one tile per item you own
+            // one tile per item you own; bundles (like dynamic heads) can't go in a Rolimons ad
+            ? _myTradableAll.Where(t => !t.IsBundle).GroupBy(t => t.AssetId).Select(g => g.First())
             : LimitedValues.All.Select(v => LimitedTile.From(v.AssetId, v.Name, v.Rap));
         var list = source.Where(t =>
                 (q.Length == 0 || t.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
@@ -253,6 +254,7 @@ public partial class MainViewModel
                 {
                     var copies = mine.Where(t => t.AssetId == id).ToList();
                     if (copies.Count == 0) { skipped.Add($"{name} (not in this account's inventory)"); continue; }
+                    if (copies.All(t => t.IsBundle)) { skipped.Add($"{name} (a bundle: Rolimons ads only take single items)"); continue; }
                     if (copies.All(t => t.IsOnHold)) { skipped.Add($"{name} (on trade hold)"); continue; }
                 }
                 offer.Add(id);
