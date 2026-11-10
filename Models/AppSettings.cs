@@ -49,7 +49,7 @@ public partial class AppSettings : ObservableObject
 
     // Performance
     public const int FpsMin = 5;
-    public const int FpsMax = 240;   // the top of the slider means "no cap": Roblox is left alone
+    public const int FpsMax = 240;   // the top of the slider: 240 FPS (no cap at all is the Unlimited FPS switch)
 
     [ObservableProperty] private string perfPreset = "Max alts";
     [ObservableProperty] private int fpsCap = 10;
@@ -103,9 +103,14 @@ public partial class AppSettings : ObservableObject
     [System.Text.Json.Serialization.JsonIgnore] public bool HasCustomPerf => CustomPerf != null;
     [System.Text.Json.Serialization.JsonIgnore]
     public string CustomPerfSummary => CustomPerf == null ? "Not saved yet"
-        : (CustomPerf.FpsCap >= FpsMax ? "No FPS cap" : $"{CustomPerf.FpsCap} FPS")
+        : $"{CustomPerf.FpsCap} FPS"
           + (CustomPerf.LowestGraphics ? ", lowest graphics" : "")
           + (CustomPerf.BackgroundCpuLimit > 0 ? $", CPU {CustomPerf.BackgroundCpuLimit}%" : "");
+
+    /// <summary>The FPS cap is written to Roblox: always, except with Unlimited FPS (which writes its own) and with the
+    /// "Roblox defaults" preset, which leaves Roblox's own frame rate alone.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool UsesFpsCap => !UnlimitedFps && PerfPreset != "Roblox defaults";
 
     partial void OnFpsCapChanged(int value)
     {

@@ -85,7 +85,7 @@ public sealed class PerformanceService
             f["DFIntTaskSchedulerTargetFps"] = UnlimitedFpsValue.ToString(CultureInfo.InvariantCulture);
             f["FFlagTaskSchedulerLimitTargetFpsTo2402"] = "false";
         }
-        else if (s.FpsCap < AppSettings.FpsMax)
+        else if (s.UsesFpsCap)
             f["DFIntTaskSchedulerTargetFps"] = s.FpsCap.ToString(CultureInfo.InvariantCulture);
 
         if (!s.LighterRendering) return f;
@@ -307,7 +307,7 @@ public sealed class PerformanceService
             l.Add(("GraphicsQualityLevel", "int", LowestLevel));
             l.Add(("SavedQualityLevel", "token", LowestLevel));
         }
-        if (!s.UnlimitedFps && s.FpsCap < AppSettings.FpsMax)
+        if (s.UsesFpsCap)
             l.Add(("FramerateCap", "int", s.FpsCap.ToString(CultureInfo.InvariantCulture)));
         if (s.MuteOnStart)
             l.Add(("MasterVolume", "float", "0"));
