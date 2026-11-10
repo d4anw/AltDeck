@@ -65,16 +65,16 @@ public partial class MainViewModel
         return LoadProfileTabAsync();
     }
 
-    private Task LoadProfileTabAsync()
+    private async Task LoadProfileTabAsync()
     {
-        if (OpenProfile is not { } p || ProfileTab == "About" || p.UserId != _profileTabsFor) return Task.CompletedTask;
-        if (!_profileTabsLoaded.Add(ProfileTab)) return Task.CompletedTask;
+        if (OpenProfile is not { } p || ProfileTab == "About" || p.UserId != _profileTabsFor) return;
+        if (!_profileTabsLoaded.Add(ProfileTab)) return;
         var a = CurrentAccount;
         var tab = ProfileTab;
         long id = p.UserId;
         bool Gone() => OpenProfile?.UserId != id || ProfileTab != tab;
         ProfileTabInfo = "";
-        return ProfileTabLoad.RunAsync(async ct =>
+        await ProfileTabLoad.RunAsync(async ct =>
         {
             switch (tab)
             {
@@ -151,6 +151,8 @@ public partial class MainViewModel
                 }
             }
         }, "Loading…");
+        // cut short (another tab or profile meanwhile) or failed: load it again next time it's opened
+        if (ProfileTab != tab || OpenProfile?.UserId != id || ProfileTabLoad.State == LoadState.Error) _profileTabsLoaded.Remove(tab);
     }
 
     private async Task<List<WardrobeItem>> LoadInventoryPageAsync(Account? a, long userId, WardrobeCategory cat, bool more, CancellationToken ct)

@@ -585,7 +585,7 @@
             <StackPanel>
               <Grid>
                 <TextBlock Text="Price" Style="{StaticResource MutedText}"/>
-                <TextBlock HorizontalAlignment="Right" FontWeight="Bold"><Run Text="R$"/> <Run Text="{Binding PassToBuy.PriceText, Mode=OneWay}"/></TextBlock>
+                <TextBlock HorizontalAlignment="Right" FontWeight="Bold" Text="{Binding PassToBuy.PriceLabel}"/>
               </Grid>
               <Grid Margin="0,6,0,0">
                 <TextBlock Text="Account" Style="{StaticResource MutedText}"/>
@@ -602,7 +602,7 @@
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Content="Cancel" Command="{Binding CancelPassBuyCommand}" IsCancel="True"/>
             <Button Margin="0" Style="{StaticResource Primary}" Command="{Binding ConfirmPassBuyCommand}" IsEnabled="{Binding PassBuyBusy, Converter={StaticResource Not}}">
-              <TextBlock><Run Text="Buy for R$"/> <Run Text="{Binding PassToBuy.PriceText, Mode=OneWay}"/></TextBlock>
+              <TextBlock Text="{Binding PassToBuy.BuyText}"/>
             </Button>
           </StackPanel>
         </StackPanel>

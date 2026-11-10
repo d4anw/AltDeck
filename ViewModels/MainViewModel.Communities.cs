@@ -174,11 +174,11 @@ public partial class MainViewModel
         RecordNav();
     }
 
-    private Task LoadCommunityTabAsync()
+    private async Task LoadCommunityTabAsync()
     {
-        if (OpenCommunity is not { } c || !_communityTabsLoaded.Add(CommunityTab)) return Task.CompletedTask;
+        if (OpenCommunity is not { } c || !_communityTabsLoaded.Add(CommunityTab)) return;
         var tab = CommunityTab;
-        return CommunityTabLoad.RunAsync(async ct =>
+        await CommunityTabLoad.RunAsync(async ct =>
         {
             switch (tab)
             {
@@ -230,6 +230,8 @@ public partial class MainViewModel
                 }
             }
         }, "Loading…");
+        // cut short (another tab or community meanwhile) or failed: load it again next time it's opened
+        if (CommunityTab != tab || OpenCommunity != c || CommunityTabLoad.State == LoadState.Error) _communityTabsLoaded.Remove(tab);
     }
 
     [RelayCommand] private void ClearRoleFilter() => CommunityRoleFilter = null;

@@ -26,6 +26,11 @@ public partial class MainViewModel
 
     private void MaybeLoadTrades()
     {
+        // coming back to Trades from elsewhere while a trade profile was left open: the tab it was opened from
+        // (back / forward still return to the trade profile itself)
+        if (Page == "Trades" && TradesTab == "Profile" && !_restoring && _tradesEnteredAt != Page)
+            TradesTab = _profileFrom is { Length: > 0 } f && f != "Profile" ? f : "Trades";
+        _tradesEnteredAt = Page;
         bool deals = Page == "Trades" && TradesTab == "Deals";
         if (deals) StartDeals(); else _dealTimer.Stop();
         if (Page != "Trades") return;
@@ -92,6 +97,8 @@ public partial class MainViewModel
     partial void OnDealsHideProjectedChanged(bool value) => FilterDeals();
     partial void OnDealsAffordableChanged(bool value) => FilterDeals();
     partial void OnDealsValueOnlyChanged(bool value) => FilterDeals();
+
+    private string _tradesEnteredAt = "";
 
     private void StartDeals()
     {

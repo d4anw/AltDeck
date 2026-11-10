@@ -37,6 +37,9 @@ public sealed partial class GamePassInfo : ObservableObject
     public bool CanBuy => !Owned && ForSale && Price is not null;
     public string PriceText => Owned ? "Owned" : ForSale && Price is long p ? (p == 0 ? "Free" : p.ToString("N0", CultureInfo.CurrentCulture)) : "Off sale";
     public bool ShowRobux => !Owned && ForSale && Price is > 0;
+    /// <summary>For the confirm card: "R$ 399", or "Free".</summary>
+    public string PriceLabel => Price is long p && p > 0 ? "R$ " + p.ToString("N0", CultureInfo.CurrentCulture) : "Free";
+    public string BuyText => Price is long p && p > 0 ? "Buy for R$ " + p.ToString("N0", CultureInfo.CurrentCulture) : "Get it for free";
 }
 
 /// <summary>A post (announcement) on a community's page.</summary>

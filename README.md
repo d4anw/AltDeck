@@ -113,6 +113,7 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 - **Limiteds:** every limited with value, demand, trend, RAP and a hoverable price chart.
 - **Inventory value** per account, with items on trade hold marked.
 - **Your trades:** inbound, outbound, completed and inactive, with both sides, a win / loss verdict, and accept / counter / decline behind a confirm screen.
+- **Send trades** from the trade maker, a profile or a trade profile. RoDeck checks Roblox's rules first: both of you need Roblox Plus, each side needs an item, and Robux can be at most half the RAP of that side.
 - **Trade ads:** a Rolimons trade ad posted again for you every 15+ minutes.
 
 ### 💰 Robux
@@ -241,7 +242,13 @@ Needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 The version shown in the app, the exe's details and backups all come from `<Version>` in `RoDeck.csproj`.
 
-**Releasing an update:** raise `<Version>`, build the exe, and publish a GitHub release tagged `v<version>` with the file attached as exactly `RoDeck.exe`, **and the same file a second time as `AltDeck.exe`** (installs from before the rename look for that name). Everyone's RoDeck offers it the next time they open it.
+**Releasing an update:**
+1. Raise `<Version>` in `RoDeck.csproj` and add the version to the changelog below.
+2. Build the exe (`Build RoDeck.exe.bat`).
+3. Publish a GitHub release tagged `v<version>` with the release notes as its text (the update window and "What's new" show them) and the exe attached as exactly **`RoDeck.exe`**.
+4. For a couple of months after 1.0, attach the same file a second time as **`AltDeck.exe`**: installs from before the rename only look for that name.
+
+Everyone's RoDeck offers the update the next time they open it.
 
 <br>
 
@@ -249,13 +256,17 @@ The version shown in the app, the exe's details and backups all come from `<Vers
 
 ```
 RoDeck/
-├─ Views/            Home, Games, Friends, Avatar, Marketplace, Trades, Multi-launch, FPS & FastFlags and Settings
-├─ ViewModels/       MainViewModel (app state and commands)
-├─ Services/         Vault, Launcher, RobloxApi, Updater, auto-rejoin, monitors, tray, hotkeys, Discord …
-├─ Models/           Account, settings, presets, layouts
-├─ Controls/         Dials, avatars, setting rows
-├─ *.xaml            Main window, splash, login, update window, What's new and dialogs
-└─ RoDeck.csproj    .NET 8 WPF project (version lives here)
+├─ Views/            One page each: Home, Games, Friends, Communities, Avatar, Marketplace, Trades, Transactions,
+│                    Multi-launch, FPS & FastFlags and Settings (plus the shared item page and buy card)
+├─ ViewModels/       MainViewModel, split by page (MainViewModel.Games.cs, .Trades.cs, .Communities.cs …)
+├─ Services/         Roblox's web services (RobloxHttp, RobloxApi, RobloxGames, RobloxFriends, RobloxCommunities,
+│                    RobloxProfiles, RobloxMarket, RobloxTrades, RobloxEconomy …), Rolimons values and ads,
+│                    the vault, launcher, auto-rejoin, FPS & FastFlags, updater, tray, hotkeys, Discord
+├─ Models/           Accounts, settings, games, items, trades, avatar
+├─ Controls/         Dials, avatars, remote images, search box, setting rows, loading states
+├─ docs/             Release notes
+├─ *.xaml            Main window, splash, login, Roblox pages, update window, What's new and dialogs
+└─ RoDeck.csproj     .NET 8 WPF project (the version lives here)
 ```
 
 <br>
@@ -268,19 +279,19 @@ RoDeck/
 
 AltDeck was an alt launcher; RoDeck is a whole Roblox app. Your accounts and settings come over by themselves.
 
-- **New look:** a sidebar with Home, Games, Friends, Avatar, Marketplace, Trades, Multi-launch and FPS & FastFlags. Pick an account top right and every page is for that account. Back / forward with your mouse's side buttons.
-- **Home:** continue playing, your favourite games, your friends, and a card for every running client.
-- **Games:** charts as rows, search, favourites (synced with Roblox) and recently played, game pages with stats, a server finder, private servers, the game's store and its badges.
-- **Communities:** your communities, search, community pages with shout, games, store and members, join and leave.
-- **Friends:** who's online and where, join them, requests, player search, profiles.
-- **Avatar editor:** wardrobe, body, colours, outfits, R6 / R15, a 3D preview and copy a look to another account.
+- **New look:** a sidebar with Home, Games, Friends, Communities, Avatar, Marketplace, Trades, Multi-launch and FPS & FastFlags. Pick an account top right and every page is for that account. Your mouse's side buttons go back and forward.
+- **Home:** friends online, friend requests, continue playing, your favourite games and recommended games.
+- **Games:** charts as rows, search, favourites (synced with Roblox) and recently played. Game pages with stats, a server finder, private servers, the game's store (buy game passes) and its badges.
+- **Friends:** who's online and where, join them, requests, player search. Full profiles: what they wear, their friends, communities, badges, favourite games and inventory, with Send trade and a switch to their trade profile. Edit your own About text.
+- **Communities:** your communities, search, community pages with the shout, posts, games, store and members; join and leave.
+- **Avatar editor:** wardrobe, body, colours, outfits, emotes, R6 / R15, a 3D preview, and copy a look to another account.
 - **Marketplace:** browse, search and try on items; item pages with similar items, more from the creator and every seller for limiteds.
-- **Trades:** live deals (newest first) with a buy card or insta-buy, a watchlist with notifications, a trade calculator, limiteds with values and RAP history, inventory value, your trades with accept / counter / decline, and Rolimons trade ads.
+- **Trades:** live deals (newest first) with a buy card or insta-buy, a watchlist with notifications, a trade calculator, limiteds with values and RAP history, inventory value, and your trades with accept / counter / decline. Sending a trade checks Roblox's rules first (Roblox Plus, an item on each side, the Robux limit). Rolimons trade ads.
 - **Robux:** click the Robux top right for My Transactions (with totals), Buy Robux and Redeem Roblox Codes.
 - **Notifications:** friends online, trades received, trades you sent being accepted or declined, friend requests and big deals.
-- **FPS & FastFlags:** separate **Playing** and **Multi-launch** profiles, each with presets, fine-tune and your own FastFlags. Unlimited FPS really is unlimited, and a 240 cap really is 240.
-- **Multi-launch:** Browse games under Where to?, a full-width Accounts page and a Client windows toolbar.
-- Lots of fixes from a full code review: safer settings saves, steadier side buttons, a single game window isn't shrunk anymore, and more.
+- **FPS & FastFlags:** separate Playing and Multi-launch profiles, each with presets, fine-tune and your own FastFlags. Unlimited FPS is really unlimited.
+- **Multi-launch:** Browse games under Where to?, private servers with alts, a full-width Accounts page and a Client windows toolbar.
+- Lots of fixes from a full code review.
 
 </details>
 
