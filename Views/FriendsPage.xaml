@@ -225,12 +225,28 @@
     <ScrollViewer x:Name="ProfileScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding IsProfileOpen, Converter={StaticResource BoolVis}}">
       <StackPanel Margin="32,22,32,32">
-        <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseProfileCommand}" Margin="-8,0,0,10">
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Text="&#xE72B;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <TextBlock Text="Back to Friends"/>
+        <Grid Margin="0,0,0,14">
+          <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" VerticalAlignment="Center" Command="{Binding CloseProfileCommand}" Margin="-8,0,0,0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE72B;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <TextBlock Text="Back to Friends"/>
+            </StackPanel>
+          </Button>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button Style="{StaticResource SegButtonOn}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE77B;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Profile" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource SegButton}" Margin="0" Command="{Binding OpenTradeProfileFromProfileCommand}" ToolTip="Their limiteds with value and RAP">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Trade profile" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
           </StackPanel>
-        </Button>
+        </Grid>
 
         <ctl:StateView State="{Binding ProfileLoad.State}" Message="{Binding ProfileLoad.Message}" MinHeight="300"
                        RetryCommand="{Binding RetryOpenProfileCommand}">
@@ -312,8 +328,6 @@
                   <Button Content="Send trade" ctl:Btn.Icon="&#xE8AB;" Margin="0,0,8,8" Command="{Binding SendTradeFromProfileCommand}"
                           Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVisInv}}"
                           ToolTip="A new trade with them (Trades → the trade maker)"/>
-                  <Button Content="Trade profile" ctl:Btn.Icon="&#xE8EC;" Margin="0,0,8,8" Command="{Binding OpenTradeProfileFromProfileCommand}"
-                          ToolTip="Their limiteds with value and RAP"/>
                   <Button Content="Edit About" ctl:Btn.Icon="&#xE70F;" Style="{StaticResource Primary}" Margin="0,0,8,8" Padding="18,10"
                           Command="{Binding EditAboutCommand}" Visibility="{Binding ProfileIsMe, Converter={StaticResource BoolVis}}"
                           ToolTip="Change the About text everyone sees on your profile"/>

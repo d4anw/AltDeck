@@ -318,7 +318,11 @@ public partial class MainViewModel
         }
         catch (RobloxException ex)
         {
-            TradeConfirmError = ex.TooMany ? "Roblox is busy. Nothing changed. Try again in a moment." : ex.Message;
+            TradeConfirmError = ex.TooMany ? "Roblox is busy. Nothing changed. Try again in a moment."
+                : ex.Message.Contains("unknown error", StringComparison.OrdinalIgnoreCase)
+                    ? "Roblox refused it without saying why (\"An unknown error occurred\"). Usually: an item can't be traded right now "
+                      + "(on hold, or just traded), the other player can't trade (no Premium, or trades only with friends), or the Robux is too much. Nothing was sent."
+                : ex.Message;
         }
         finally { TradeBusy = false; }
     }
@@ -528,7 +532,26 @@ public partial class MainViewModel
         UpdateBuild();
     }
 
-    public bool CanSendTrade => BuildPartnerId > 0 && (BuildGive.Count > 0 || BuildGiveRobux > 0) && (BuildGet.Count > 0 || BuildGetRobux > 0);
+    public bool CanSendTrade => BuildPartnerId > 0 && BuildProblem.Length == 0;
+
+    /// <summary>
+    /// Why Roblox would refuse this trade, before sending it (Roblox itself only says "An unknown error occurred"):
+    /// every side needs at least one item, and Robux on a side may be at most half the RAP of that side's items.
+    /// "" when it's fine.
+    /// </summary>
+    public string BuildProblem
+    {
+        get
+        {
+            if (BuildGive.Count == 0 && BuildGet.Count == 0) return "";   // nothing picked yet: no message
+            if (BuildGive.Count == 0) return "Add at least one of your items: Roblox doesn't allow a trade with only Robux on a side.";
+            if (BuildGet.Count == 0) return "Add at least one of their items: Roblox doesn't allow a trade with only Robux on a side.";
+            long giveCap = BuildGive.Sum(i => i.Rap) / 2, getCap = BuildGet.Sum(i => i.Rap) / 2;
+            if (BuildGiveRobux > giveCap) return $"You can add at most R$ {giveCap:N0}: half the RAP of the items you give.";
+            if (BuildGetRobux > getCap) return $"You can ask at most R$ {getCap:N0}: half the RAP of the items you get.";
+            return "";
+        }
+    }
 
     private void UpdateBuild()
     {
@@ -538,6 +561,7 @@ public partial class MainViewModel
         BuildGiveText = SideText(mine, false);
         BuildGetText = SideText(theirs, true);
         (BuildVerdict, BuildVerdictKind) = Verdict(d.Give, d.Get, d.RapDifference);
+        OnPropertyChanged(nameof(BuildProblem));
         OnPropertyChanged(nameof(CanSendTrade));
     }
 

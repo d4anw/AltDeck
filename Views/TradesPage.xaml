@@ -671,12 +671,28 @@
 
         <!-- ================= A TRADE PROFILE ================= -->
         <StackPanel Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Profile}">
-          <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseTradeProfileCommand}" Margin="-8,0,0,10">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="&#xE72B;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
-              <TextBlock Text="{Binding TradeProfileBackText}"/>
-            </StackPanel>
-          </Button>
+          <Grid Margin="0,0,0,14">
+            <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" VerticalAlignment="Center" Command="{Binding CloseTradeProfileCommand}" Margin="-8,0,0,0">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE72B;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Text="{Binding TradeProfileBackText}"/>
+              </StackPanel>
+            </Button>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button Style="{StaticResource SegButton}" Command="{Binding OpenProfileFromTradeCommand}" ToolTip="What they wear, their friends, communities, badges…">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE77B;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Profile" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource SegButtonOn}" Margin="0">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Trade profile" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </StackPanel>
+          </Grid>
 
           <Border Style="{StaticResource CardBox}" Padding="22,20">
             <Grid>
@@ -725,8 +741,6 @@
                   </StackPanel>
                 </Button>
                 <StackPanel Orientation="Horizontal">
-                  <Button Content="Profile" ctl:Btn.Icon="&#xE77B;" Padding="14,7" Command="{Binding OpenProfileFromTradeCommand}"
-                          ToolTip="Their profile: what they wear, friends, communities, badges…"/>
                   <Button Content="Roblox" ctl:Btn.External="True" Padding="14,7" Command="{Binding OpenProfileOnRobloxCommand}" ToolTip="Their profile on roblox.com"/>
                   <Button Content="Rolimons" ctl:Btn.External="True" Padding="14,7" Margin="0" Command="{Binding OpenProfileOnRolimonsCommand}" ToolTip="Their page on rolimons.com"/>
                 </StackPanel>
@@ -1709,7 +1723,10 @@
                 <Button Style="{StaticResource Primary}" Content="Send trade…" HorizontalAlignment="Right" Margin="0" Padding="20,10"
                         Command="{Binding SendTradeCommand}" IsEnabled="{Binding CanSendTrade}"/>
               </Grid>
-              <TextBlock Text="Up to 4 items per side. Robux you get count at 70 %: Roblox keeps 30 %." FontSize="11" Style="{StaticResource MutedText}" Margin="0,8,0,0"/>
+              <TextBlock Text="{Binding BuildProblem}" Foreground="{DynamicResource Red}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,10,0,0"
+                         Visibility="{Binding BuildProblem, Converter={StaticResource EmptyCollapsed}}"/>
+              <TextBlock Text="Up to 4 items per side, and at least one. Robux: at most half the RAP of that side's items; Robux you get count at 70 % (Roblox keeps 30 %)."
+                         FontSize="11" Style="{StaticResource MutedText}" Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
           </Border>
 

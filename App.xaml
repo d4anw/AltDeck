@@ -370,6 +370,40 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <!-- a switch between two pages of the same thing (Profile / Trade profile): the one you're on, and the other -->
+    <Style x:Key="SegButton" TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1"
+                    CornerRadius="10" Padding="16,8">
+              <ContentPresenter HorizontalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource AccentHover}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="SegButtonOn" TargetType="Button" BasedOn="{StaticResource SegButton}">
+      <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+      <Setter Property="Cursor" Value="Arrow"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource Accent}" BorderThickness="1"
+                    CornerRadius="10" Padding="16,8">
+              <ContentPresenter HorizontalAlignment="Center"/>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <Style x:Key="Nav" TargetType="RadioButton">
       <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
       <Setter Property="Margin" Value="0,2"/>
