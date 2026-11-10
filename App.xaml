@@ -686,7 +686,8 @@
       <Setter Property="HorizontalAlignment" Value="Center"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="TextAlignment" Value="Center"/>
-      <Setter Property="RenderTransform" Value="{StaticResource TextLift}"/>
+      <!-- no lift in a badge: the digits sit exactly in the middle of the pill (measured: lifted they were 1 px high) -->
+      <Setter Property="RenderTransform" Value="{x:Null}"/>
       <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
     </Style>
 
