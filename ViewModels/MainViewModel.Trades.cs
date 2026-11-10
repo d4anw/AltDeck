@@ -99,10 +99,13 @@ public partial class MainViewModel
         DealSort ??= DealSorts[1];   // newest first, like Rolimons' deals
         if (!_dealTimerHooked) { _dealTimer.Tick += (_, _) => { MaybeScan(); FilterDeals(); }; _dealTimerHooked = true; }
         if (!_dealTimer.IsEnabled) { _dealTimer.Start(); MaybeScan(); FilterDeals(); _ = FillDealThumbsAsync(_allDeals.Values.ToList()); }
+        // the live feed starts the first time Deals is opened, then keeps collecting for the rest of the session
+        // (so going back to Deals finds everything listed meanwhile); never opened, Rolimons isn't asked every second
+        if (!_dealFeedTimer.IsEnabled) { _dealFeedTimer.Start(); _ = Quietly("Deals", PollDealsAsync); }
     }
 
-    // ---- new listings, collected from the moment RoDeck starts (Rolimons' feed only goes back about two minutes),
-    // and remembered on disk, so the list is full when you open Deals, also after a restart
+    // ---- new listings, collected once Deals has been opened (Rolimons' feed only goes back about two minutes),
+    // and remembered on disk, so the list is full when you open Deals again, also after a restart
     private readonly DispatcherTimer _dealFeedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private static string DealsFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoDeck", "cache", "deals.json");
     private DateTime _dealsSavedAt;
@@ -112,8 +115,7 @@ public partial class MainViewModel
     private void SetupDealFeed()
     {
         LoadSavedDeals();
-        _dealFeedTimer.Tick += async (_, _) => await Quietly("Deals", PollDealsAsync);
-        _dealFeedTimer.Start();
+        _dealFeedTimer.Tick += async (_, _) => await Quietly("Deals", PollDealsAsync);   // started by StartDeals
     }
 
     private sealed record SavedDeal(long Id, long Price, DateTime At);
