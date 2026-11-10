@@ -332,22 +332,35 @@ public static class RobloxTrades
     }
 
     /// <summary>
-    /// Marks which of the non-serial limiteds and bundles found above are on hold: the copies someone owns but can't
-    /// trade yet. One look at what they can trade (several pages for a big inventory), so it runs after the items show.
-    /// Limiteds with a serial already say it themselves.
+    /// Which copies are on trade hold, from Roblox's trade service: the one place that knows it for every kind of limited.
+    /// (The inventory list's own "on hold" is often wrong for newer limiteds.) A copy with a serial is matched by its
+    /// serial; copies without one by how many of that item can be traded. Runs after the items show; they update.
     /// </summary>
     public static async Task MarkHoldsAsync(string cookie, long userId, IReadOnlyList<LimitedTile> items, CancellationToken ct)
     {
-        var unsure = items.Where(i => i.HoldUnknown).ToList();
-        if (unsure.Count == 0) return;
+        if (items.Count == 0) return;
         List<LimitedTile> tradable;
         try { tradable = await GetTradableAsync(cookie, userId, ct); }
         catch (RobloxException) { return; }
-        foreach (var g in unsure.GroupBy(i => (i.AssetId, i.IsBundle)))
+        // a very big inventory may not fit in the pages read: then only what was found is marked
+        bool complete = tradable.Count < 1000;
+
+        var bySerial = tradable.Where(t => t.Serial > 0).GroupBy(t => (t.AssetId, t.IsBundle, t.Serial)).ToDictionary(g => g.Key, g => g.First());
+        foreach (var g in items.GroupBy(i => (i.AssetId, i.IsBundle)))
         {
-            int canTrade = tradable.Count(t => t.AssetId == g.Key.AssetId && t.IsBundle == g.Key.IsBundle);
+            var copies = tradable.Where(t => t.AssetId == g.Key.AssetId && t.IsBundle == g.Key.IsBundle).ToList();
+            int free = copies.Count(t => !t.IsOnHold);   // copies that can be traded right now
             int n = 0;
-            foreach (var t in g) { t.IsOnHold = n++ >= canTrade; t.HoldUnknown = false; }
+            foreach (var t in g.OrderBy(t => t.Serial == 0))   // the ones with a serial first, matched one to one
+            {
+                if (t.Serial > 0 && bySerial.TryGetValue((t.AssetId, t.IsBundle, t.Serial), out var same))
+                {
+                    t.IsOnHold = same.IsOnHold;
+                    if (!same.IsOnHold) n++;
+                }
+                else if (complete) t.IsOnHold = n++ >= free;   // no serial (or not listed): beyond the tradable count = on hold
+                t.HoldUnknown = false;
+            }
         }
     }
 

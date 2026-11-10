@@ -34,8 +34,9 @@ public partial class MainViewModel
         var rows = GameCharts.Select(s => new GameRow { Id = s.Id, Name = s.Name, Games = s.Games.Take(RowPreview).ToList() }).ToList();
         var fav = (await FavouriteTilesAsync()).Take(RowPreview).ToList();
         var recent = Settings.RecentGames.Select(s => s.Tile).Take(RowPreview).ToList();
+        // like Home: what you played first, then your favourites, then the charts
         if (fav.Count > 0) rows.Insert(0, new GameRow { Id = "favourites", Name = "My favourites", Icon = "", Games = fav });
-        if (recent.Count > 0) rows.Insert(fav.Count > 0 ? 1 : 0, new GameRow { Id = "recent", Name = "Recently played", Icon = "", Games = recent });
+        if (recent.Count > 0) rows.Insert(0, new GameRow { Id = "recent", Name = "Recently played", Icon = "", Games = recent });
         GameRows.Clear();
         foreach (var r in rows) GameRows.Add(r);
         var all = rows.SelectMany(r => r.Games).ToList();
@@ -78,9 +79,18 @@ public partial class MainViewModel
 
     private DateTime _chartsLoadedAt = DateTime.MinValue;
 
+    /// <summary>Set while something opens a game page from another page (Home, a profile), so that isn't undone.</summary>
+    private bool _gamesDirect;
+
     private void MaybeLoadGames()
     {
         if (Page != "Games") return;
+        // coming back to Games from another page: the overview, not where you left off (back / forward still restores)
+        if (!_restoring && !_gamesDirect && GameCharts.Count > 0)
+        {
+            if (IsGameOpen) CloseGame();
+            if (!GamesOverview) ShowGameRows();
+        }
         if (GameCharts.Count > 0 && DateTime.Now - _chartsLoadedAt < TimeSpan.FromMinutes(10)) return;
         _ = LoadChartsAsync();
     }
@@ -222,7 +232,7 @@ public partial class MainViewModel
         ServersInfo = "";
         SelectedMedia = "";
         IsGameOpen = true;                       // first, so "back" from here returns to where you came from
-        if (Page != "Games") Page = "Games";
+        if (Page != "Games") { _gamesDirect = true; try { Page = "Games"; } finally { _gamesDirect = false; } }
         await GameLoad.RunAsync(async ct =>
         {
             var d = await RobloxGames.GetDetailsAsync(tile.UniverseId, ct);

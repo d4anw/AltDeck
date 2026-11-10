@@ -190,7 +190,8 @@
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2" VerticalAlignment="Top" Loaded="SellersGrid_Loaded"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border x:Name="row" CornerRadius="10" Padding="12,8" Margin="2" Background="Transparent">
+              <Border x:Name="row" CornerRadius="10" Padding="14,9" Margin="4" Background="{DynamicResource Card2}"
+                    BorderBrush="{DynamicResource Line}" BorderThickness="1">
                 <Grid>
                   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                   <StackPanel VerticalAlignment="Center">
@@ -213,7 +214,7 @@
                 </Grid>
               </Border>
               <DataTemplate.Triggers>
-                <Trigger SourceName="row" Property="IsMouseOver" Value="True"><Setter TargetName="row" Property="Background" Value="{DynamicResource Card2}"/></Trigger>
+                <Trigger SourceName="row" Property="IsMouseOver" Value="True"><Setter TargetName="row" Property="BorderBrush" Value="{DynamicResource AccentLine}"/></Trigger>
               </DataTemplate.Triggers>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
