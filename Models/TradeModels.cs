@@ -274,9 +274,6 @@ public sealed class WatchEntry
     /// <summary>A deal of this many percent under the value (RAP without one); 0 = the fixed price above.</summary>
     public int Percent { get; set; }
     public string Name { get; set; } = "";
-    /// <summary>Buy one copy by itself as soon as one is listed at or below the price, with this account (its Id).</summary>
-    public bool AutoBuy { get; set; }
-    public string BuyerId { get; set; } = "";
 }
 
 /// <summary>A limited on the watchlist: your price, and the cheapest copy for sale right now.</summary>
@@ -334,14 +331,6 @@ public partial class WatchRow : ObservableObject
     partial void OnValueChanged(long value) => Follow();
     /// <summary>The price a notification was last sent for (0 none), so the same price isn't announced twice.</summary>
     public long NotifiedPrice { get; set; }
-    /// <summary>Auto-buy: one copy is bought by itself at or below the price (then it turns off). Red when on.</summary>
-    [ObservableProperty] private bool autoBuy;
-    public string BuyerId { get; set; } = "";
-    /// <summary>An auto-buy is going on right now (or waited a moment after a failed try).</summary>
-    public bool Buying { get; set; }
-    public DateTime NextBuyTry { get; set; }
-    /// <summary>The switch shows the real state again after a click that only asked first.</summary>
-    public void RefreshAutoBuy() => OnPropertyChanged(nameof(AutoBuy));
 
     public bool IsHit => BestPrice > 0 && BestPrice <= MaxPrice;
     public string BestText => !Checked ? "…" : BestPrice > 0 ? BestPrice.ToString("N0") : "None for sale";

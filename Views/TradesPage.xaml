@@ -651,21 +651,6 @@
                       <TextBlock Text="{Binding StatusText}" FontSize="12" FontWeight="SemiBold"/>
                     </Border>
                     <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
-                      <!-- auto-buy: red, and it asks every time it's switched on -->
-                      <StackPanel Margin="0,0,16,0" VerticalAlignment="Center" ToolTip="Buys one copy by itself as soon as it's at or below your price">
-                        <TextBlock Text="Auto-buy" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,3">
-                          <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
-                              <Style.Triggers>
-                                <DataTrigger Binding="{Binding AutoBuy}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Red}"/></DataTrigger>
-                              </Style.Triggers>
-                            </Style>
-                          </TextBlock.Style>
-                        </TextBlock>
-                        <ToggleButton Style="{StaticResource DangerSwitch}" IsChecked="{Binding AutoBuy, Mode=OneWay}"
-                                      Command="{Binding DataContext.ToggleWatchAutoBuyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      CommandParameter="{Binding}"/>
-                      </StackPanel>
                       <Button Content="View" Padding="14,7"
                               Command="{Binding DataContext.WatchOpenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
                               ToolTip="Its item page with every seller"/>
@@ -677,9 +662,6 @@
                 <DataTemplate.Triggers>
                   <DataTrigger Binding="{Binding IsHit}" Value="True">
                     <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Green}"/>
-                  </DataTrigger>
-                  <DataTrigger Binding="{Binding AutoBuy}" Value="True">
-                    <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Red}"/>
                   </DataTrigger>
                 </DataTemplate.Triggers>
               </DataTemplate>
@@ -1802,37 +1784,6 @@
             <Button Content="Cancel" Command="{Binding CancelInstaBuyCommand}" IsCancel="True"/>
             <Button Margin="0" Style="{StaticResource Primary}" Background="{DynamicResource Red}" BorderBrush="{DynamicResource Red}" Foreground="White"
                     Content="Turn on insta-buy" Command="{Binding ConfirmInstaBuyCommand}"/>
-          </StackPanel>
-        </StackPanel>
-      </Border>
-    </Grid>
-
-    <!-- ================= switching auto-buy on for a watched limited: a warning, every time ================= -->
-    <Grid Visibility="{Binding ShowAutoBuyWarning, Converter={StaticResource BoolVis}}" Background="#B0000000">
-      <Border Style="{StaticResource CardBox}" Width="470" Padding="26,22" HorizontalAlignment="Center" VerticalAlignment="Center"
-              Background="{DynamicResource Card}" BorderBrush="{DynamicResource Red}">
-        <StackPanel>
-          <StackPanel Orientation="Horizontal">
-            <Border Width="38" Height="38" CornerRadius="11" Background="{DynamicResource RedBg}" Margin="0,0,12,0">
-              <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource Icons}" FontSize="17" Foreground="{DynamicResource Red}"
-                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            </Border>
-            <TextBlock Text="Turn on auto-buy?" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource Red}"/>
-          </StackPanel>
-          <TextBlock Text="{Binding AutoBuyWarningItem}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,16,0,0"/>
-          <TextBlock TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="20"
-                     Text="RoDeck buys one copy by itself the moment one is listed at or below your price, also while it's in the tray. There's no confirm card and no way to undo it."/>
-          <StackPanel Margin="0,12,0,0">
-            <TextBlock TextWrapping="Wrap" LineHeight="20" Style="{StaticResource MutedText}" Text="•  Never above your price. If the price follows the value (% off), it buys at that price."/>
-            <TextBlock TextWrapping="Wrap" LineHeight="20" Style="{StaticResource MutedText}" Text="•  Your spending limit in Settings still applies, and never more than the account has."/>
-            <TextBlock TextWrapping="Wrap" LineHeight="20" Style="{StaticResource MutedText}" Text="•  One copy. After buying, auto-buy turns off for this item."/>
-          </StackPanel>
-          <TextBlock TextWrapping="Wrap" Margin="0,14,0,0" FontWeight="SemiBold" Foreground="{DynamicResource Red}"
-                     Text="Values and RAP can be wrong or manipulated. You use auto-buy at your own risk."/>
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Content="Cancel" Command="{Binding CancelAutoBuyCommand}" IsCancel="True"/>
-            <Button Margin="0" Style="{StaticResource Primary}" Background="{DynamicResource Red}" BorderBrush="{DynamicResource Red}" Foreground="White"
-                    Content="Turn on auto-buy" Command="{Binding ConfirmAutoBuyCommand}"/>
           </StackPanel>
         </StackPanel>
       </Border>
