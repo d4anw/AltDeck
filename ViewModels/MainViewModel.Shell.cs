@@ -29,6 +29,7 @@ public partial class MainViewModel
         // nothing running: Multi-launch opens where you start something, not on an empty Running tab
         if (value == "Multi" && !_restoring && !_multiTabChosen && MultiTab == "Running" && RunningCount == 0) MultiTab = "Launch";
         if (value != "Games") PickingGameForMulti = false;
+        MaybeLoadTransactions();
         RecordNav();
         MaybeLoadHome();
         MaybeLoadGames();
@@ -66,6 +67,9 @@ public partial class MainViewModel
         TradesAccountChanged();
         _ = RefreshRequestCountAsync();
         if (GameRows.Count > 0) _ = BuildGameRowsAsync();   // "My favourites" is per account
+        _txFor = null;
+        MaybeLoadTransactions();
+        ShowRedeem = false;
     }
 
     [RelayCommand]

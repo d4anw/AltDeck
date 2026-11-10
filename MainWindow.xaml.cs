@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using RoDeck.Models;
 using RoDeck.Services;
 using RoDeck.ViewModels;
 
@@ -86,6 +87,12 @@ public partial class MainWindow : Window
             ApplyPresetHotkeys();
         };
         _vm.PresetHotkeysChanged += ApplyPresetHotkeys;
+        _vm.OpenRobloxPageRequested += (a, url, title) => OpenRobloxPage(a, url, title);
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.ShowRedeem) && _vm.ShowRedeem)
+                Dispatcher.BeginInvoke(() => { RedeemBox.Focus(); }, System.Windows.Threading.DispatcherPriority.Input);
+        };
 
         Closing += (_, e) =>
         {
@@ -442,16 +449,28 @@ public partial class MainWindow : Window
             PlacementTarget = (UIElement)sender,
             Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom
         };
-        Add(menu, "Buy Robux", "", () => OpenRobloxPage("https://www.roblox.com/upgrades/robux", "Buy Robux"));
-        Add(menu, "My Transactions", "", () => OpenRobloxPage("https://www.roblox.com/transactions", "My Transactions"));
-        Add(menu, "Redeem Roblox Codes", "", () => OpenRobloxPage("https://www.roblox.com/redeem", "Redeem Roblox Codes"));
+        Add(menu, "Buy Robux", "", OpenBuyRobux);
+        Add(menu, "My Transactions", "", () => _vm.OpenTransactionsCommand.Execute(null));
+        Add(menu, "Redeem Roblox Codes", "", () => _vm.OpenRedeemCommand.Execute(null));
         menu.IsOpen = true;
     }
 
-    /// <summary>A roblox.com page signed in as the account top right; its Robux are checked again afterwards.</summary>
-    private void OpenRobloxPage(string url, string title)
+    /// <summary>Roblox's own payment page (paying is never done by RoDeck), signed in as the account top right.</summary>
+    public void OpenBuyRobux()
     {
         if (_vm.CurrentAccount is not { } a || string.IsNullOrEmpty(a.Cookie)) { _vm.StatusMessage = "Pick an account top right first."; return; }
+        OpenRobloxPage(a, "https://www.roblox.com/upgrades/robux", "Buy Robux");
+    }
+
+    private void RedeemBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter) { _vm.RedeemCommand.Execute(null); e.Handled = true; }
+    }
+
+    /// <summary>A roblox.com page signed in as this account; its Robux are checked again afterwards.</summary>
+    private void OpenRobloxPage(Account a, string url, string title)
+    {
+        if (string.IsNullOrEmpty(a.Cookie)) { _vm.StatusMessage = "This account is signed out."; return; }
         var w = new RobloxWebWindow(a, url, title) { Owner = this };
         w.Closed += async (_, _) => await _vm.RefreshRobuxAsync(a);
         w.Show();

@@ -224,6 +224,49 @@
             <views:MultiLaunchPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Multi}"/>
             <views:PerformancePage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Performance}"/>
             <views:SettingsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Settings}"/>
+            <views:TransactionsPage Visibility="{Binding Page, Converter={StaticResource PageVis}, ConverterParameter=Transactions}"/>
+            </Grid>
+
+            <!-- Redeem Roblox Codes (from the Robux pill), over any page -->
+            <Grid Visibility="{Binding ShowRedeem, Converter={StaticResource BoolVis}}" Background="#B0000000">
+              <Border Style="{StaticResource CardBox}" Width="460" Padding="26,22" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Background="{DynamicResource Card}">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Border Width="38" Height="38" CornerRadius="11" Background="{DynamicResource AccentSoft}" Margin="0,0,12,0">
+                      <TextBlock Text="&#xE8EC;" FontFamily="{StaticResource Icons}" FontSize="17" Foreground="{DynamicResource Accent}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                      <TextBlock Text="Redeem Roblox Codes" FontSize="20" FontWeight="Bold"/>
+                      <TextBlock FontSize="12" Style="{StaticResource MutedText}">
+                        <Run Text="For"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay}" FontWeight="SemiBold"/>
+                      </TextBlock>
+                    </StackPanel>
+                  </StackPanel>
+                  <TextBlock Text="A promo code, an item code or a gift card PIN." TextWrapping="Wrap" Margin="0,16,0,8"/>
+                  <TextBox x:Name="RedeemBox" Text="{Binding RedeemCode, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" FontSize="16"
+                           Padding="14,12" CharacterCasing="Upper" KeyDown="RedeemBox_KeyDown"/>
+                  <TextBlock Text="{Binding RedeemResult}" TextWrapping="Wrap" Margin="0,10,0,0" FontWeight="SemiBold"
+                             Visibility="{Binding RedeemResult, Converter={StaticResource EmptyCollapsed}}">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource Red}"/>
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding RedeemResultKind}" Value="1"><Setter Property="Foreground" Value="{DynamicResource Green}"/></DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <TextBlock FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0" Style="{StaticResource MutedText}"
+                             Text="Gift card PINs, and codes Roblox wants a security check for, open on Roblox's own redeem page with your code filled in."/>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <Button Content="Close" Command="{Binding CloseRedeemCommand}" IsCancel="True"/>
+                    <Button Margin="0" Style="{StaticResource Primary}" Content="Redeem" Command="{Binding RedeemCommand}"
+                            IsEnabled="{Binding RedeemBusy, Converter={StaticResource Not}}"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
             </Grid>
 
             <!-- toast: bottom centre, or top centre while the launch queue panel is in the corner -->

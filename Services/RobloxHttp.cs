@@ -16,6 +16,8 @@ public sealed class RobloxException : Exception
     public RobloxException(string message, HttpStatusCode? status = null, Exception? inner = null) : base(message, inner) => Status = status;
     public bool SignedOut => Status is HttpStatusCode.Unauthorized;
     public bool TooMany => Status is HttpStatusCode.TooManyRequests;
+    /// <summary>Roblox wants a security check (a captcha or similar) before it does this; only its own website can do that.</summary>
+    public bool Challenge { get; init; }
 }
 
 /// <summary>
@@ -174,7 +176,11 @@ public static class RobloxHttp
                 if (resp.IsSuccessStatusCode) return text;
                 int waitLeft;
                 lock (gate) waitLeft = (int)Math.Ceiling(Math.Max(0, (gate.BlockedUntil - DateTime.UtcNow).TotalSeconds));
-                throw new RobloxException(Describe(resp.StatusCode, text), resp.StatusCode) { WaitSeconds = waitLeft };
+                throw new RobloxException(Describe(resp.StatusCode, text), resp.StatusCode)
+                {
+                    WaitSeconds = waitLeft,
+                    Challenge = resp.Headers.Contains("rblx-challenge-id") || resp.Headers.Contains("rblx-challenge-type"),
+                };
             }
         }
     }

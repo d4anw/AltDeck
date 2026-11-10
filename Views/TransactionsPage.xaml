@@ -1,0 +1,201 @@
+<UserControl x:Class="RoDeck.Views.TransactionsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RoDeck.Controls">
+  <UserControl.Resources>
+    <!-- +123 green, −123 normal -->
+    <Style x:Key="TxAmount" TargetType="TextBlock">
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Kind}" Value="1"><Setter Property="Foreground" Value="{DynamicResource Green}"/></DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <!-- the clickable part of a row: a soft highlight on hover -->
+    <Style x:Key="TxLink" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Margin" Value="-8,-4,8,-4"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="Transparent" CornerRadius="10"/>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource Card2}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="StatCard" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource Page}"/>
+      <Setter Property="CornerRadius" Value="14"/>
+      <Setter Property="Padding" Value="18,14"/>
+    </Style>
+  </UserControl.Resources>
+
+  <ScrollViewer x:Name="Scroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,26,32,32">
+      <!-- title, the account's Robux, Buy Robux -->
+      <Grid>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="My Transactions" FontSize="28" FontWeight="Bold"/>
+          <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedText}">
+            <Run Text="Robux in and out of"/> <Run Text="{Binding CurrentAccount.Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=", from Roblox."/>
+          </TextBlock>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1" CornerRadius="12"
+                  Padding="14,0" Height="44" Margin="0,0,10,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Balance" Style="{StaticResource MutedText}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <TextBlock Text="{Binding CurrentAccount.RobuxText, Mode=OneWay}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+          <Button Content="Redeem a code" ctl:Btn.Icon="&#xE8EC;" Command="{Binding OpenRedeemCommand}"/>
+          <Button Content="Buy Robux" ctl:Btn.Icon="&#xE8C7;" ctl:Btn.External="True" Style="{StaticResource Primary}" Click="BuyRobux_Click"/>
+          <Button Style="{StaticResource IconBtn}" Content="&#xE72C;" ToolTip="Refresh" Margin="10,0,0,0" Command="{Binding RefreshTransactionsCommand}"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- ===== totals ===== -->
+      <Border Style="{StaticResource CardBox}" Padding="20,18" Margin="0,22,0,0">
+        <StackPanel>
+          <Grid>
+            <TextBlock Text="Summary" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <RadioButton Style="{StaticResource Seg}" Content="Past day" GroupName="txframe"
+                           IsChecked="{Binding TxTimeFrame, Converter={StaticResource Eq}, ConverterParameter=Day, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Past week" GroupName="txframe"
+                           IsChecked="{Binding TxTimeFrame, Converter={StaticResource Eq}, ConverterParameter=Week, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Past month" GroupName="txframe"
+                           IsChecked="{Binding TxTimeFrame, Converter={StaticResource Eq}, ConverterParameter=Month, Mode=TwoWay}"/>
+              <RadioButton Style="{StaticResource Seg}" Content="Past year" GroupName="txframe" Margin="0"
+                           IsChecked="{Binding TxTimeFrame, Converter={StaticResource Eq}, ConverterParameter=Year, Mode=TwoWay}"/>
+            </StackPanel>
+          </Grid>
+          <ctl:StateView State="{Binding TxTotalsLoad.State}" Message="{Binding TxTotalsLoad.Message}" MinHeight="120" Margin="0,16,0,0"
+                         RetryCommand="{Binding RefreshTransactionsCommand}">
+            <StackPanel>
+              <UniformGrid Columns="3">
+                <Border Style="{StaticResource StatCard}" Margin="0,0,8,0">
+                  <StackPanel>
+                    <TextBlock Text="Incoming" FontSize="12" Style="{StaticResource MutedText}"/>
+                    <TextBlock Text="{Binding TxIncoming}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource Green}" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource StatCard}" Margin="4,0">
+                  <StackPanel>
+                    <TextBlock Text="Outgoing" FontSize="12" Style="{StaticResource MutedText}"/>
+                    <TextBlock Text="{Binding TxOutgoing}" FontSize="22" FontWeight="Bold" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource StatCard}" Margin="8,0,0,0">
+                  <StackPanel>
+                    <TextBlock Text="Pending" FontSize="12" Style="{StaticResource MutedText}"/>
+                    <TextBlock Text="{Binding TxPending}" FontSize="22" FontWeight="Bold" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+              <ItemsControl ItemsSource="{Binding TxTotals}" Margin="0,12,-24,0">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="4,10" Margin="0,0,24,0">
+                      <Grid>
+                        <TextBlock Text="{Binding Label}"/>
+                        <TextBlock Text="{Binding AmountText}" HorizontalAlignment="Right" Style="{StaticResource TxAmount}"/>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ctl:StateView>
+        </StackPanel>
+      </Border>
+
+      <!-- ===== the list ===== -->
+      <StackPanel Orientation="Horizontal" Margin="0,24,0,14">
+        <RadioButton Style="{StaticResource Seg}" Content="Purchases" GroupName="txtype"
+                     IsChecked="{Binding TxType, Converter={StaticResource Eq}, ConverterParameter=Purchase, Mode=TwoWay}"/>
+        <RadioButton Style="{StaticResource Seg}" Content="Sales" GroupName="txtype"
+                     IsChecked="{Binding TxType, Converter={StaticResource Eq}, ConverterParameter=Sale, Mode=TwoWay}"/>
+        <RadioButton Style="{StaticResource Seg}" Content="Robux bought" GroupName="txtype"
+                     IsChecked="{Binding TxType, Converter={StaticResource Eq}, ConverterParameter=CurrencyPurchase, Mode=TwoWay}"/>
+        <RadioButton Style="{StaticResource Seg}" Content="Premium" GroupName="txtype"
+                     IsChecked="{Binding TxType, Converter={StaticResource Eq}, ConverterParameter=PremiumStipend, Mode=TwoWay}"/>
+        <RadioButton Style="{StaticResource Seg}" Content="Group payouts" GroupName="txtype"
+                     IsChecked="{Binding TxType, Converter={StaticResource Eq}, ConverterParameter=GroupPayout, Mode=TwoWay}"/>
+        <RadioButton Style="{StaticResource Seg}" Content="Trades" GroupName="txtype" Margin="0"
+                     IsChecked="{Binding TxType, Converter={StaticResource Eq}, ConverterParameter=TradeRobux, Mode=TwoWay}"/>
+      </StackPanel>
+
+      <ctl:StateView State="{Binding TxLoad.State}" Message="{Binding TxLoad.Message}" MinHeight="200"
+                     EmptyText="Nothing here for this account yet." RetryCommand="{Binding RefreshTransactionsCommand}">
+        <StackPanel>
+          <!-- column titles -->
+          <Grid Margin="16,0,16,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="220"/>
+              <ColumnDefinition Width="170"/>
+              <ColumnDefinition Width="120"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Item" FontSize="12" Style="{StaticResource MutedText}" Margin="60,0,0,0"/>
+            <TextBlock Grid.Column="1" Text="From / to" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Grid.Column="2" Text="Date" FontSize="12" Style="{StaticResource MutedText}"/>
+            <TextBlock Grid.Column="3" Text="Robux" FontSize="12" Style="{StaticResource MutedText}" HorizontalAlignment="Right"/>
+          </Grid>
+          <ItemsControl ItemsSource="{Binding TxRows}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><VirtualizingStackPanel/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="{DynamicResource CardGrad}" BorderBrush="{DynamicResource CardEdge}" BorderThickness="1" CornerRadius="14"
+                        Padding="16,10" Margin="0,0,0,8">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="220"/>
+                      <ColumnDefinition Width="170"/>
+                      <ColumnDefinition Width="120"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- an item: its page -->
+                    <Button Grid.ColumnSpan="2" Style="{StaticResource TxLink}" Focusable="False" ToolTip="Open the item page"
+                            Visibility="{Binding HasItem, Converter={StaticResource BoolVis}}"
+                            Command="{Binding DataContext.OpenTxItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                    <StackPanel Orientation="Horizontal" IsHitTestVisible="False">
+                      <Grid Width="44" Height="44" Margin="0,0,16,0">
+                        <Border CornerRadius="10" Background="{DynamicResource Card2}"/>
+                        <TextBlock Text="&#xE8C7;" FontFamily="{StaticResource Icons}" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource Muted}" Visibility="{Binding HasItem, Converter={StaticResource BoolVisInv}}"/>
+                        <ctl:RemoteImage Url="{Binding ThumbUrl}" CornerRadius="10"/>
+                      </Grid>
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ItemText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <Border Style="{StaticResource Badge}" HorizontalAlignment="Left" Margin="0,4,0,0" Background="{DynamicResource Card2}"
+                                Visibility="{Binding Pending, Converter={StaticResource BoolVis}}">
+                          <TextBlock Text="Pending" Style="{StaticResource BadgeText}"/>
+                        </Border>
+                      </StackPanel>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding AgentText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               IsHitTestVisible="False" Margin="0,0,12,0"/>
+                    <TextBlock Grid.Column="2" Text="{Binding WhenText}" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
+                    <TextBlock Grid.Column="3" Text="{Binding AmountText}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="15"
+                               Style="{StaticResource TxAmount}"/>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button Content="Show more" HorizontalAlignment="Center" Margin="0,8,0,0" Command="{Binding LoadMoreTxCommand}"
+                  Visibility="{Binding HasTxMore, Converter={StaticResource BoolVis}}" IsEnabled="{Binding TxMoreBusy, Converter={StaticResource Not}}"/>
+        </StackPanel>
+      </ctl:StateView>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
