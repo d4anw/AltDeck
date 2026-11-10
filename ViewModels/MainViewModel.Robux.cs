@@ -69,7 +69,14 @@ public partial class MainViewModel
             await Task.Delay(350, ct);   // clicking through the time frames: only the last one is asked
             if (ask != _txTotalsAsk) return true;
             using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            limit.CancelAfter(TimeSpan.FromSeconds(25));
+            limit.CancelAfter(TimeSpan.FromMinutes(2));
+            _ = SayStillLoadingAsync(TxTotalsLoad, ct, frame switch
+            {
+                "Day" => "Roblox is adding up the past day…",
+                "Week" => "Roblox is adding up the past week…",
+                "Year" => "Roblox is adding up the whole year. That can take a minute…",
+                _ => "Roblox is adding up the past month. That can take a while…",
+            });
             try
             {
                 var (inc, outg, pend, lines) = await RobloxEconomy.GetTotalsAsync(a.Cookie, a.UserId, frame, limit.Token);
@@ -78,7 +85,7 @@ public partial class MainViewModel
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                throw new RobloxException("Roblox is taking too long to add this up. Press Try again in a moment.");
+                throw new RobloxException("Roblox didn't finish adding this up. Press Try again in a moment.");
             }
         }
         if (a != CurrentAccount || frame != TxTimeFrame) return true;
@@ -97,13 +104,14 @@ public partial class MainViewModel
         if (CurrentAccount is not { UserId: > 0 } a) throw new RobloxException("Pick an account top right first.");
         _txFor = a;
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        limit.CancelAfter(TimeSpan.FromSeconds(25));
+        limit.CancelAfter(TimeSpan.FromMinutes(2));
+        _ = SayStillLoadingAsync(TxLoad, ct, "Roblox is still looking these up…");
         List<TxRow> rows;
         string? next;
         try { (rows, next) = await RobloxEconomy.GetTransactionsAsync(a.Cookie, a.UserId, TxType, null, limit.Token); }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new RobloxException("Roblox is taking too long to answer. Press Try again in a moment.");
+            throw new RobloxException("Roblox didn't answer. Press Try again in a moment.");
         }
         if (a != CurrentAccount) return true;
         foreach (var r in rows) TxRows.Add(r);
@@ -113,6 +121,13 @@ public partial class MainViewModel
         return rows.Count > 0;
     });
 
+    /// <summary>After a few seconds of loading, says why it takes a while (Roblox works these out when asked).</summary>
+    private static async Task SayStillLoadingAsync(Loader load, CancellationToken ct, string text)
+    {
+        try { await Task.Delay(5000, ct); } catch (OperationCanceledException) { return; }
+        if (!ct.IsCancellationRequested && load.State == LoadState.Loading && load.Message == "Loading…") load.Message = text;
+    }
+
     [RelayCommand]
     private async Task LoadMoreTx()
     {
@@ -121,7 +136,8 @@ public partial class MainViewModel
         var type = TxType;
         try
         {
-            var (rows, next) = await RobloxEconomy.GetTransactionsAsync(a.Cookie, a.UserId, type, _txNext, CancellationToken.None);
+            using var limit = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+            var (rows, next) = await RobloxEconomy.GetTransactionsAsync(a.Cookie, a.UserId, type, _txNext, limit.Token);
             if (a != CurrentAccount || type != TxType) return;
             foreach (var r in rows) TxRows.Add(r);
             _txNext = next;
@@ -129,6 +145,7 @@ public partial class MainViewModel
             _ = FillTxThumbsAsync(rows);
         }
         catch (RobloxException ex) { StatusMessage = ex.Message; }
+        catch (OperationCanceledException) { StatusMessage = "Roblox didn't answer. Press Show more again in a moment."; }
         finally { TxMoreBusy = false; }
     }
 

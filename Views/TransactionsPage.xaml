@@ -26,6 +26,33 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <!-- the Robux symbol (the same one as the pill top right), in the colour of its text -->
+    <Style x:Key="Robux" TargetType="Control">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="IsTabStop" Value="False"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Control">
+            <Viewbox>
+              <Canvas Width="20" Height="20">
+                <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="2.2" StrokeLineJoin="Round"
+                      Data="M10,1.6 L17.3,5.8 L17.3,14.2 L10,18.4 L2.7,14.2 L2.7,5.8 Z"/>
+                <Rectangle Canvas.Left="7.2" Canvas.Top="7.2" Width="5.6" Height="5.6" RadiusX="0.8" RadiusY="0.8" Fill="{TemplateBinding Foreground}"/>
+              </Canvas>
+            </Viewbox>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- next to an amount: green for Robux in -->
+    <Style x:Key="TxAmountIcon" TargetType="Control" BasedOn="{StaticResource Robux}">
+      <Setter Property="Foreground" Value="{DynamicResource Fg}"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Margin" Value="0,0,6,0"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Kind}" Value="1"><Setter Property="Foreground" Value="{DynamicResource Green}"/></DataTrigger>
+      </Style.Triggers>
+    </Style>
     <Style x:Key="StatCard" TargetType="Border">
       <Setter Property="Background" Value="{DynamicResource Page}"/>
       <Setter Property="CornerRadius" Value="14"/>
@@ -80,19 +107,28 @@
                 <Border Style="{StaticResource StatCard}" Margin="0,0,8,0">
                   <StackPanel>
                     <TextBlock Text="Incoming" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding TxIncoming}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource Green}" Margin="0,4,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                      <Control Style="{StaticResource Robux}" Width="19" Height="19" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource Green}"/>
+                      <TextBlock Text="{Binding TxIncoming}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource Green}" VerticalAlignment="Center"/>
+                    </StackPanel>
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource StatCard}" Margin="4,0">
                   <StackPanel>
                     <TextBlock Text="Outgoing" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding TxOutgoing}" FontSize="22" FontWeight="Bold" Margin="0,4,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                      <Control Style="{StaticResource Robux}" Width="19" Height="19" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource Fg}"/>
+                      <TextBlock Text="{Binding TxOutgoing}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource StatCard}" Margin="8,0,0,0">
                   <StackPanel>
                     <TextBlock Text="Pending" FontSize="12" Style="{StaticResource MutedText}"/>
-                    <TextBlock Text="{Binding TxPending}" FontSize="22" FontWeight="Bold" Margin="0,4,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                      <Control Style="{StaticResource Robux}" Width="19" Height="19" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource Fg}"/>
+                      <TextBlock Text="{Binding TxPending}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
                   </StackPanel>
                 </Border>
               </UniformGrid>
@@ -105,7 +141,10 @@
                     <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Padding="4,10" Margin="0,0,24,0">
                       <Grid>
                         <TextBlock Text="{Binding Label}"/>
-                        <TextBlock Text="{Binding AmountText}" HorizontalAlignment="Right" Style="{StaticResource TxAmount}"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                          <Control Style="{StaticResource TxAmountIcon}" Width="13" Height="13"/>
+                          <TextBlock Text="{Binding AmountText}" Style="{StaticResource TxAmount}"/>
+                        </StackPanel>
                       </Grid>
                     </Border>
                   </DataTemplate>
@@ -170,9 +209,9 @@
                     <StackPanel Orientation="Horizontal" IsHitTestVisible="False">
                       <Grid Width="44" Height="44" Margin="0,0,16,0">
                         <Border CornerRadius="10" Background="{DynamicResource Card2}"/>
-                        <TextBlock Text="&#xE8C7;" FontFamily="{StaticResource Icons}" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource Muted}" Visibility="{Binding ShowGlyph, Converter={StaticResource BoolVis}}"/>
-                        <ctl:RemoteImage Url="{Binding ThumbUrl}" CornerRadius="10"/>
+                        <ctl:RemoteImage Url="{Binding ThumbUrl}" CornerRadius="10" Visibility="{Binding HasPicture, Converter={StaticResource BoolVis}}"/>
+                        <Control Style="{StaticResource Robux}" Width="22" Height="22" Foreground="{DynamicResource Accent}"
+                                 Visibility="{Binding IsRobux, Converter={StaticResource BoolVis}}"/>
                       </Grid>
                       <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding ItemText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -185,8 +224,10 @@
                     <TextBlock Grid.Column="1" Text="{Binding AgentText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                IsHitTestVisible="False" Margin="0,0,12,0"/>
                     <TextBlock Grid.Column="2" Text="{Binding WhenText}" VerticalAlignment="Center" Style="{StaticResource MutedText}"/>
-                    <TextBlock Grid.Column="3" Text="{Binding AmountText}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="15"
-                               Style="{StaticResource TxAmount}"/>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <Control Style="{StaticResource TxAmountIcon}" Width="15" Height="15"/>
+                      <TextBlock Text="{Binding AmountText}" VerticalAlignment="Center" FontSize="15" Style="{StaticResource TxAmount}"/>
+                    </StackPanel>
                   </Grid>
                 </Border>
               </DataTemplate>

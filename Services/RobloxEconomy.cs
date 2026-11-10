@@ -21,8 +21,10 @@ public sealed partial class TxRow(long id, DateTime created, bool pending, strin
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     [CommunityToolkit.Mvvm.ComponentModel.NotifyPropertyChangedFor(nameof(ShowGlyph))]
     private string thumbUrl = "";
-    /// <summary>No picture (yet): a Robux symbol in its place.</summary>
+    /// <summary>No picture (yet).</summary>
     public bool ShowGlyph => ThumbUrl.Length == 0;
+    /// <summary>Plain Robux (bought, Premium, a group payout, a trade): the Robux symbol instead of a picture.</summary>
+    public bool IsRobux => !HasPicture;
     /// <summary>Something with a picture: an item, a bundle, a game pass or an in-game product.</summary>
     public bool HasPicture => ItemId > 0 && ItemType.Length > 0;
 
@@ -69,12 +71,54 @@ public static class RobloxEconomy
         ("TradeRobux", "Trades"),
     };
 
+    // Roblox works the history and the totals out when they're asked for, which can take well over half a minute for a
+    // busy account or a whole year. The usual client gives up after 30 s and tries again (starting over each time), so
+    // these get their own: one request, as long as the caller lets it run, and Roblox's own wait when it says "too many".
+    static readonly HttpClient Slow = CreateSlow();
+
+    static HttpClient CreateSlow()
+    {
+        var c = new HttpClient(new HttpClientHandler { UseCookies = false }) { Timeout = Timeout.InfiniteTimeSpan };
+        c.DefaultRequestHeaders.UserAgent.ParseAdd(RobloxApi.Http.DefaultRequestHeaders.UserAgent.ToString());
+        return c;
+    }
+
+    static async Task<JsonDocument> SlowGetAsync(string url, string cookie, CancellationToken ct)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.TryAddWithoutValidation("Cookie", ".ROBLOSECURITY=" + cookie);
+            HttpResponseMessage resp;
+            try { resp = await Slow.SendAsync(req, ct); }
+            catch (HttpRequestException ex) { throw new RobloxException("Roblox isn't answering. Check your internet and try again.", null, ex); }
+            using (resp)
+            {
+                var text = await resp.Content.ReadAsStringAsync(ct);
+                if (resp.IsSuccessStatusCode)
+                {
+                    try { return JsonDocument.Parse(string.IsNullOrWhiteSpace(text) ? "{}" : text); }
+                    catch (JsonException ex) { throw new RobloxException("Roblox sent something RoDeck didn't understand.", null, ex); }
+                }
+                if ((int)resp.StatusCode >= 500 && attempt < 2) { await Task.Delay(2000, ct); continue; }
+                int wait = resp.Headers.TryGetValues("x-ratelimit-reset", out var v) && int.TryParse(v.First().Split(',')[0].Trim(), out var n) ? n : 0;
+                throw (int)resp.StatusCode switch
+                {
+                    401 => new RobloxException("This account is signed out. Sign it in again on the Accounts tab.", resp.StatusCode),
+                    429 => new RobloxException("Roblox is getting too many requests.", resp.StatusCode) { WaitSeconds = Math.Max(wait, 5) },
+                    >= 500 => new RobloxException("Roblox is having trouble right now. Try again in a moment.", resp.StatusCode),
+                    _ => new RobloxException($"Roblox answered {(int)resp.StatusCode}.", resp.StatusCode),
+                };
+            }
+        }
+    }
+
     public static async Task<(List<TxRow> Rows, string? Next)> GetTransactionsAsync(string cookie, long userId, string type, string? cursor,
                                                                                     CancellationToken ct)
     {
         var url = $"https://economy.roblox.com/v2/users/{userId}/transactions?transactionType={Uri.EscapeDataString(type)}&limit=100"
                   + (string.IsNullOrEmpty(cursor) ? "" : "&cursor=" + Uri.EscapeDataString(cursor));
-        using var doc = await RobloxHttp.GetJsonAsync(url, cookie, ct);
+        using var doc = await SlowGetAsync(url, cookie, ct);
         var root = doc.RootElement;
         var rows = new List<TxRow>();
         foreach (var t in root.Arr("data"))
@@ -115,7 +159,7 @@ public static class RobloxEconomy
     public static async Task<(long Incoming, long Outgoing, long Pending, List<TxTotal> Lines)> GetTotalsAsync(
         string cookie, long userId, string timeFrame, CancellationToken ct)
     {
-        using var doc = await RobloxHttp.GetJsonAsync(
+        using var doc = await SlowGetAsync(
             $"https://economy.roblox.com/v2/users/{userId}/transaction-totals?timeFrame={timeFrame}&transactionType=summary", cookie, ct);
         var root = doc.RootElement;
         var all = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
