@@ -320,8 +320,8 @@ public partial class MainViewModel
         {
             TradeConfirmError = ex.TooMany ? "Roblox is busy. Nothing changed. Try again in a moment."
                 : ex.Message.Contains("unknown error", StringComparison.OrdinalIgnoreCase)
-                    ? "Roblox refused it without saying why (\"An unknown error occurred\"). Usually: an item can't be traded right now "
-                      + "(on hold, or just traded), the other player can't trade (no Premium, or trades only with friends), or the Robux is too much. Nothing was sent."
+                    ? "Roblox refused it without saying why (\"An unknown error occurred\"). Usually the other player just changed their trade "
+                      + "settings, or one of the items was traded away a moment ago. Nothing was sent."
                 : ex.Message;
         }
         finally { TradeBusy = false; }
@@ -374,6 +374,8 @@ public partial class MainViewModel
 
     [ObservableProperty] private bool isBuildingTrade;
     [ObservableProperty] private long buildPartnerId;
+    /// <summary>Why this account can't trade with the picked player ("" when it can).</summary>
+    [ObservableProperty] private string buildPartnerProblem = "";
     [ObservableProperty] private string buildPartnerName = "";
     [ObservableProperty] private string buildPartnerHead = "";
     [ObservableProperty] private string partnerSearch = "";
@@ -481,8 +483,10 @@ public partial class MainViewModel
         BuildPartnerId = id;
         BuildPartnerName = name;
         BuildPartnerHead = head;
+        BuildPartnerProblem = "";
         PartnerHits.Clear();
         BuildGet.Clear();
+        _ = CheckPartnerAsync(a, id, name);
         if (head.Length == 0)
         {
             var pics = await Thumbnails.GetAsync("AvatarHeadShot", new[] { id }, "150x150");
@@ -504,6 +508,15 @@ public partial class MainViewModel
             UpdateBuild();
             return list.Count > 0;
         }, "Loading their limiteds…");
+    }
+
+    /// <summary>Roblox Plus on both sides, and their trade settings: shown (and Send blocked) before anything is picked.</summary>
+    private async Task CheckPartnerAsync(Account a, long id, string name)
+    {
+        var why = await RobloxTrades.CannotTradeReasonAsync(a.Cookie, id, name, a.Label, CancellationToken.None);
+        if (BuildPartnerId != id) return;
+        BuildPartnerProblem = why ?? "";
+        UpdateBuild();
     }
 
     private static void FilterTradable(ObservableCollection<LimitedTile> shown, List<LimitedTile> all, string filter)
@@ -543,6 +556,7 @@ public partial class MainViewModel
     {
         get
         {
+            if (BuildPartnerProblem.Length > 0) return BuildPartnerProblem;
             if (BuildGive.Count == 0 && BuildGet.Count == 0) return "";   // nothing picked yet: no message
             if (BuildGive.Count == 0) return "Add at least one of your items: Roblox doesn't allow a trade with only Robux on a side.";
             if (BuildGet.Count == 0) return "Add at least one of their items: Roblox doesn't allow a trade with only Robux on a side.";

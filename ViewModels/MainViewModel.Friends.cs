@@ -76,6 +76,7 @@ public partial class MainViewModel
             if (_friendsShown > FriendsPageSize) { _friendsShown = FriendsPageSize; ShowFriendsPage(); }
             if (IsProfileOpen) { ProfileLoad.Cancel(); ProfileLoad.State = LoadState.Ready; OpenProfile = null; IsProfileOpen = false; IsEditingAbout = false; }
             if (FriendsTab != "Friends") FriendsTab = "Friends";
+            ClearFriendSearches();
             return;
         }
         if (_friendsLoadedFor == CurrentAccount && DateTime.Now - _friendsLoadedAt < TimeSpan.FromMinutes(2)) return;
@@ -321,9 +322,17 @@ public partial class MainViewModel
     [RelayCommand]
     private Task RetryOpenProfile() => _lastProfileId > 0 ? OpenProfileAsync(_lastProfileId) : Task.CompletedTask;
 
+    /// <summary>The friend filter and the player search start empty again.</summary>
+    private void ClearFriendSearches()
+    {
+        if (FriendsFilter.Length > 0) FriendsFilter = "";
+        if (PlayerSearchText.Length > 0) { PlayerSearchText = ""; PlayerHits.Clear(); PlayersLoad.State = LoadState.Ready; }
+    }
+
     [RelayCommand]
     private void CloseProfile()
     {
+        ClearFriendSearches();
         ProfileLoad.Cancel();
         ProfileLoad.State = LoadState.Ready;
         OpenProfile = null;

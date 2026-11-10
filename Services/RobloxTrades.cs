@@ -118,6 +118,33 @@ public static class RobloxTrades
         using var _ = await RobloxHttp.PostJsonAsync($"{Trades}/v1/trades/{tradeId}/decline", cookie, new { }, ct);
     }
 
+    /// <summary>
+    /// Why this account can't trade with that player (no Roblox Plus on either side, or their trade settings), or null
+    /// when it can (or Roblox didn't say).
+    /// </summary>
+    public static async Task<string?> CannotTradeReasonAsync(string cookie, long userId, string partner, string me, CancellationToken ct)
+    {
+        try
+        {
+            using var doc = await RobloxHttp.GetJsonAsync($"{Trades}/v1/users/{userId}/can-trade-with", cookie, ct);
+            var r = doc.RootElement;
+            if (r.ValueKind != JsonValueKind.Object) return null;
+            if (r.TryGetProperty("canTrade", out var ok) && ok.ValueKind == JsonValueKind.True) return null;
+            var status = Str(r, "status");
+            var who = partner.Length > 0 ? partner : "This player";
+            return status switch
+            {
+                "ReceiverCannotTrade" => $"{who} doesn't have Roblox Plus, so they can't trade.",
+                "SenderCannotTrade" => $"{me} doesn't have Roblox Plus, so it can't trade.",
+                _ when status.Contains("Receiver", StringComparison.OrdinalIgnoreCase) => $"{who} doesn't accept trades from {me} (their trade settings).",
+                _ when status.Contains("Sender", StringComparison.OrdinalIgnoreCase) => $"{me}'s trade settings don't allow this trade (Roblox settings → Privacy).",
+                "CannotTradeWithSelf" => "That's this account. Pick someone else.",
+                _ => $"Roblox doesn't allow a trade with {who}" + (status.Length > 0 ? $" ({status})." : "."),
+            };
+        }
+        catch (RobloxException) { return null; }
+    }
+
     /// <summary>Sends a new trade (or, with <paramref name="counterOf"/>, a counter to that trade). Returns the trade's ID.</summary>
     public static async Task<long> SendAsync(string cookie, long myUserId, IEnumerable<string> give, long giveRobux,
                                              long partnerId, IEnumerable<string> get, long getRobux, long? counterOf = null,

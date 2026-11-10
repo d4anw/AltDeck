@@ -442,9 +442,14 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
-    private void TradeWithProfile()
+    private async Task TradeWithProfile()
     {
-        if (TradeProfileId <= 0 || TradeProfileIsMe) return;
+        if (TradeProfileId <= 0 || TradeProfileIsMe || CurrentAccount is not { } a) return;
+        if (await RobloxTrades.CannotTradeReasonAsync(a.Cookie, TradeProfileId, TradeProfileName, a.Label, CancellationToken.None) is { } why)
+        {
+            StatusMessage = why;
+            return;
+        }
         _counterOf = null;
         BuildTitle = "New trade";
         StartBuild(TradeProfileId, TradeProfileName, TradeProfileHead);

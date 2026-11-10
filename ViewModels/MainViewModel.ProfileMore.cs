@@ -244,10 +244,16 @@ public partial class MainViewModel
 
     /// <summary>A new trade with this player, in the trade maker.</summary>
     [RelayCommand]
-    private void SendTradeFromProfile()
+    private async Task SendTradeFromProfile()
     {
-        if (OpenProfile is not { } p || ProfileIsMe) return;
+        if (OpenProfile is not { } p || ProfileIsMe || CurrentAccount is not { } a) return;
         var name = p.DisplayName.Length > 0 ? p.DisplayName : p.Name;
+        if (await RobloxTrades.CannotTradeReasonAsync(a.Cookie, p.UserId, name, a.Label, CancellationToken.None) is { } why)
+        {
+            StatusMessage = why;
+            return;
+        }
+        if (OpenProfile != p) return;
         Page = "Trades";
         _counterOf = null;
         BuildTitle = "New trade";

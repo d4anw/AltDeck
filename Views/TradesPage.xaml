@@ -671,14 +671,15 @@
 
         <!-- ================= A TRADE PROFILE ================= -->
         <StackPanel Visibility="{Binding TradesTab, Converter={StaticResource PageVis}, ConverterParameter=Profile}">
-          <Grid Margin="0,0,0,14">
+          <Grid Margin="0,0,0,18">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" VerticalAlignment="Center" Command="{Binding CloseTradeProfileCommand}" Margin="-8,0,0,0">
               <StackPanel Orientation="Horizontal">
                 <TextBlock Text="&#xE72B;" FontFamily="{StaticResource Icons}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <TextBlock Text="{Binding TradeProfileBackText}"/>
               </StackPanel>
             </Button>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Margin="0,10,0,0">
             <Button Style="{StaticResource SegButton}" Command="{Binding OpenProfileFromTradeCommand}" ToolTip="What they wear, their friends, communities, badges…">
               <StackPanel Orientation="Horizontal">
                 <TextBlock Text="&#xE77B;" FontFamily="{StaticResource Icons}" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -1673,6 +1674,14 @@
                   <Run Text="{Binding CurrentAccount.Label, Mode=OneWay}"/> <Run Text="⇄" Foreground="{DynamicResource Muted}"/> <Run Text="{Binding BuildPartnerName, Mode=OneWay}" FontWeight="SemiBold"/>
                 </TextBlock>
                 <Button Content="Someone else" Command="{Binding NewTradeCommand}" VerticalAlignment="Center"/>
+                <!-- no Roblox Plus, or their trade settings: said right away, Send stays off -->
+                <Border Background="{DynamicResource RedBg}" CornerRadius="10" Padding="12,7" Margin="14,0,0,0" VerticalAlignment="Center"
+                        Visibility="{Binding BuildPartnerProblem, Converter={StaticResource EmptyCollapsed}}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource Icons}" FontSize="13" Foreground="{DynamicResource Red}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding BuildPartnerProblem}" Foreground="{DynamicResource Red}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                  </StackPanel>
+                </Border>
               </StackPanel>
             </Grid>
           </Border>
