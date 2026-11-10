@@ -57,7 +57,7 @@
 
   <Grid>
     <!-- ================= list: friends / requests / find ================= -->
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+    <ScrollViewer x:Name="ListScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding IsProfileOpen, Converter={StaticResource BoolVisInv}}">
       <StackPanel Margin="32,26,32,32">
         <Grid>
@@ -187,7 +187,7 @@
     </ScrollViewer>
 
     <!-- ================= a profile ================= -->
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+    <ScrollViewer x:Name="ProfileScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding IsProfileOpen, Converter={StaticResource BoolVis}}">
       <StackPanel Margin="32,22,32,32">
         <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseProfileCommand}" Margin="-8,0,0,10">

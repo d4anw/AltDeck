@@ -49,7 +49,7 @@
 
   <Grid>
     <!-- ================= the list: yours, or a search ================= -->
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+    <ScrollViewer x:Name="ListScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding IsCommunityOpen, Converter={StaticResource BoolVisInv}}">
       <StackPanel Margin="32,26,32,32">
         <Grid>
@@ -98,7 +98,7 @@
     </ScrollViewer>
 
     <!-- ================= a community's page ================= -->
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+    <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding IsCommunityOpen, Converter={StaticResource BoolVis}}">
       <StackPanel Margin="32,18,32,32">
         <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Command="{Binding CloseCommunityCommand}" Margin="-8,0,0,10">
@@ -205,6 +205,8 @@
             <!-- games, store, members -->
             <Grid Margin="0,24,0,14">
               <StackPanel Orientation="Horizontal">
+                <RadioButton Style="{StaticResource Seg}" Content="Posts" GroupName="communitytab"
+                             IsChecked="{Binding CommunityTab, Converter={StaticResource Eq}, ConverterParameter=Posts, Mode=TwoWay}"/>
                 <RadioButton Style="{StaticResource Seg}" Content="Games" GroupName="communitytab"
                              IsChecked="{Binding CommunityTab, Converter={StaticResource Eq}, ConverterParameter=Games, Mode=TwoWay}"/>
                 <RadioButton Style="{StaticResource Seg}" Content="Store" GroupName="communitytab"
@@ -244,6 +246,48 @@
             <ctl:StateView State="{Binding CommunityTabLoad.State}" Message="{Binding CommunityTabLoad.Message}" MinHeight="200"
                            EmptyText="Nothing here yet.">
               <Grid>
+                <!-- posts: the community's announcements, newest first -->
+                <StackPanel Visibility="{Binding CommunityTab, Converter={StaticResource PageVis}, ConverterParameter=Posts}">
+                  <ItemsControl ItemsSource="{Binding CommunityPosts}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Style="{StaticResource CardBox}" Padding="22,18" Margin="0,0,0,12">
+                          <StackPanel>
+                            <Button Style="{StaticResource Subtle}" HorizontalAlignment="Left" Padding="0" Margin="0" Cursor="Hand"
+                                    ToolTip="Open their profile"
+                                    Command="{Binding DataContext.OpenPostAuthorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}">
+                              <StackPanel Orientation="Horizontal">
+                                <ctl:AvatarView Width="36" Height="36" Url="{Binding AuthorHeadshot}" Initials="{Binding AuthorInitials}"/>
+                                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                  <TextBlock Text="{Binding Author}" FontWeight="SemiBold" Foreground="{DynamicResource Fg}"/>
+                                  <TextBlock Text="{Binding Meta}" FontSize="12" Style="{StaticResource MutedText}"/>
+                                </StackPanel>
+                              </StackPanel>
+                            </Button>
+                            <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="Bold" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="21" Margin="0,8,0,0" Style="{StaticResource MutedText}"
+                                       Visibility="{Binding HasText, Converter={StaticResource BoolVis}}"/>
+                            <Grid HorizontalAlignment="Left" Margin="0,14,0,0" Visibility="{Binding HasImage, Converter={StaticResource BoolVis}}">
+                              <Border Width="320" Height="320" CornerRadius="14" Background="{DynamicResource Card2}"/>
+                              <ctl:RemoteImage Url="{Binding ImageUrl}" Width="320" Height="320" CornerRadius="14"/>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0" Visibility="{Binding ReactionsText, Converter={StaticResource EmptyCollapsed}}">
+                              <TextBlock Text="&#xEB51;" FontFamily="{StaticResource Icons}" FontSize="13" Foreground="{DynamicResource Accent}"
+                                         VerticalAlignment="Center" Margin="0,0,7,0"/>
+                              <TextBlock FontSize="12" Style="{StaticResource MutedText}" VerticalAlignment="Center">
+                                <Run Text="{Binding ReactionsText, Mode=OneWay}"/> <Run Text="reactions"/>
+                              </TextBlock>
+                            </StackPanel>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Button Content="Show more" HorizontalAlignment="Center" Margin="0,4,0,0" Command="{Binding MorePostsCommand}"
+                          Visibility="{Binding HasMorePosts, Converter={StaticResource BoolVis}}"/>
+                </StackPanel>
+
                 <ItemsControl ItemsSource="{Binding CommunityGames}" ItemTemplate="{StaticResource GameTileTemplate}"
                               Visibility="{Binding CommunityTab, Converter={StaticResource PageVis}, ConverterParameter=Games}">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>

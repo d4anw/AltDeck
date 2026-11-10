@@ -8,6 +8,15 @@ using System.Text.Json;
 namespace RoDeck.Services;
 
 /// <summary>A Roblox web request that didn't work, with a message that can be shown as is.</summary>
+/// <summary>A request body sent as a web form (application/x-www-form-urlencoded), like roblox.com's own pages do for some changes.</summary>
+public sealed record FormBody(IReadOnlyDictionary<string, string> Fields);
+
+/// <summary>A change (POST) that sends no body at all, like roblox.com's own pages do for some.</summary>
+public sealed record NoBody
+{
+    public static readonly NoBody Instance = new();
+}
+
 public sealed class RobloxException : Exception
 {
     public HttpStatusCode? Status { get; }
@@ -122,7 +131,7 @@ public static class RobloxHttp
     {
         string? json = body switch
         {
-            null => null,
+            null or FormBody or NoBody => null,
             string s => s,
             _ => JsonSerializer.Serialize(body)
         };
@@ -137,8 +146,16 @@ public static class RobloxHttp
             using var req = new HttpRequestMessage(method, url);
             if (cookie != null) req.Headers.TryAddWithoutValidation("Cookie", ".ROBLOSECURITY=" + cookie);
             if (changes && key != null && Csrf.TryGetValue(key, out var token)) req.Headers.TryAddWithoutValidation("X-CSRF-TOKEN", token);
-            if (json != null) req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            if (body is FormBody form) req.Content = new FormUrlEncodedContent(form.Fields);
+            else if (body is NoBody) { }
+            else if (json != null) req.Content = new StringContent(json, Encoding.UTF8, "application/json");
             else if (changes) req.Content = new StringContent("", Encoding.UTF8, "application/json");
+            if (changes)
+            {
+                // what a browser sends with every change on roblox.com; some of Roblox's newer services want to see it
+                req.Headers.TryAddWithoutValidation("Origin", "https://www.roblox.com");
+                req.Headers.TryAddWithoutValidation("Referer", "https://www.roblox.com/");
+            }
 
             HttpResponseMessage resp;
             await gate.Slots.WaitAsync(ct);

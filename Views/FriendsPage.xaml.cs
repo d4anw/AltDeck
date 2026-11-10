@@ -9,7 +9,13 @@ namespace RoDeck.Views;
 /// <summary>Friends: the friend list, requests, player search and profiles.</summary>
 public partial class FriendsPage : UserControl
 {
-    public FriendsPage() { InitializeComponent(); }
+    public FriendsPage()
+    {
+        InitializeComponent();
+        // coming back to Friends, or opening another profile: from the top
+        IsVisibleChanged += (_, e) => { if ((bool)e.NewValue) { ListScroll.ScrollToTop(); ProfileScroll.ScrollToTop(); } };
+        ProfileScroll.IsVisibleChanged += (_, e) => { if ((bool)e.NewValue) ProfileScroll.ScrollToTop(); };
+    }
 
     private MainViewModel VM => (MainViewModel)DataContext;
     private string Me => VM.CurrentAccount?.Label ?? "this account";

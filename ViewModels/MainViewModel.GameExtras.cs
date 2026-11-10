@@ -171,7 +171,7 @@ public partial class MainViewModel
         PassBuyBusy = true;
         try
         {
-            var r = await RobloxGameExtras.BuyPassAsync(a.Cookie, p, CancellationToken.None);
+            var r = await RobloxGameExtras.BuyPassAsync(a.Cookie, a.UserId, OpenGame?.UniverseId ?? 0, p, CancellationToken.None);
             if (r.Ok)
             {
                 p.Owned = true;
@@ -183,7 +183,7 @@ public partial class MainViewModel
             }
             else PassBuyError = r.Message;
         }
-        catch (RobloxException ex) when (ex.Challenge)
+        catch (RobloxException ex) when (ex.Challenge || ex.Status == System.Net.HttpStatusCode.Forbidden)
         {
             ShowPassBuy = false;
             OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/game-pass/{p.Id}", p.Name);

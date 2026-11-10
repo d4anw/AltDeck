@@ -72,8 +72,10 @@ public partial class MainViewModel
     {
         if (Page != "Friends")
         {
-            // leaving Friends forgets "Show more": coming back shows the first page again
+            // leaving Friends: coming back starts on the friend list again (back / forward still return to where you were)
             if (_friendsShown > FriendsPageSize) { _friendsShown = FriendsPageSize; ShowFriendsPage(); }
+            if (IsProfileOpen) { ProfileLoad.Cancel(); ProfileLoad.State = LoadState.Ready; OpenProfile = null; IsProfileOpen = false; IsEditingAbout = false; }
+            if (FriendsTab != "Friends") FriendsTab = "Friends";
             return;
         }
         if (_friendsLoadedFor == CurrentAccount && DateTime.Now - _friendsLoadedAt < TimeSpan.FromMinutes(2)) return;

@@ -89,7 +89,7 @@ then **continue playing**, your **favourite games** and **recommended for you**.
 
 ### 🏘️ Communities
 - **Your communities** (Roblox's groups) with your role in each, and **search** for any other.
-- **Community pages** with the shout, the about text, the owner, its **games**, its **store** and its **members** (by role).
+- **Community pages** with the shout, the about text, the owner, its **posts**, **games**, **store** and **members** (by role).
 - **Join** (or ask to join) and **leave**, for the account top right.
 
 ### 🧍 Avatar editor

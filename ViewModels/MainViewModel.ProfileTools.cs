@@ -40,14 +40,38 @@ public partial class MainViewModel
             return;
         }
         BlockArmed = false;
+        var who = p.DisplayName.Length > 0 ? p.DisplayName : p.Name;
         try
         {
             await RobloxGameExtras.SetBlockedAsync(a.Cookie, p.UserId, block, CancellationToken.None);
             ProfileBlocked = block;
-            var who = p.DisplayName.Length > 0 ? p.DisplayName : p.Name;
             StatusMessage = block ? $"{a.Label} blocked {who}. They can't message, friend or join you anymore." : $"{a.Label} unblocked {who}.";
         }
+        catch (RobloxException ex) when (!ex.TooMany && !ex.SignedOut)
+        {
+            // Roblox wants it done on its own site (a security check, or a rule for this account): its profile page,
+            // signed in as the account, where the ⋯ menu has Block
+            Log(ActivityLog.Info, $"{(block ? "Blocking" : "Unblocking")} {who} from RoDeck didn't go through ({(int?)ex.Status}: {ex.Message}); opened Roblox's page instead.");
+            OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/users/{p.UserId}/profile", who);
+            StatusMessage = $"Roblox wants this done on its own page: use the ⋯ menu next to {who}'s name there, then close the window.";
+            _ = RecheckBlockLaterAsync(a, p.UserId);
+        }
         catch (RobloxException ex) { StatusMessage = ex.Message; }
+    }
+
+    /// <summary>After blocking on Roblox's page: the button shows the new state once the window has been used.</summary>
+    private async Task RecheckBlockLaterAsync(Models.Account a, long userId)
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+            if (OpenProfile?.UserId != userId || CurrentAccount != a) return;
+            if (await RobloxGameExtras.IsBlockedAsync(a.Cookie, userId, CancellationToken.None) is bool b && b != ProfileBlocked)
+            {
+                ProfileBlocked = b;
+                return;
+            }
+        }
     }
 
     [RelayCommand]
@@ -67,10 +91,19 @@ public partial class MainViewModel
         AboutBusy = true;
         try
         {
-            var saved = await RobloxGameExtras.SetAboutAsync(a.Cookie, (AboutDraft ?? "").Trim(), CancellationToken.None);
+            var saved = await RobloxGameExtras.SetAboutAsync(a.Cookie, a.UserId, (AboutDraft ?? "").Trim(), CancellationToken.None);
             IsEditingAbout = false;
             StatusMessage = saved.Contains('#') ? "Saved. Roblox filtered some words (the #s)." : "Your About text is saved.";
             await OpenProfileAsync(p.UserId);
+        }
+        catch (RobloxException ex) when (!ex.TooMany && !ex.SignedOut)
+        {
+            // a locked account PIN, a security check, or a rule for this account: Roblox's own profile page can do it
+            Log(ActivityLog.Info, $"Saving the About text from RoDeck didn't go through ({(int?)ex.Status}: {ex.Message}); opened Roblox's page instead.");
+            try { System.Windows.Clipboard.SetText((AboutDraft ?? "").Trim()); } catch { }
+            OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/users/{a.UserId}/profile", "Your profile");
+            StatusMessage = $"Roblox said: {ex.Message} Your text is copied: paste it in the About box on Roblox's page (the pencil).";
+            IsEditingAbout = false;
         }
         catch (RobloxException ex) { StatusMessage = ex.Message; }
         finally { AboutBusy = false; }

@@ -25,7 +25,7 @@ public partial class MainViewModel
 
     private void MaybeLoadCommunities()
     {
-        if (Page != "Communities") return;
+        if (Page != "Communities") { ResetCommunitiesPage(); return; }
         if (_communitiesFor == CurrentAccount && DateTime.Now - _communitiesAt < TimeSpan.FromMinutes(5) && MyCommunities.Count > 0) return;
         _ = LoadMyCommunitiesAsync();
     }
@@ -87,7 +87,7 @@ public partial class MainViewModel
     [ObservableProperty] private bool isCommunityOpen;
     [ObservableProperty] private CommunityDetails? openCommunity;
     [ObservableProperty] private string openCommunityIcon = "";
-    [ObservableProperty] private string communityTab = "Games";
+    [ObservableProperty] private string communityTab = "Posts";
     /// <summary>"Member", "Pending" (asked to join) or "" (not in it).</summary>
     [ObservableProperty, NotifyPropertyChangedFor(nameof(CommunityJoinText))] private string communityMembership = "";
     [ObservableProperty] private string communityRole = "";
@@ -102,6 +102,9 @@ public partial class MainViewModel
         _ => OpenCommunity is { PublicEntry: false } ? "Ask to join" : "Join",
     };
 
+    public ObservableCollection<CommunityPost> CommunityPosts { get; } = new();
+    [ObservableProperty] private bool hasMorePosts;
+    private string? _postsNext;
     public ObservableCollection<GameTile> CommunityGames { get; } = new();
     public ObservableCollection<MarketItem> CommunityStore { get; } = new();
     public ObservableCollection<CommunityMember> CommunityMembers { get; } = new();
@@ -127,8 +130,10 @@ public partial class MainViewModel
         _lastCommunityId = id;
         OpenCommunity = null;
         OpenCommunityIcon = icon;
-        CommunityGames.Clear(); CommunityStore.Clear(); CommunityMembers.Clear(); CommunityRoles.Clear();
+        CommunityPosts.Clear(); CommunityGames.Clear(); CommunityStore.Clear(); CommunityMembers.Clear(); CommunityRoles.Clear();
         _communityTabsLoaded.Clear();
+        HasMorePosts = false;
+        if (!_restoring) CommunityTab = "Posts";
         CommunityLeaveArmed = false;
         CommunityRoleFilter = null;
         IsCommunityOpen = true;
@@ -177,6 +182,18 @@ public partial class MainViewModel
         {
             switch (tab)
             {
+                case "Posts":
+                {
+                    CommunityPosts.Clear();
+                    _postsNext = null;
+                    var (posts, next) = await RobloxGameExtras.GetPostsAsync(c.Id, CurrentAccount?.Cookie, null, ct);
+                    if (OpenCommunity != c) return true;
+                    foreach (var p in posts) CommunityPosts.Add(p);
+                    _postsNext = next;
+                    HasMorePosts = next != null;
+                    _ = FillPostPicturesAsync(posts);
+                    return posts.Count > 0;
+                }
                 case "Games":
                 {
                     CommunityGames.Clear();
@@ -216,6 +233,69 @@ public partial class MainViewModel
     }
 
     [RelayCommand] private void ClearRoleFilter() => CommunityRoleFilter = null;
+
+    /// <summary>After joining on Roblox's page: the button follows once Roblox has it.</summary>
+    private async Task RecheckMembershipLaterAsync(Account a, CommunityDetails c)
+    {
+        for (int i = 0; i < 18; i++)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+            if (OpenCommunity?.Id != c.Id || CurrentAccount != a) return;
+            try
+            {
+                var mine = (await RobloxCommunities.GetMineAsync(a.UserId, CancellationToken.None)).FirstOrDefault(x => x.Id == c.Id);
+                if (mine == null) continue;
+                CommunityMembership = "Member";
+                CommunityRole = mine.Role;
+                if (MyCommunities.All(x => x.Id != c.Id)) { mine.IconUrl = OpenCommunityIcon; MyCommunities.Insert(0, mine); }
+                return;
+            }
+            catch (RobloxException) { }
+        }
+    }
+
+    [RelayCommand]
+    private async Task MorePosts()
+    {
+        if (OpenCommunity is not { } c || _postsNext == null) return;
+        try
+        {
+            var (posts, next) = await RobloxGameExtras.GetPostsAsync(c.Id, CurrentAccount?.Cookie, _postsNext, CancellationToken.None);
+            if (OpenCommunity != c) return;
+            foreach (var p in posts) CommunityPosts.Add(p);
+            _postsNext = next;
+            HasMorePosts = next != null;
+            _ = FillPostPicturesAsync(posts);
+        }
+        catch (RobloxException ex) { StatusMessage = ex.Message; }
+    }
+
+    /// <summary>A post's picture (an image on Roblox) and its writer's headshot.</summary>
+    private static async Task FillPostPicturesAsync(List<CommunityPost> posts)
+    {
+        try
+        {
+            var withImage = posts.Where(p => p.HasImage).ToList();
+            if (withImage.Count > 0)
+            {
+                var pics = await Thumbnails.GetAsync("Asset", withImage.Select(p => p.ImageAssetId), "420x420");
+                foreach (var p in withImage) if (pics.TryGetValue(p.ImageAssetId, out var u)) p.ImageUrl = u;
+            }
+            var heads = await Thumbnails.GetAsync("AvatarHeadShot", posts.Select(p => p.AuthorId).Where(i => i > 0), "150x150");
+            foreach (var p in posts) if (heads.TryGetValue(p.AuthorId, out var u)) p.AuthorHeadshot = u;
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    private Task OpenPostAuthor(CommunityPost? p) => p is { AuthorId: > 0 } ? OpenProfileAsync(p.AuthorId) : Task.CompletedTask;
+
+    /// <summary>Leaving Communities: coming back starts at your list again (back / forward still return to where you were).</summary>
+    private void ResetCommunitiesPage()
+    {
+        if (IsCommunityOpen) { CommunityLoad.Cancel(); CommunityLoad.State = LoadState.Ready; IsCommunityOpen = false; OpenCommunity = null; }
+        if (IsCommunitySearch) { CommunitySearchText = ""; IsCommunitySearch = false; CommunityResults.Clear(); }
+    }
 
     [RelayCommand]
     private async Task MoreMembers()
@@ -310,10 +390,13 @@ public partial class MainViewModel
                 StatusMessage = mine != null ? $"{a.Label} joined {c.Name}." : $"Asked to join {c.Name}: its admins decide.";
             }
         }
-        catch (RobloxException ex) when (ex.Challenge)
+        catch (RobloxException ex) when (ex.Challenge || (ex.Status == System.Net.HttpStatusCode.Forbidden && CommunityMembership != "Member"))
         {
+            // joining asks for Roblox's puzzle check (only its own page can show it): the community's page, signed in
+            Log(ActivityLog.Info, $"Joining {c.Name} from RoDeck needs Roblox's check ({(int?)ex.Status}: {ex.Message}); opened Roblox's page instead.");
             OpenRobloxPageRequested?.Invoke(a, $"https://www.roblox.com/communities/{c.Id}", c.Name);
-            StatusMessage = "Roblox wants a quick security check: finish it on the community's page.";
+            StatusMessage = $"Roblox wants a quick check before joining: press Join on {c.Name}'s page there, then close the window.";
+            _ = RecheckMembershipLaterAsync(a, c);
         }
         catch (RobloxException ex) { StatusMessage = ex.Message; }
         finally { CommunityBusy = false; CommunityLeaveArmed = false; }
